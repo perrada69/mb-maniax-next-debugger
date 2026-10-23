@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>MB Maniax Next Debugger – Uživatelská příručka</title>
+<link rel="stylesheet" href="manual.css">
+<style>
+@page { @top-right { content: "MB Maniax Next Debugger · Uživatelská příručka"; } }
+@page :first { @top-right { content: none; } }
+</style>
+</head>
+<body>
+
+<section class="title-page">
+  <div>
+    <div class="stripes"><span></span><span></span><span></span><span></span></div>
+    <h1>MB Maniax <br>Next Debugger</h1>
+    <p class="subtitle">Uživatelská příručka</p>
+    <p class="lead">Emulátor a ladicí nástroj pro ZX Spectrum Next přímo ve Visual Studio Code.
+    Program ze sjasmplus běží v přesném emulátoru a ladíte ho ve zdrojáku: breakpointy, krokování,
+    registry, paměť, obrazovka emulátoru a pohledy na hardware Nextu – sprity, palety, tilemapa,
+    Copper a další.</p>
+  </div>
+  <div class="meta">
+    <b>Verze rozšíření 0.1.0</b> · říjen 2026<br>
+    MB Maniax · <a href="https://mb-maniax.cz">mb-maniax.cz</a><br>
+    Rozšíření je šířeno pod licencí GNU GPL 3 nebo novější. Jádro emulátoru JNEXT © Jorge González
+    Villalonga (GPL 3). ROM ZX Spectra 48K © Amstrad, který jejich šíření s emulátory povoluje.
+  </div>
+</section>
+
+<nav class="toc">
+  <h2 class="nonum" id="toc">Obsah</h2>
+</nav>
+
+<main>
+
+<!-- ================================================================== 1 -->
+<h2 id="uvod">Úvod</h2>
+
+<p><b>MB Maniax Next Debugger</b> je rozšíření pro Visual Studio Code (dále jen VS Code), které do
+editoru přidává emulátor ZX Spectra Next a ladicí nástroj (debugger). Program přeložený
+v <b>sjasmplus</b> se spustí v emulátoru postaveném na jádře
+<a href="https://github.com/jorgegv/jnext">JNEXT</a> a vy ho ladíte přímo ve zdrojovém textu:
+zastavíte ho na řádku, prohlédnete si registry a paměť, krokujete instrukci po instrukci – a
+vedle kódu přitom vidíte obrazovku emulátoru.</p>
+
+<p>Pokud jste zvyklí na CSpect nebo DeZog, mnoho věcí vám bude povědomých: instrukce
+<code>BREAK</code> z CSpectu funguje, speciální komentáře <code>WPMEM</code>, <code>LOGPOINT</code>
+a <code>ASSERTION</code> mají stejnou syntaxi jako v DeZogu. Rozdíl je v tom, že tu nic dalšího
+neinstalujete ani nespouštíte – emulátor je součástí rozšíření.</p>
+
+<h3 id="co-umi">Co rozšíření umí</h3>
+<ul>
+  <li><b>Breakpointy ve zdrojáku</b> podle ladicích informací ze sjasmplus (soubor SLD), včetně
+  8K stránek Nextu – breakpoint v kódu ve stránkované paměti zastaví jen tehdy, když je jeho
+  stránka namapovaná.</li>
+  <li><b>Podmíněné breakpointy, které nezpomalují</b> – podmínku (<code>A == 5</code>,
+  <code>mem[counter] == 3</code>, <code>nextreg[$50] == 10</code>, <code>FRAME &gt; 100</code> …)
+  vyhodnocuje přímo emulátor. Návěští ze zdrojáku se v podmínkách píšou přímo.</li>
+  <li><b>Počty průchodů</b> (<code>3</code>, <code>&gt;= 10</code>, <code>% 4</code>) a
+  <b>logpointy</b>, které místo zastavení vypíšou text s hodnotami.</li>
+  <li><b>Breakpointy na události stroje</b>: přerušení IM 1 / IM 2, NMI, zápis do NEXTREG,
+  vstup/výstup na port, Copper, DMA, reset.</li>
+  <li><b>Watchpointy</b> – zastavení při čtení nebo zápisu paměti.</li>
+  <li><b>Krokování</b> (Step Into / Over / Out), zásobník volání s návěštími, registry
+  a příznaky (dají se měnit), stránky MMU, disassembler, prohlížení a úprava paměti, výrazy
+  v panelu Watch a při najetí myší.</li>
+  <li><b>Krok zpět</b> (Step Back) – emulátor si pamatuje posledních 10 sekund.</li>
+  <li><b>Obrazovka emulátoru</b> v panelu VS Code se zvukem a klávesnicí.</li>
+  <li><b>Panel Next</b> s pohledy na hardware: sprity, Pattern RAM, palety, vrstvy, Layer 2,
+  tilemapa, program Copperu a všechny registry NEXTREG.</li>
+  <li><b>Uložené stavy</b> celého stroje a jejich export do souboru.</li>
+  <li><b>Profiler</b>, který u každého řádku zdrojáku ukáže, kolik T-stavů na něm program strávil.</li>
+</ul>
+
+<h3 id="pozadavky">Požadavky</h3>
+<ul>
+  <li><b>Windows (x64)</b> – balíček rozšíření <code>mbx-next-debugger-win32-x64-0.1.0.vsix</code> obsahuje
+  ladicí server pro 64bitová Windows.</li>
+  <li><b>Visual Studio Code 1.100 nebo novější</b>.</li>
+  <li><b>sjasmplus</b> – assembler, kterým program překládáte. Měl by být v cestě (proměnné
+  <code>PATH</code>), aby ho šlo spustit příkazem <code>sjasmplus</code> z terminálu.</li>
+  <li>SD karta ani ROM Nextu nejsou potřeba: rozšíření má vlastní ROM ZX Spectra 48K a program
+  spouští přímo. SD kartu s ROM potřebujete jen pro emulaci jiných strojů než Next
+  (viz <a class="secref" href="#launch"></a>).</li>
+</ul>
+
+<h3 id="konvence">Jak číst tento manuál</h3>
+<p>Manuál nepředpokládá, že VS Code znáte. Kde se mluví o části okna, je vždy popsáno, kde ji najdete
+a jakou klávesovou zkratkou se k ní dostanete. Použité značení:</p>
+<ul>
+  <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> – klávesová zkratka (stiskněte klávesy současně).</li>
+  <li><span class="ui">Run and Debug</span> – název prvku okna VS Code, tlačítka nebo záložky tak,
+  jak je uvidíte na obrazovce.</li>
+  <li><span class="cmd">MB Maniax: Save State…</span> – příkaz, který se spouští z palety příkazů
+  (Command Palette, <a class="secref" href="#paleta"></a>).</li>
+  <li><code>mem[counter]</code> – text, který píšete (výraz, kód, nastavení).</li>
+</ul>
+<div class="note">
+<p><b>Jazyk.</b> Samotné VS Code předpokládáme v angličtině (výchozí stav), proto jsou názvy jeho
+částí – <span class="ui">Run and Debug</span>, <span class="ui">Debug Console</span>,
+<span class="ui">Command Palette</span> – v manuálu anglicky, tak jak je uvidíte. Texty rozšíření
+(obrazovka emulátoru, panel Next, hlášení, sekce v panelu Variables) jsou česky, pokud je rozšíření
+přepnuté do češtiny (<a class="secref" href="#jazyk"></a>). <b>Názvy příkazů</b> a popisy v nastavení
+se ale řídí jazykem VS Code: v anglickém VS Code uvidíte příkaz
+<span class="cmd">MB Maniax: Save State…</span>, v českém VS Code <span class="cmd">MB Maniax: Uložit
+stav…</span>. Manuál uvádí anglický název a český v závorce.</p>
+</div>
+
+<!-- ================================================================== 2 -->
+<h2 id="instalace">Instalace</h2>
+
+<p>Rozšíření se dodává jako jeden soubor s příponou <code>.vsix</code> (například
+<code>mbx-next-debugger-win32-x64-0.1.0.vsix</code>). Je to balíček, který VS Code umí nainstalovat
+sám – nic nerozbalujte.</p>
+
+<h3 id="instalace-vsix">Instalace ze souboru .vsix</h3>
+<ol class="steps">
+  <li>Spusťte VS Code.</li>
+  <li>Otevřete panel rozšíření: v úzkém svislém pruhu ikon úplně vlevo (<span class="ui">Activity Bar</span>)
+  klikněte na ikonu čtyř čtverečků, nebo stiskněte <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>.
+  Vlevo se otevře seznam <span class="ui">Extensions</span>.</li>
+  <li>V záhlaví seznamu (vpravo nahoře nad vyhledávacím polem) klikněte na tři tečky
+  <span class="ui">…</span> (<span class="ui">Views and More Actions</span>) a vyberte
+  <span class="ui">Install from VSIX…</span>.</li>
+  <li>V dialogu najděte soubor <code>.vsix</code> a potvrďte <span class="ui">Install</span>.
+  Vpravo dole se objeví zpráva o dokončení instalace.</li>
+</ol>
+<p>Stejně to jde i příkazem z palety příkazů: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, napište
+<code>vsix</code> a vyberte <span class="cmd">Extensions: Install from VSIX…</span>. Kdo má rád
+příkazový řádek, může použít:</p>
+<pre><code>code --install-extension mbx-next-debugger-win32-x64-0.1.0.vsix</code></pre>
+
+<h3 id="aktualizace">Aktualizace na novou verzi</h3>
+<p>Novou verzi nainstalujete úplně stejně – stačí nainstalovat nový soubor <code>.vsix</code>, starý
+není potřeba předem odinstalovat. Pokud právě běží ladění, nejdřív ho ukončete
+(<kbd>Shift</kbd>+<kbd>F5</kbd>). Po instalaci VS Code obvykle nabídne tlačítko pro restart
+rozšíření; pokud ne, nebo si nejste jistí, že běží nová verze, obnovte okno (další oddíl).</p>
+
+<h3 id="reload">Obnovení okna (Developer: Reload Window)</h3>
+<p>Po instalaci nebo aktualizaci rozšíření je nejjistější „obnovit okno“ – VS Code tím znovu načte
+všechna rozšíření, ale otevřené soubory i rozložení oken zůstanou:</p>
+<ol class="steps">
+  <li>Stiskněte <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> (nebo <kbd>F1</kbd>). Nahoře uprostřed
+  okna se otevře pole palety příkazů.</li>
+  <li>Napište <code>reload</code>.</li>
+  <li>Vyberte <span class="cmd">Developer: Reload Window</span> a stiskněte <kbd>Enter</kbd>.</li>
+</ol>
+<p>Okno na chvíli zmizí a znovu se vykreslí. Zavřít a znovu spustit celé VS Code funguje také.</p>
+
+<h3 id="kontrola">Kontrola instalace</h3>
+<p>V seznamu <span class="ui">Extensions</span> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>) napište
+do vyhledávacího pole <code>MB Maniax</code>. Mezi nainstalovanými rozšířeními (<span class="ui">Installed</span>)
+by mělo být <b>MB Maniax Next Debugger</b> s číslem verze. Kliknutím na něj se otevře jeho stránka
+s popisem.</p>
+
+<h3 id="jazyk">Jazyk rozšíření</h3>
+<p>Rozšíření umí anglicky, česky, slovensky, španělsky, německy, francouzsky, italsky, polsky,
+portugalsky (Brazílie), rusky, ukrajinsky, japonsky a čínsky (zjednodušeně). Jazyk určuje nastavení
+<code>mbxNext.language</code>:</p>
+<ul>
+  <li><code>auto</code> (výchozí, v nabídce <span class="ui">Automaticky</span>) – jazyk VS Code, pokud
+  není angličtina; jinak jazyk Windows; jinak angličtina. Na českých Windows s anglickým VS Code tedy
+  rozšíření mluví česky.</li>
+  <li>nebo pevně zvolený jazyk: <code>en</code>, <code>cs</code>, <code>sk</code>, <code>es</code>,
+  <code>de</code>, <code>fr</code>, <code>it</code>, <code>pl</code>, <code>pt-br</code>, <code>ru</code>,
+  <code>uk</code>, <code>ja</code>, <code>zh-cn</code>.</li>
+</ul>
+<p>Postup změny:</p>
+<ol class="steps">
+  <li>Otevřete nastavení: <kbd>Ctrl</kbd>+<kbd>,</kbd> (čárka), nebo menu
+  <span class="ui">File › Preferences › Settings</span>.</li>
+  <li>Do vyhledávacího pole nahoře napište <code>mbxNext</code>.</li>
+  <li>U položky <span class="ui">Mbx Next: Language</span> vyberte jazyk z rozbalovací nabídky.</li>
+</ol>
+<figure class="shot" id="fig-settings">
+  <img src="img/cs/settings-language.png" alt="">
+  <figcaption>Nastavení VS Code vyfiltrované na <code>mbxNext</code>: jazyk rozšíření a cesta
+  k ladicímu serveru.</figcaption>
+</figure>
+<p>Změna platí pro příští ladicí sezení; panely, které jsou právě otevřené (obrazovka emulátoru,
+panel Next), se hned přestaví v novém jazyce. Názvy příkazů a popisy v nastavení a v launch.json se
+řídí jazykem VS Code, ne tímto nastavením.</p>
+
+<!-- ================================================================== 3 -->
+<h2 id="orientace">Orientace ve VS Code</h2>
+
+<p>Tato kapitola je pro ty, kdo s VS Code začínají. Popisuje části okna, se kterými se při ladění
+setkáte, a kde je najdete. Na obrázku <a class="figref" href="#fig-overview"></a> je okno při
+ladění ukázkového programu.</p>
+
+<figure class="shot" id="fig-overview">
+  <img src="img/cs/debug-overview.png" alt="">
+  <figcaption>Okno VS Code při ladění: program stojí na breakpointu (žlutý řádek), vlevo jsou sekce
+  ladění, nahoře lišta ladění, vpravo obrazovka emulátoru.</figcaption>
+</figure>
+
+<ol class="legend">
+  <li><b>Activity Bar</b> – úzký svislý pruh ikon úplně vlevo. Přepíná, co je v postranním panelu:
+  soubory (<span class="ui">Explorer</span>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>), hledání,
+  rozšíření a hlavně <span class="ui">Run and Debug</span> (ikona trojúhelníku „play“ s broukem,
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>).</li>
+  <li><b>Postranní panel Run and Debug</b> – vlevo vedle Activity Bar. Nahoře zelené tlačítko
+  ▶ se jménem ladicí konfigurace (spustí ladění), pod ním sekce <span class="ui">Variables</span>,
+  <span class="ui">Watch</span>, <span class="ui">Call Stack</span> a <span class="ui">Breakpoints</span>.
+  Sekce se rozbalují a sbalují kliknutím na jejich záhlaví.</li>
+  <li><b>Lišta ladění</b> (Debug Toolbar) – plovoucí řada tlačítek nahoře uprostřed okna; objeví se,
+  jen když ladění běží.</li>
+  <li><b>Editor</b> – uprostřed. Vlevo od čísel řádků je úzký okraj (gutter), kam se klikem dávají
+  breakpointy. Řádek, na kterém program stojí, je zvýrazněný žlutě se žlutou šipkou v okraji.</li>
+  <li><b>Panel ZX Spectrum Next</b> – obrazovka emulátoru; při startu ladění se otevře vpravo vedle
+  editoru (<a class="secref" href="#obrazovka"></a>).</li>
+  <li><b>Spodní panel</b> (Panel) – záložky <span class="ui">Problems</span>, <span class="ui">Output</span>,
+  <span class="ui">Debug Console</span>, <span class="ui">Terminal</span>. Zobrazí a skryje se
+  zkratkou <kbd>Ctrl</kbd>+<kbd>J</kbd>.</li>
+  <li><b>Stavový řádek</b> (Status Bar) – úplně dole. Během ladění změní barvu (obvykle na oranžovou).
+  Vpravo dole je mimo jiné jazyk otevřeného souboru (například <span class="ui">Plain Text</span>) – na
+  ten se ještě odvoláme v kapitole <a class="secref" href="#problemy"></a>.</li>
+</ol>
+
+<h3 id="run-debug">Run and Debug</h3>
+<p>Ladění spustíte klávesou <kbd>F5</kbd>, nebo zeleným tlačítkem ▶ nahoře v postranním panelu
+<span class="ui">Run and Debug</span> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>). Vedle tlačítka je
+rozbalovací seznam ladicích konfigurací ze souboru <code>.vscode/launch.json</code> – pokud jich máte
+víc, tady vyberete, kterou spustit. Když složka žádný launch.json nemá, je v panelu odkaz
+<span class="ui">create a launch.json file</span> (<a class="secref" href="#prvni-launch"></a>).</p>
+
+<h3 id="lista">Lišta ladění</h3>
+<p>Když ladění běží, objeví se nahoře uprostřed okna plovoucí lišta. Dá se uchopit za levý okraj
+a přesunout. Tlačítka zleva:</p>
+<table class="compact">
+  <thead><tr><th>Tlačítko</th><th>Klávesa</th><th>Co dělá</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ui">Continue</span> / <span class="ui">Pause</span></td><td><kbd>F5</kbd> / <kbd>F6</kbd></td><td>Rozběhne zastavený program / zastaví běžící.</td></tr>
+    <tr><td><span class="ui">Step Over</span></td><td><kbd>F10</kbd></td><td>Provede jednu instrukci; <code>CALL</code>, <code>RST</code> a <code>DJNZ</code> přeskočí (podprogram nebo smyčka proběhne celá).</td></tr>
+    <tr><td><span class="ui">Step Into</span></td><td><kbd>F11</kbd></td><td>Provede přesně jednu instrukci (do podprogramu vstoupí).</td></tr>
+    <tr><td><span class="ui">Step Out</span></td><td><kbd>Shift</kbd>+<kbd>F11</kbd></td><td>Běží, dokud se aktuální podprogram nevrátí.</td></tr>
+    <tr><td><span class="ui">Step Back</span>, <span class="ui">Reverse</span></td><td>–</td><td>Krok zpět (<a class="secref" href="#rewind"></a>); zpětný běh zatím není.</td></tr>
+    <tr><td><span class="ui">Restart</span></td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Nahraje program znovu a spustí ho od začátku.</td></tr>
+    <tr><td><span class="ui">Stop</span></td><td><kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Ukončí ladění a emulátor.</td></tr>
+  </tbody>
+</table>
+<p>Za nimi jsou tlačítka tohoto rozšíření (ikony; název ukáže bublina po najetí myší):
+<span class="cmd">Next Panel (Sprites, Palettes, …)</span> – otevře panel Next,
+<span class="cmd">Save State…</span> a <span class="cmd">Restore State…</span> – uložené stavy,
+<span class="cmd">Start Profiler</span> / <span class="cmd">Stop Profiler</span> – profiler.
+Pokud se všechna tlačítka na lištu nevejdou, část z nich VS Code schová pod šipku
+nebo tři tečky na konci lišty.</p>
+
+<h3 id="variables">Variables – registry a stav stroje</h3>
+<p>Sekce <span class="ui">Variables</span> v postranním panelu Run and Debug ukazuje stav stroje vždy,
+když program stojí. Má čtyři skupiny:</p>
+<ul>
+  <li><b>Registry</b> – <code>AF BC DE HL IX IY SP PC</code> šestnáctkově i desítkově
+  (<code>$8000 (32768)</code>), za nimi návěští, na které hodnota ukazuje (<code>start</code>,
+  <code>main_loop+3</code>); dále <code>I</code>, <code>R</code>, režim přerušení <code>IM</code>
+  a <code>IFF1</code>.</li>
+  <li><b>Příznaky</b> – <code>S Z H P/V N C</code> jako 0 nebo 1.</li>
+  <li><b>Stínové registry</b> – <code>AF' BC' DE' HL'</code> (ve výchozím stavu sbalené).</li>
+  <li><b>Stroj (MMU, čas)</b> – <b>Snímek</b> (číslo snímku od startu), <b>T-stavy celkem</b>
+  a osm slotů MMU: <code>MMU0 ($0000)</code> … <code>MMU7 ($E000)</code> s číslem 8K stránky, která je
+  ve slotu namapovaná (<code>stránka 10 ($0A)</code>).</li>
+</ul>
+<figure class="shot half" id="fig-variables">
+  <img src="img/cs/variables-crop.png" alt="">
+  <figcaption>Sekce Variables: registry s návěštími, příznaky a skupina Stroj (MMU, čas).</figcaption>
+</figure>
+<p>Hodnoty registrů a příznaků se dají měnit (<a class="secref" href="#registry-zmena"></a>).</p>
+
+<h3 id="watch">Watch</h3>
+<p>Sekce <span class="ui">Watch</span> drží výrazy, které chcete sledovat – například
+<code>mem[counter]</code> nebo <code>HL</code>. Přidáte je tlačítkem <b>+</b> v záhlaví sekce
+(objeví se po najetí myší na záhlaví), nebo v editoru označte text, klikněte pravým tlačítkem a
+vyberte <span class="ui">Add to Watch</span>. Hodnoty se přepočítají při každém zastavení.
+Podrobnosti v <a class="secref" href="#watch-hover"></a>.</p>
+
+<h3 id="callstack">Call Stack</h3>
+<p>Sekce <span class="ui">Call Stack</span> ukazuje, kde program stojí a kudy se tam dostal:
+nahoře aktuální místo (jméno nejbližšího návěští), pod ním místa, odkud byly volány podprogramy.
+Kliknutím na řádek se editor přesune na příslušné místo ve zdrojáku. Místa mimo váš zdroják (ROM,
+kód bez ladicích informací) jsou šedá a mají u sebe adresu. V záhlaví sekce je i <b>důvod
+zastavení</b> – například <span class="ui">Paused on breakpoint</span>, <span class="ui">Paused on
+step</span>, <span class="ui">Paused on BREAK</span> nebo název události.</p>
+
+<h3 id="breakpoints-sekce">Breakpoints</h3>
+<p>Sekce <span class="ui">Breakpoints</span> vypisuje všechny breakpointy a logpointy; zaškrtávátkem
+je dočasně vypnete, dvojklikem přejdete na řádek. Nahoře v seznamu jsou zaškrtávátka
+<b>událostí stroje</b> tohoto rozšíření (<span class="ui">Přerušení (IM 1 / IM 2)</span>,
+<span class="ui">NMI</span>, <span class="ui">Zápis do NEXTREG</span> …), viz
+<a class="secref" href="#udalosti"></a>. V záhlaví sekce jsou tlačítka pro vypnutí a smazání všech
+breakpointů.</p>
+
+<h3 id="debug-console">Debug Console</h3>
+<p><span class="ui">Debug Console</span> je záložka ve spodním panelu. Otevře se zkratkou
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd>, menu <span class="ui">View › Debug Console</span>,
+nebo kliknutím na záložku <span class="ui">Debug Console</span> ve spodním panelu
+(<kbd>Ctrl</kbd>+<kbd>J</kbd> ho zobrazí). Sem přichází výpis logpointů, hlášení rozšíření
+a výpisy emulátoru. Úplně dole je vstupní řádek se znakem <code>&gt;</code>: napište výraz
+(například <code>HL</code>) a stiskněte <kbd>Enter</kbd> – vypíše se jeho hodnota. Příkazem
+<code>m adresa</code> vypíšete paměť (<a class="secref" href="#konzole"></a>). Šipkami
+<kbd>↑</kbd> <kbd>↓</kbd> listujete v dříve zadaných příkazech.</p>
+
+<h3 id="paleta">Command Palette</h3>
+<p>Paleta příkazů (<span class="ui">Command Palette</span>) je místo, odkud se dá spustit kterýkoli
+příkaz VS Code i rozšíření. Otevřete ji zkratkou <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> nebo
+<kbd>F1</kbd>, případně menu <span class="ui">View › Command Palette…</span>. Nahoře uprostřed
+okna se objeví vstupní pole; pište část názvu příkazu (například <code>mb maniax</code>) a šipkami
+vyberte. Příkazy tohoto rozšíření začínají <span class="cmd">MB Maniax:</span> (a obrazovka emulátoru
+<span class="cmd">MB Maniax Next:</span>). Některé z nich se v nabídce objeví, jen když ladění
+běží.</p>
+
+<h3 id="terminal">Terminál a Problems</h3>
+<p><span class="ui">Terminal</span> (<kbd>Ctrl</kbd>+<kbd>`</kbd>, klávesa pod <kbd>Esc</kbd>) je
+příkazový řádek ve spodním panelu – sem píše sjasmplus při překladu. Chyby překladu se navíc
+objeví v záložce <span class="ui">Problems</span> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>);
+kliknutím na chybu přejdete na řádek ve zdrojáku.</p>
+
+<!-- ================================================================== 4 -->
+<h2 id="prvni">První program</h2>
+
+<p>V této kapitole přeložíte a spustíte ukázkový program <b>hello</b> ze složky
+<code>examples/hello</code>. Program mění barvu okraje a počítá v paměti, kolikrát to udělal.
+Celý postup je stejný jako u vašeho vlastního projektu.</p>
+
+<pre><code><span class="c">; examples/hello/hello.asm (zkráceno)</span>
+        DEVICE ZXSPECTRUMNEXT
+        SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
+        ORG $8000
+start:  ei
+        ld sp, stack_top
+        nextreg $07, 3          <span class="c">; 28 MHz</span>
+        ld a, 0
+        ld (counter), a
+main_loop:
+        call next_colour
+        ld b, 25
+.wait:  halt
+        djnz .wait
+        jr main_loop
+next_colour:
+        ld a, (counter)
+        inc a
+        and 7
+        ld (counter), a
+        out ($fe), a
+        ret
+counter:    db 0
+            ds 64
+stack_top:
+        SAVENEX OPEN "hello.nex", start, stack_top
+        SAVENEX CORE 3, 0, 0
+        SAVENEX AUTO
+        SAVENEX CLOSE</code></pre>
+
+<h3 id="prvni-sjasmplus">Překlad se ladicími informacemi</h3>
+<p>Aby ladicí nástroj věděl, který řádek zdrojáku odpovídá které adrese, potřebuje od sjasmplus
+soubor <b>SLD</b> (Source Level Debugging). sjasmplus ho vytvoří s volbou <code>--sld</code>:</p>
+<pre><code>sjasmplus --sld=hello.sld --fullpath hello.asm</code></pre>
+<ul>
+  <li><code>--sld=hello.sld</code> – zapíše ladicí informace (řádky, adresy, 8K stránky, návěští,
+  klíčová slova z komentářů).</li>
+  <li><code>--fullpath</code> – zapíše do SLD celé cesty ke zdrojákům, aby rozšíření spolehlivě
+  spárovalo řádky se soubory otevřenými v editoru (i když se zdroják skládá z víc souborů přes
+  <code>INCLUDE</code>).</li>
+</ul>
+<p>Výsledný program (<code>hello.nex</code>) vytvoří direktiva <code>SAVENEX</code> ve zdrojáku.</p>
+<div class="tip"><p>Zkontrolujte, že sjasmplus jde spustit: otevřete terminál
+(<kbd>Ctrl</kbd>+<kbd>`</kbd>) a napište <code>sjasmplus --version</code>. Pokud Windows příkaz
+nezná, přidejte složku se sjasmplus do proměnné <code>PATH</code> (a VS Code pak zavřete a znovu
+spusťte), nebo v tasks.json napište celou cestu k <code>sjasmplus.exe</code>.</p></div>
+
+<h3 id="prvni-slozka">Otevření složky</h3>
+<p>VS Code pracuje se <b>složkami</b> (workspace), ne s jednotlivými soubory – nastavení ladění
+a úloh se hledá v podsložce <code>.vscode</code> otevřené složky.</p>
+<ol class="steps">
+  <li>Menu <span class="ui">File › Open Folder…</span> (<kbd>Ctrl</kbd>+<kbd>K</kbd>
+  <kbd>Ctrl</kbd>+<kbd>O</kbd>) a vyberte složku <code>examples\hello</code>.</li>
+  <li>Pokud se VS Code zeptá, zda autorům složky důvěřujete (<span class="ui">Do you trust the
+  authors…</span>), potvrďte <span class="ui">Yes, I trust the authors</span> – jinak by nesměl
+  spouštět úlohy (překlad).</li>
+  <li>Vlevo v <span class="ui">Explorer</span> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>) klikněte
+  na <code>hello.asm</code>; otevře se v editoru.</li>
+</ol>
+
+<h3 id="prvni-launch">Soubor launch.json – jak ladit</h3>
+<p>Soubor <code>.vscode/launch.json</code> říká, co se má při <kbd>F5</kbd> spustit. Ukázka ho už má:</p>
+<pre><code>{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "mbx-next",
+            "request": "launch",
+            "name": "Ladit hello.nex",
+            "program": "${workspaceFolder}/hello.nex",
+            "sld": "${workspaceFolder}/hello.sld",
+            "stopOnEntry": true,
+            "preLaunchTask": "sjasmplus"
+        }
+    ]
+}</code></pre>
+<ul>
+  <li><code>"type": "mbx-next"</code> – ladí se tímto rozšířením.</li>
+  <li><code>"name"</code> – jméno, které uvidíte v seznamu vedle zeleného tlačítka ▶.</li>
+  <li><code>"program"</code> a <code>"sld"</code> – přeložený program a jeho ladicí informace;
+  <code>${workspaceFolder}</code> je otevřená složka.</li>
+  <li><code>"stopOnEntry": true</code> – zastavit hned na první instrukci programu.</li>
+  <li><code>"preLaunchTask": "sjasmplus"</code> – před spuštěním přeložit program úlohou
+  <code>sjasmplus</code> z tasks.json (další oddíl).</li>
+</ul>
+<figure class="shot" id="fig-launch">
+  <img src="img/cs/launch-json.png" alt="">
+  <figcaption>Soubor .vscode/launch.json s konfigurací typu mbx-next v editoru.</figcaption>
+</figure>
+<p>Ve vlastním projektu launch.json vytvoříte takto: v panelu <span class="ui">Run and Debug</span>
+klikněte na <span class="ui">create a launch.json file</span> a vyberte <span class="ui">MB Maniax Next
+Debugger</span>. Vznikne konfigurace „Ladit na ZX Spectrum Next“ s <code>program.nex</code>
+a <code>program.sld</code> – přepište jména na svá. Do existujícího launch.json přidáte další
+konfiguraci tlačítkem <span class="ui">Add Configuration…</span> vpravo dole v editoru launch.json
+a volbou <span class="ui">MB Maniax Next Debugger: Next program (sjasmplus)</span>
+(v českém VS Code <span class="ui">program pro Next (sjasmplus)</span>). Všechny atributy popisuje
+<a class="secref" href="#launch"></a>.</p>
+
+<h3 id="prvni-tasks">Soubor tasks.json – jak překládat</h3>
+<p>Úloha (task) je příkaz, který VS Code spustí za vás – tady překlad sjasmplus. Soubor
+<code>.vscode/tasks.json</code> z ukázky:</p>
+<pre><code>{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "sjasmplus",
+            "type": "shell",
+            "command": "sjasmplus",
+            "args": ["--sld=hello.sld", "--fullpath", "--lst=hello.lst", "hello.asm"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": {
+                "owner": "sjasmplus",
+                "fileLocation": ["autoDetect", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.*)\\((\\d+)\\):\\s+(error|warning)[^:]*:\\s+(.*)$",
+                    "file": 1, "line": 2, "severity": 3, "message": 4
+                }
+            }
+        }
+    ]
+}</code></pre>
+<ul>
+  <li><code>"label"</code> – jméno úlohy; na něj odkazuje <code>preLaunchTask</code> v launch.json.</li>
+  <li><code>"args"</code> – parametry sjasmplus (<code>--lst</code> navíc vytvoří výpis).</li>
+  <li><code>"group": … "isDefault": true</code> – výchozí úloha překladu: spustíte ji kdykoli
+  zkratkou <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>, i bez ladění.</li>
+  <li><code>"problemMatcher"</code> – chyby a varování sjasmplus se ukážou v záložce
+  <span class="ui">Problems</span> a jako podtržení ve zdrojáku.</li>
+</ul>
+
+<h3 id="prvni-f5">Spuštění: F5</h3>
+<ol class="steps">
+  <li>Stiskněte <kbd>F5</kbd>. Ve spodním panelu se otevře <span class="ui">Terminal</span> a proběhne
+  překlad. (Pokud překlad selže, VS Code nabídne <span class="ui">Debug Anyway</span> nebo
+  <span class="ui">Show Errors</span> – podívejte se do <span class="ui">Problems</span>.)</li>
+  <li>Spustí se emulátor a vpravo vedle editoru se otevře panel <b>ZX Spectrum Next</b>
+  s obrazovkou.</li>
+  <li>Protože ukázka má <code>"stopOnEntry": true</code>, program hned stojí na první instrukci
+  (<code>ei</code> za návěštím <code>start</code>) – řádek je žlutý a vlevo se plní sekce Variables
+  a Call Stack.</li>
+  <li>Klikněte do okraje vlevo od čísla řádku <code>call next_colour</code> – objeví se červená
+  tečka, breakpoint.</li>
+  <li>Stiskněte <kbd>F5</kbd> (Continue). Program se rozběhne a zastaví na breakpointu.</li>
+  <li>Stiskněte <kbd>F11</kbd> (Step Into) – jste uvnitř <code>next_colour</code>. Krokujte dál
+  <kbd>F11</kbd> a sledujte v sekci Variables, jak se mění <code>A</code>; po instrukci
+  <code>out ($fe), a</code> se změní barva okraje na obrazovce emulátoru.</li>
+  <li>Najeďte myší na slovo <code>counter</code> ve zdrojáku – bublina ukáže jeho adresu a obsah
+  paměti. Do Debug Console (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd>) napište
+  <code>m counter</code> a stiskněte <kbd>Enter</kbd>.</li>
+  <li>Ladění ukončíte <kbd>Shift</kbd>+<kbd>F5</kbd> nebo tlačítkem <span class="ui">Stop</span>
+  na liště ladění.</li>
+</ol>
+
+<h3 id="bez-launch">Bez launch.json</h3>
+<p>Pro rychlé vyzkoušení launch.json není nutný: otevřete v editoru soubor <code>.asm</code> (také
+<code>.a80</code>, <code>.z80</code> nebo <code>.s</code>) a stiskněte <kbd>F5</kbd>. Rozšíření spustí
+<code>.nex</code> a <code>.sld</code> stejného jména ze stejné složky (k <code>hra.asm</code>
+tedy <code>hra.nex</code> a <code>hra.sld</code>). Program ale v tomto režimu <b>nepřekládá</b> –
+přeložte ho předem (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> nebo v terminálu). Pokud se VS Code
+zeptá, jaký ladicí nástroj použít (<span class="ui">Select debugger</span>), vyberte
+<span class="ui">MB Maniax Next Debugger</span>.</p>
+
+<div class="note"><p><b>Data programu a esxDOS.</b> Bez obrazu SD karty program přes esxDOS vidí
+složku, ve které leží (načítání dat, uložené pozice). Jinou složku nebo obraz SD karty nastavíte
+v launch.json atributy <code>esxdosRoot</code> a <code>sdImage</code>.</p></div>
+
+<!-- ================================================================== 5 -->
+<h2 id="ladeni">Ladění</h2>
+
+<h3 id="bp">Breakpointy</h3>
+<p>Breakpoint zastaví program těsně <b>před</b> provedením instrukce na daném řádku.</p>
+<ul>
+  <li><b>Myší:</b> najeďte v editoru do úzkého okraje vlevo od čísel řádků – objeví se bledě červená
+  tečka. Kliknutím ji „přišpendlíte“, dalším kliknutím breakpoint zrušíte.</li>
+  <li><b>Klávesou:</b> postavte kurzor na řádek a stiskněte <kbd>F9</kbd> (zapnout / vypnout).</li>
+  <li><b>Kontextovou nabídkou:</b> pravé tlačítko v okraji vlevo nabízí <span class="ui">Add
+  Breakpoint</span>, <span class="ui">Add Conditional Breakpoint…</span> a <span class="ui">Add
+  Logpoint…</span>; pravé tlačítko na existující tečce nabízí <span class="ui">Edit Breakpoint…</span>,
+  <span class="ui">Disable Breakpoint</span> a <span class="ui">Remove Breakpoint</span>.</li>
+</ul>
+<p>Breakpointy můžete dávat i před spuštěním ladění; při startu se pošlou emulátoru. Pokud na řádku
+není instrukce (komentář, prázdný řádek, samotné návěští), posune se breakpoint na nejbližší další
+řádek s instrukcí (nejvýš o 20 řádků). Když instrukce ani tam není, zůstane tečka <b>šedá
+a prázdná</b> (neověřený breakpoint) a bublina u ní řekne proč – například <i>Na řádku ani pod ním
+není instrukce (podle SLD)</i> nebo <i>Chybí SLD ze sjasmplus (atribut "sld")</i>.</p>
+<div class="note"><p><b>Stránkovaná paměť.</b> SLD ze sjasmplus zná u každého řádku i 8K stránku
+(pokud zdroják používá <code>DEVICE ZXSPECTRUMNEXT</code>). Breakpoint pak zastaví jen tehdy, když
+je ta stránka v příslušném slotu MMU opravdu namapovaná – kód jiné stránky na stejné adrese ho
+nespustí. Když je tentýž řádek přeložený do víc stránek, platí breakpoint pro všechny.</p></div>
+<div class="tip"><p>Když v okraji tečka vůbec nejde dát (po najetí myší se neobjeví), VS Code
+nepovažuje soubor za jazyk, pro který rozšíření breakpointy hlásí. Řešení najdete v kapitole
+<a class="secref" href="#problemy"></a>.</p></div>
+
+<h3 id="krokovani">Krokování</h3>
+<p>Když program stojí, ovládáte ho tlačítky na liště ladění nebo klávesami:</p>
+<table class="compact">
+  <thead><tr><th>Klávesa</th><th>Akce</th><th>Popis</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>F5</kbd></td><td>Continue</td><td>Běh až do dalšího breakpointu, události nebo pauzy.</td></tr>
+    <tr><td><kbd>F6</kbd></td><td>Pause</td><td>Zastaví běžící program na nejbližší hranici instrukce.</td></tr>
+    <tr><td><kbd>F11</kbd></td><td>Step Into</td><td>Jedna instrukce. U <code>HALT</code> počká, než ho přerušení ukončí.</td></tr>
+    <tr><td><kbd>F10</kbd></td><td>Step Over</td><td>Jako Step Into, ale <code>CALL</code>, <code>RST</code> a <code>DJNZ</code> proběhnou celé a stroj zastaví na následující instrukci.</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>F11</kbd></td><td>Step Out</td><td>Běh, dokud se program nevrátí z aktuálního podprogramu (o úroveň výš v zásobníku).</td></tr>
+  </tbody>
+</table>
+<p>Pozastavit a rozběhnout program jde také tlačítkem ⏸ / ▶ v panelu s obrazovkou emulátoru.</p>
+
+<h3 id="run-to-cursor">Run to Cursor a Jump to Cursor</h3>
+<p>Když stroj stojí, klikněte pravým tlačítkem na řádek zdrojáku:</p>
+<ul>
+  <li><span class="ui">Run to Cursor</span> – program poběží, dokud na tento řádek nedojde (jako
+  jednorázový breakpoint).</li>
+  <li><span class="ui">Jump to Cursor</span> – přesune <code>PC</code> na tento řádek <b>bez provedení
+  kódu mezi</b>. Hodí se k přeskočení kusu kódu nebo k opakování instrukce. Pokud je řádek přeložený
+  na víc adres (víc stránek), VS Code nabídne výběr – položky mají tvar <code>$C000 (stránka 12)</code>
+  a stránky, které právě nejsou namapované, mají poznámku <i>není namapovaná</i>.</li>
+</ul>
+
+<h3 id="podminky">Podmíněné breakpointy</h3>
+<p>Podmíněný breakpoint zastaví, jen když platí podmínka. Podmínku vyhodnocuje přímo emulátor při
+každém průchodu, takže program <b>nezpomaluje</b> – nemusíte se bát dát ji do smyčky, která běží
+tisíckrát za snímek.</p>
+<ol class="steps">
+  <li>Pravým tlačítkem klikněte do okraje vlevo od řádku a vyberte <span class="ui">Add Conditional
+  Breakpoint…</span> (u existujícího breakpointu <span class="ui">Edit Breakpoint…</span>).</li>
+  <li>Pod řádkem se otevře malé pole. Vlevo v něm je rozbalovací nabídka: nechte
+  <span class="ui">Expression</span>.</li>
+  <li>Napište podmínku a stiskněte <kbd>Enter</kbd>. Tečka breakpointu dostane symbol
+  <code>=</code>.</li>
+</ol>
+<p>Příklady podmínek:</p>
+<pre><code>A == 5
+HL &gt; $4000 and not ZF
+mem[counter] == 3
+mem16[score] &gt;= 1000
+nextreg[$50] == 10
+FRAME &gt; 100
+B == 0 or (IX &gt;= enemies and IX &lt; enemies_end)</code></pre>
+<p>Návěští ze zdrojáku (<code>counter</code>, <code>score</code>) se píšou přímo. Úplný jazyk výrazů
+popisuje kapitola <a class="secref" href="#vyrazy"></a>. Chybu v podmínce (překlep, neznámé jméno)
+pozná emulátor hned: breakpoint zůstane šedý a bublina u něj ukáže chybu. Chyba za běhu (např. dělení
+nulou) se vypíše do Debug Console.</p>
+
+<h3 id="pocty">Počty průchodů</h3>
+<p>V poli pro úpravu breakpointu vyberte v rozbalovací nabídce <span class="ui">Hit Count</span>
+a zadejte, kolikátý průchod má zastavit:</p>
+<table class="compact">
+  <thead><tr><th>Zápis</th><th>Zastaví</th></tr></thead>
+  <tbody>
+    <tr><td><code>3</code> nebo <code>== 3</code></td><td>právě při 3. průchodu</td></tr>
+    <tr><td><code>&gt;= 10</code></td><td>při 10. průchodu a každém dalším</td></tr>
+    <tr><td><code>&gt; 10</code>, <code>&lt; 5</code>, <code>&lt;= 5</code></td><td>obdobně</td></tr>
+    <tr><td><code>% 4</code></td><td>při každém 4. průchodu (4., 8., 12. …)</td></tr>
+  </tbody>
+</table>
+<p>Podmínku a počet průchodů můžete kombinovat – průchody se pak počítají jen tehdy, když podmínka
+platí. Počítadlo začíná od nuly při každé změně breakpointů.</p>
+
+<h3 id="logpointy">Logpointy</h3>
+<p>Logpoint program <b>nezastaví</b>, jen vypíše text do Debug Console – je to ladicí výpis, který
+nemusíte psát do programu. Pravým tlačítkem v okraji vyberte <span class="ui">Add Logpoint…</span>
+(nebo v poli úpravy breakpointu <span class="ui">Log Message</span>) a napište zprávu. Výrazy ve
+složených závorkách se nahradí hodnotou:</p>
+<pre><code>barva {A}, skóre {mem16[score]}
+HL={HL:hex} DE={DE:hex} příznaky {F:flags}</code></pre>
+<p>Za dvojtečkou může být formát: <code>hex</code> (šestnáctkově), <code>unsigned</code> (výchozí),
+<code>signed</code> (se znaménkem), <code>char</code> (znak ASCII), <code>bits</code> (dvojkově),
+<code>flags</code> (příznaky ve tvaru <code>SZHPNC</code>, nenastavené jako <code>-</code>),
+<code>labels</code> (návěští na adrese). Logpoint má v okraji tvar kosočtverce. Text se vypisuje
+při každém průchodu, s počtem průchodů jen při splnění počtu.</p>
+
+<h3 id="udalosti">Breakpointy na události stroje</h3>
+<p>Některé chyby nesouvisí s konkrétním řádkem: „kdo mi přepisuje registr $50?“, „kdy přišlo
+přerušení?“. Pro ně má rozšíření v sekci <span class="ui">Breakpoints</span> zaškrtávátka událostí.
+Zaškrtnutím se událost zapne; po najetí myší na položku se vpravo objeví tužka
+(<span class="ui">Edit Condition</span>), kterou zadáte podmínku – bez podmínky zastaví každá
+událost daného druhu.</p>
+<figure class="shot half" id="fig-breakpoints">
+  <img src="img/cs/breakpoints-view.png" alt="">
+  <figcaption>Sekce Breakpoints: zaškrtávátka událostí stroje, breakpoint s podmínkou
+  <code>A == 3</code> a logpoint.</figcaption>
+</figure>
+<table>
+  <thead><tr><th>Událost</th><th>Kdy zastaví</th><th>Co lze použít v podmínce navíc</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ui">Přerušení (IM 1 / IM 2)</span></td><td>na začátku obsluhy maskovatelného přerušení</td><td>– (např. <code>IM == 2</code>, <code>FRAME &gt; 50</code>)</td></tr>
+    <tr><td><span class="ui">NMI</span></td><td>nemaskovatelné přerušení (Multiface, DivMMC)</td><td>–</td></tr>
+    <tr><td><span class="ui">Zápis do NEXTREG</span></td><td>při zápisu do registru Nextu (instrukcí <code>NEXTREG</code>, přes porty $243B/$253B nebo Copperem)</td><td><code>REG</code> číslo registru, <code>VALUE</code> zapisovaná hodnota, <code>PREV</code> předchozí hodnota, <code>SOURCE</code> kdo zapisuje (<code>CPU</code>, <code>COPPER</code>, <code>DMA</code>)</td></tr>
+    <tr><td><span class="ui">Vstup / výstup na port</span></td><td>při instrukci <code>IN</code> nebo <code>OUT</code></td><td><code>PORT</code> číslo portu, <code>VALUE</code> hodnota, <code>SOURCE</code></td></tr>
+    <tr><td><span class="ui">Copper (MOVE)</span></td><td>když Copper provede instrukci MOVE</td><td><code>CPC</code> adresa v programu Copperu (0–1023), <code>CVC</code> řádek, <code>HC_ULA</code> vodorovná pozice</td></tr>
+    <tr><td><span class="ui">DMA (začátek přenosu)</span></td><td>na začátku přenosu DMA</td><td><code>SRC</code> zdrojová adresa, <code>DST</code> cílová adresa</td></tr>
+    <tr><td><span class="ui">Reset stroje</span></td><td>při resetu</td><td>(bez podmínky)</td></tr>
+  </tbody>
+</table>
+<p>Ve všech podmínkách událostí můžete používat i registry, paměť a ostatní jména z kapitoly
+<a class="secref" href="#vyrazy"></a>; <code>PC</code> je tu adresa instrukce, která událost
+způsobila. Stroj se zastaví hned za touto instrukcí. Příklady: <code>REG == $50 or REG == $51</code>, <code>(PORT &amp; $FF) == $FE</code>,
+<code>REG == $15 and SOURCE == CPU</code>. Po zastavení na události je v záhlaví Call Stack její
+název.</p>
+<div class="note"><p><code>PORT</code> je celá 16bitová adresa portu, jak ji vidí sběrnice – u
+<code>out ($fe),a</code> je horní bajt hodnota <code>A</code> (port <code>$01FE</code>, <code>$02FE</code> …).
+Podmínka <code>PORT == $FE</code> by tedy zastavila jen při <code>A = 0</code>. Pro porty, u kterých
+rozhoduje jen dolní bajt (ULA <code>$FE</code>, Kempston <code>$1F</code> …), pište
+<code>(PORT &amp; $FF) == $FE</code>; plné číslo porovnávejte u 16bitových portů
+(<code>PORT == $243B</code>).</p></div>
+
+<h3 id="watchpointy">Watchpointy – zastavení při přístupu do paměti</h3>
+<p>Watchpoint (ve VS Code „data breakpoint“) zastaví program, když instrukce čte nebo zapisuje
+zvolenou paměť. Stroj se zastaví hned po instrukci, která přístup provedla.</p>
+<ul>
+  <li><b>Na registr:</b> v sekci <span class="ui">Variables</span> klikněte pravým tlačítkem na
+  <code>BC</code>, <code>DE</code>, <code>HL</code>, <code>IX</code>, <code>IY</code> nebo
+  <code>SP</code> a vyberte <span class="ui">Break on Value Change</span> (zápis),
+  <span class="ui">Break on Value Read</span> (čtení) nebo <span class="ui">Break on Value Access</span>
+  (obojí). Hlídá se bajt, <b>na který registr právě ukazuje</b> – ne registr samotný.</li>
+  <li><b>Na návěští nebo adresu:</b> přidejte do sekce <span class="ui">Watch</span> výraz, který je
+  jen jménem návěští (<code>counter</code>) nebo číslem (<code>$5B00</code>), a na něm pravým
+  tlačítkem zvolte <span class="ui">Break on Value Change</span>.</li>
+  <li><b>Komentářem ve zdrojáku:</b> <code>; WPMEM</code> (<a class="secref" href="#wpmem"></a>) –
+  hodí se pro oblasti delší než bajt a pro watchpointy, které chcete mít pořád.</li>
+</ul>
+<p>Watchpointy najdete v sekci <span class="ui">Breakpoints</span> a tam je také vypnete nebo smažete.
+V novějších verzích VS Code nabízí sekce Breakpoints ve svém záhlaví i příkaz
+<span class="ui">Add Data Breakpoint at Address</span>, kde zadáte adresu a délku přímo.</p>
+
+<h3 id="watch-hover">Výrazy ve Watch a při najetí myší</h3>
+<p>Do sekce <span class="ui">Watch</span> můžete napsat libovolný výraz z kapitoly
+<a class="secref" href="#vyrazy"></a>: <code>mem[counter]</code>, <code>HL</code>,
+<code>nextreg[$07]</code>, <code>mem16[stack_top - 2]</code>, <code>mmu[3]</code>. Výsledek se ukazuje
+šestnáctkově i desítkově (<code>$03 (3)</code>). Je-li výraz jen jménem návěští, ukáže se jeho
+adresa a k ní obsah paměti na ní: <code>$8023 (32803)  → [$03] [$0003]</code> – v hranatých závorkách
+bajt a 16bitové slovo.</p>
+<figure class="shot half" id="fig-watch">
+  <img src="img/cs/watch-view.png" alt="">
+  <figcaption>Sekce Watch s výrazy <code>mem[counter]</code>, <code>HL</code> a
+  <code>nextreg[$07]</code>.</figcaption>
+</figure>
+<p>Když program stojí, stačí v editoru <b>najet myší</b> na registr nebo návěští – bublina ukáže
+hodnotu a obsah paměti, na kterou ukazuje. Bublina se ukáže jen u slov, která jsou platným výrazem.</p>
+
+<h3 id="konzole">Debug Console a výpis paměti</h3>
+<p>Do vstupního řádku Debug Console (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd>, řádek s
+<code>&gt;</code> úplně dole) napište výraz a stiskněte <kbd>Enter</kbd>; vypíše se jeho hodnota
+stejně jako ve Watch. Navíc tu funguje příkaz pro výpis paměti:</p>
+<pre><code>m adresa
+m adresa, délka</code></pre>
+<p>Adresa i délka jsou výrazy (číslo, návěští, registr…). Bez délky se vypíše 128 bajtů, nejvýš jde
+4096. Každý řádek má adresu, 16 bajtů šestnáctkově, tytéž bajty jako text (netisknutelné jako
+<code>.</code>) a návěští, které na adrese začíná nebo jí předchází:</p>
+<pre><code>&gt; m start, 32
+$8000  FB 31 64 80 ED 91 07 03 3E 00 32 23 80 CD 17 80  .1d.....&gt;.2#....  start
+$8010  06 19 76 10 FD 18 F6 3A 23 80 3C E6 07 32 23 80  ..v....:#.&lt;..2#.  main_loop+3
+&gt; m HL, 16
+&gt; m stack_top - 16, 16</code></pre>
+<figure class="shot" id="fig-console">
+  <img src="img/cs/debug-console.png" alt="">
+  <figcaption>Debug Console: výpis paměti příkazem <code>m start</code> a hodnota výrazu
+  <code>A</code>.</figcaption>
+</figure>
+
+<h3 id="pamet">Prohlížení a úprava paměti</h3>
+<p>U 16bitových registrů v sekci <span class="ui">Variables</span> se po najetí myší objeví vpravo malá
+ikona <span class="ui">View Binary Data</span>. Otevře paměť od adresy v registru v šestnáctkovém
+editoru VS Code (rozšíření <i>Hex Editor</i> od Microsoftu – pokud ho nemáte, VS Code nabídne jeho
+instalaci). V hex editoru lze bajty i přepsat; zápis jde rovnou do paměti emulátoru. Zobrazuje se
+paměť tak, jak ji vidí procesor (64 KB podle aktuálního mapování MMU).</p>
+
+<h3 id="disasm">Disassembler</h3>
+<p>Když program stojí mimo váš zdroják (v ROM, v kódu bez SLD, v datech), nebo když chcete vidět
+skutečné instrukce, otevřete disassembler: pravým tlačítkem v editoru zvolte
+<span class="ui">Open Disassembly View</span>, nebo v paletě příkazů <span class="cmd">Debug: Open
+Disassembly View</span>. Instrukce mají u sebe návěští ze SLD a řádky zdrojáku. I v disassembleru lze
+klikem vlevo od adresy dát breakpoint a krokovat po instrukcích. Bez souboru SLD se ladí jen tady.</p>
+
+<h3 id="registry-zmena">Úprava registrů a příznaků</h3>
+<p>V sekci <span class="ui">Variables</span> dvakrát klikněte na hodnotu registru (nebo pravým
+tlačítkem <span class="ui">Set Value</span>), napište novou hodnotu a stiskněte <kbd>Enter</kbd>.
+Čísla lze psát jako <code>$FF</code>, <code>0xFF</code>, <code>#FF</code>, <code>FFh</code>,
+<code>255</code> nebo dvojkově <code>%1010</code>. Příznaky (<code>S Z H P/V N C</code>) mají hodnotu
+0 nebo 1. Chcete-li přesunout <code>PC</code> na jiný řádek, je pohodlnější Jump to Cursor
+(<a class="secref" href="#run-to-cursor"></a>) – editor se přesune s ním.</p>
+
+<!-- ================================================================== 6 -->
+<h2 id="vyrazy">Jazyk výrazů</h2>
+
+<p>Stejný jazyk výrazů platí všude: v podmínkách breakpointů a watchpointů, v podmínkách událostí,
+v logpointech (ve složených závorkách), v sekci Watch, při najetí myší, v Debug Console
+a v klíčových slovech v komentářích (<a class="secref" href="#klicova"></a>). Výrazy počítá emulátor
+v 32bitových celých číslech se znaménkem. Podmínka platí, když je výsledek nenulový.</p>
+
+<h3 id="vyrazy-cisla">Čísla</h3>
+<table class="compact">
+  <thead><tr><th>Zápis</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>255</code></td><td>desítkově</td></tr>
+    <tr><td><code>$FF</code>, <code>0xFF</code></td><td>šestnáctkově</td></tr>
+    <tr><td><code>0b1010</code></td><td>dvojkově</td></tr>
+    <tr><td><code>true</code>, <code>false</code></td><td>1 a 0</td></tr>
+  </tbody>
+</table>
+<div class="warn"><p>V podmínkách v okně VS Code <b>nefungují</b> zápisy <code>#FF</code>,
+<code>0FFh</code> a <code>%1010</code> (<code>%</code> je zbytek po dělení). Ty jdou jen v komentářích
+WPMEM / LOGPOINT / ASSERTION a při úpravě hodnoty registru.</p></div>
+
+<h3 id="vyrazy-registry">Registry a příznaky</h3>
+<table>
+  <thead><tr><th>Jméno</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>A F B C D E H L I R</code></td><td>8bitové registry</td></tr>
+    <tr><td><code>AF BC DE HL IX IY SP PC</code></td><td>16bitové registry</td></tr>
+    <tr><td><code>AF' BC' DE' HL'</code></td><td>stínové registry (lze psát i <code>AF2 BC2 DE2 HL2</code>)</td></tr>
+    <tr><td><code>IXH IXL IYH IYL</code></td><td>horní a dolní polovina <code>IX</code> a <code>IY</code></td></tr>
+    <tr><td><code>CF ZF SF PF HF NF</code></td><td>příznaky carry, zero, sign, parity/overflow, half-carry, subtract (0/1)</td></tr>
+    <tr><td><code>IFF1 IFF2 IM HALTED</code></td><td>klopné obvody přerušení, režim přerušení, procesor stojí na HALT</td></tr>
+  </tbody>
+</table>
+<p>Jména registrů z prvních čtyř řádků (včetně <code>AF'</code> a <code>IXH</code>) a <code>IM</code>,
+<code>IFF1</code>, <code>IFF2</code> můžete psát i malými písmeny (rozšíření je převede); ostatní jména
+(<code>AF2</code>, příznaky, <code>HALTED</code>, jména z dalších tabulek) pište <b>velkými písmeny</b>,
+jak jsou v tabulce.</p>
+
+<h3 id="vyrazy-pamet">Paměť, registry Nextu a MMU</h3>
+<table>
+  <thead><tr><th>Zápis</th><th>Hodnota</th></tr></thead>
+  <tbody>
+    <tr><td><code>mem[a]</code></td><td>bajt na adrese <code>a</code> (paměť procesoru 0–$FFFF podle aktuálního mapování)</td></tr>
+    <tr><td><code>mem16[a]</code></td><td>16bitové slovo na adrese <code>a</code> (little endian)</td></tr>
+    <tr><td><code>stack[n]</code></td><td>slovo na zásobníku: <code>stack[0]</code> = na <code>SP</code>, <code>stack[1]</code> = na <code>SP+2</code> …</td></tr>
+    <tr><td><code>phys[stránka, posun]</code></td><td>bajt ve fyzické 8K stránce (posun 0–$1FFF), bez ohledu na mapování</td></tr>
+    <tr><td><code>nextreg[r]</code></td><td>hodnota registru Nextu <code>r</code> (0–255)</td></tr>
+    <tr><td><code>mmu[s]</code></td><td>8K stránka nastavená ve slotu <code>s</code> (0–7) registry MMU</td></tr>
+    <tr><td><code>page[s]</code></td><td>8K stránka, kterou slot <code>s</code> skutečně používá</td></tr>
+  </tbody>
+</table>
+<p>Čtení ve výrazech nemá vedlejší účinky: nespustí watchpoint ani nezmění stav registrů,
+které se čtením mění.</p>
+
+<h3 id="vyrazy-cas">Čas a rastr</h3>
+<table>
+  <thead><tr><th>Jméno</th><th>Hodnota</th></tr></thead>
+  <tbody>
+    <tr><td><code>FRAME</code></td><td>číslo snímku od startu</td></tr>
+    <tr><td><code>CYCLE</code></td><td>čas od startu v cyklech hlavních hodin 28 MHz</td></tr>
+    <tr><td><code>TFRAME</code></td><td>čas od začátku snímku v cyklech 28 MHz</td></tr>
+    <tr><td><code>VC_ULA</code></td><td>řádek obrazu (0 = první řádek papíru, 0–191 papír)</td></tr>
+    <tr><td><code>PHC</code></td><td>sloupec pixelu (0 = první pixel papíru)</td></tr>
+    <tr><td><code>CVC</code></td><td>řádek tak, jak ho porovnává Copper a řádkové přerušení (NR $1E/$1F); = <code>VC_ULA</code> + NR $64</td></tr>
+    <tr><td><code>HC_ULA</code></td><td>vodorovný čítač 7 MHz, se kterým pracuje Copper</td></tr>
+    <tr><td><code>RAW_HC</code>, <code>RAW_VC</code></td><td>syrové čítače rastru</td></tr>
+    <tr><td><code>MACHINE</code></td><td>typ stroje: 0 = 48K, 1 = 128K, 2 = +3, 3 = Pentagon, 4 = Next</td></tr>
+  </tbody>
+</table>
+
+<h3 id="vyrazy-navesti">Návěští</h3>
+<p>Globální návěští ze zdrojáku (podle SLD) se píšou přímo a mají hodnotu své adresy:
+<code>mem[counter]</code>, <code>HL == next_colour</code>, <code>mem16[score] &gt; 100</code>. Velikost
+písmen musí odpovídat zdrojáku. Pokud by se návěští jmenovalo stejně jako registr, vyhrává registr;
+návěští si pak vynutíte zavináčem: <code>@c</code>. Fungují i <b>lokální návěští s tečkou</b> v plném
+tvaru: <code>main_loop.wait</code> má hodnotu adresy lokálního návěští <code>.wait</code> uvnitř
+<code>main_loop</code>.</p>
+
+<h3 id="vyrazy-operatory">Operátory</h3>
+<p>Seřazené od nejnižší priority po nejvyšší (operátory na jednom řádku mají stejnou prioritu):</p>
+<table class="compact">
+  <thead><tr><th>Operátory</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>or</code></td><td>logické NEBO (vyhodnocuje se zkráceně)</td></tr>
+    <tr><td><code>and</code></td><td>logické A (zkráceně)</td></tr>
+    <tr><td><code>not</code></td><td>logická negace</td></tr>
+    <tr><td><code>== != &lt; &gt; &lt;= &gt;=</code></td><td>porovnání (výsledek 1 nebo 0, se znaménkem)</td></tr>
+    <tr><td><code>| ^</code></td><td>bitové NEBO, XOR</td></tr>
+    <tr><td><code>&amp;</code></td><td>bitové A</td></tr>
+    <tr><td><code>&lt;&lt; &gt;&gt;</code></td><td>posuny</td></tr>
+    <tr><td><code>+ -</code></td><td>sčítání, odčítání</td></tr>
+    <tr><td><code>* / %</code></td><td>násobení, celočíselné dělení, zbytek</td></tr>
+    <tr><td><code>-x ~x</code></td><td>unární minus, bitová negace</td></tr>
+  </tbody>
+</table>
+<p>Pozor na rozdíl od jazyka C: bitové operátory mají <b>vyšší</b> prioritu než porovnání, takže
+<code>A &amp; $80 == $80</code> znamená <code>(A &amp; $80) == $80</code>. Závorky ale nikdy neuškodí.
+Místo <code>&amp;&amp;</code>, <code>||</code> a <code>!</code> pište <code>and</code>, <code>or</code>
+a <code>not</code>.</p>
+
+<h3 id="vyrazy-udalosti">Jména pro události a watchpointy</h3>
+<p>V podmínkách událostí (<a class="secref" href="#udalosti"></a>) jsou navíc k dispozici údaje
+o události: <code>REG</code>, <code>VALUE</code>, <code>PREV</code>, <code>PORT</code>,
+<code>SOURCE</code> (s konstantami <code>CPU</code>, <code>COPPER</code>, <code>DMA</code>),
+<code>CPC</code>, <code>SRC</code>, <code>DST</code> – které z nich jdou u které události, ukazuje tabulka
+v oddílu o událostech. V podmínce watchpointu (čtvrtý parametr WPMEM) jsou <code>ADDR</code>
+(adresa přístupu) a <code>VALUE</code> (přenášený bajt). Jméno, které daná událost nenese, emulátor
+odmítne už při zadání.</p>
+
+<h3 id="vyrazy-priklady">Příklady</h3>
+<table>
+  <thead><tr><th>Výraz</th><th>Platí, když…</th></tr></thead>
+  <tbody>
+    <tr><td><code>A == 5</code></td><td>registr A je 5</td></tr>
+    <tr><td><code>HL &gt;= $4000 and HL &lt; $5800</code></td><td>HL ukazuje do obrazovky ULA</td></tr>
+    <tr><td><code>not ZF</code></td><td>příznak Z je nulový</td></tr>
+    <tr><td><code>mem[counter] == 3</code></td><td>bajt na návěští <code>counter</code> je 3</td></tr>
+    <tr><td><code>stack[0] == main_loop</code></td><td>na vrcholu zásobníku je návratová adresa <code>main_loop</code></td></tr>
+    <tr><td><code>nextreg[$07] &amp; 3 == 3</code></td><td>procesor běží na 28 MHz</td></tr>
+    <tr><td><code>mmu[6] == 20</code></td><td>ve slotu 6 ($C000) je stránka 20</td></tr>
+    <tr><td><code>FRAME % 50 == 0</code></td><td>každý padesátý snímek</td></tr>
+    <tr><td><code>VC_ULA &gt;= 192</code></td><td>paprsek je pod papírem (spodní okraj)</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================== 7 -->
+<h2 id="klicova">Klíčová slova v komentářích sjasmplus</h2>
+
+<p>Watchpointy, logpointy a aserce můžete zapsat přímo do zdrojáku jako <b>speciální komentáře</b>
+(stejná syntaxe jako v DeZogu). Výhoda: jsou součástí kódu, neztratí se, a fungují v každém ladicím
+sezení bez klikání.</p>
+
+<h3 id="sldopt">SLDOPT – zapnutí v sjasmplus</h3>
+<p>sjasmplus zapisuje tyto komentáře do souboru SLD jen tehdy, když je ve zdrojáku (nejlépe na začátku)
+řádek:</p>
+<pre><code>    SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION</code></pre>
+<p>Stačí uvést ta slova, která používáte. sjasmplus hledá slovo kdekoli v komentáři
+a rozlišuje velikost písmen (piště je velkými písmeny); blokové komentáře <code>/* */</code> do SLD
+nezapisuje. Komentář na samostatném řádku platí pro nejbližší následující instrukci, komentář za
+instrukcí pro instrukci na tomtéž řádku. U makra se komentář vztahuje k místu, odkud je makro
+voláno.</p>
+
+<h3 id="wpmem">WPMEM – watchpoint</h3>
+<pre><code>; WPMEM [adresa [, délka [, přístup [, podmínka]]]]</code></pre>
+<ul>
+  <li><b>adresa</b> – výraz; bez ní adresa řádku, na kterém komentář je (typicky návěští dat).</li>
+  <li><b>délka</b> – počet hlídaných bajtů, výchozí 1.</li>
+  <li><b>přístup</b> – <code>r</code> čtení, <code>w</code> zápis, <code>rw</code> obojí (výchozí).</li>
+  <li><b>podmínka</b> – nepovinná; zastaví, jen když platí (lze použít <code>ADDR</code> a <code>VALUE</code>).</li>
+</ul>
+<pre><code>score:  dw 0            <span class="c">; WPMEM            – hlídá 1 bajt na „score“ (čtení i zápis)</span>
+buffer: ds 16           <span class="c">; WPMEM buffer,16,w – zastaví při zápisu do 16 bajtů</span>
+lives:  db 3            <span class="c">; WPMEM lives,1,w,VALUE == 0 – zastaví, když se zapíše nula</span>
+        <span class="c">; WPMEM $4000, $1800, w   – zápis kamkoli do bitmapy ULA</span></code></pre>
+<p>Po zastavení je v záhlaví Call Stack důvod <b>WPMEM</b> a v Debug Console řádek s rozsahem adres
+a místem komentáře, například <code>WPMEM $8030–$803F (game.asm:120) – WPMEM buffer,16,w</code>.</p>
+
+<h3 id="logpoint">LOGPOINT – ladicí výpis</h3>
+<pre><code>; LOGPOINT [SKUPINA] text ${výraz} text ${výraz:formát}</code></pre>
+<p>Při každém průchodu vypíše text do Debug Console; <code>${…}</code> nahradí hodnotou výrazu. Formáty
+jsou stejné jako u logpointů ve VS Code: <code>hex</code>, <code>unsigned</code>, <code>signed</code>,
+<code>char</code>, <code>bits</code>, <code>flags</code>, <code>labels</code>. Nepovinná skupina
+v hranatých závorkách hned za slovem se vypíše na začátek řádku (<code>[AI] …</code>). U výpisu
+v Debug Console je odkaz na řádek zdrojáku, kliknutím na něj se tam přesunete.</p>
+<pre><code>        ld a,(hl)
+        <span class="c">; LOGPOINT [MAP] přečteno ${A:hex} z ${HL:hex}</span>
+        ld (de),a</code></pre>
+
+<h3 id="assertion">ASSERTION – aserce</h3>
+<pre><code>; ASSERTION výraz</code></pre>
+<p>Zastaví program, když výraz <b>neplatí</b> (je nula). Prázdná <code>ASSERTION</code> zastaví vždy.
+V záhlaví Call Stack je důvod <b>aserce</b> s popisem <i>ASSERTION neplatí: A &lt; 10</i>; stejný
+text s místem ve zdrojáku se vypíše do Debug Console.</p>
+<pre><code>        cp 10           <span class="c">; ASSERTION A &lt; 10 – zastaví, když výraz neplatí</span>
+        <span class="c">; ASSERTION SP &gt; stack_bottom and SP &lt;= stack_top</span>
+        ret</code></pre>
+<figure class="shot" id="fig-keywords">
+  <img src="img/cs/keywords-stop.png" alt="">
+  <figcaption>Zastavení na ASSERTION: důvod v Call Stack, výpis LOGPOINT v Debug Console a zdroják
+  s komentáři.</figcaption>
+</figure>
+
+<h3 id="klicova-kdy">Kdy se klíčová slova vyhodnocují</h3>
+<p>LOGPOINT a ASSERTION jsou breakpointy na adrese svého řádku – vyhodnocují se <b>před</b> provedením
+instrukce na tom řádku. V příkladu <code>ld a,(hl) ; LOGPOINT … ${A}</code> by se tedy vypsalo
+<code>A</code> ještě před načtením. Chcete-li vidět výsledek instrukce, dejte komentář na samostatný
+řádek pod ni (platí pak pro další instrukci), jako v příkladu výše.</p>
+
+<h3 id="klicova-syntaxe">Syntaxe výrazů v komentářích</h3>
+<p>V komentářích funguje jazyk z kapitoly <a class="secref" href="#vyrazy"></a> a navíc zápisy
+z DeZogu, které rozšíření převede:</p>
+<table class="compact">
+  <thead><tr><th>DeZog</th><th>Totéž v jazyce výrazů</th></tr></thead>
+  <tbody>
+    <tr><td><code>b@(x)</code>, <code>w@(x)</code></td><td><code>mem[x]</code>, <code>mem16[x]</code></td></tr>
+    <tr><td><code>&amp;&amp;</code>, <code>||</code>, <code>!</code></td><td><code>and</code>, <code>or</code>, <code>not</code></td></tr>
+    <tr><td><code>=</code></td><td><code>==</code></td></tr>
+    <tr><td><code>#FF</code>, <code>0FFh</code></td><td><code>$FF</code></td></tr>
+    <tr><td><code>%1010</code> (tam, kde se čeká číslo)</td><td><code>0b1010</code></td></tr>
+  </tbody>
+</table>
+<p>Chyby v komentářích (neznámé návěští, špatná délka, neznámý přístup nebo formát) rozšíření ohlásí
+oznámením vpravo dole ve tvaru <i>WPMEM v komentáři (game.asm:120): …</i>; ostatní klíčová slova
+fungují dál.</p>
+
+<h3 id="klicova-vypnuti">Vypnutí</h3>
+<p>Každý druh jde vypnout v launch.json, aniž byste měnili zdroják: <code>"wpmem": false</code>,
+<code>"logpoints": false</code>, <code>"assertions": false</code> (výchozí hodnota všech je
+<code>true</code>).</p>
+
+<h3 id="break">BREAK z CSpectu</h3>
+<p>Instrukce <code>BREAK</code> z emulátoru CSpect zastaví program jako breakpoint – hodí se tam,
+kde je jednodušší napsat zastavení do kódu než klikat.</p>
+<ul>
+  <li>sjasmplus s volbou <code>--zxnext=cspect</code> překládá <code>BREAK</code> jako
+  <code>FD 00</code>. Funguje i starší CSpect <code>DD 01</code> a <code>ED FF</code> ze ZEsarUX.</li>
+  <li>Stroj se zastaví hned <b>za</b> instrukcí (PC = adresa BREAK + 2): žlutý řádek je na
+  instrukci za <code>BREAK</code>, popis v Call Stack uvádí adresu samotného BREAK.</li>
+</ul>
+<p>V záhlaví Call Stack je důvod <b>BREAK</b> s popisem <i>Zastaveno na BREAK na $8003</i>.
+Pokračujete normálně (<kbd>F5</kbd>, kroky). Zastavování vypnete v launch.json:
+<code>"magicBreakpoint": false</code>.</p>
+<figure class="shot" id="fig-break">
+  <img src="img/cs/break-stop.png" alt="">
+  <figcaption>Zastavení na instrukci BREAK: důvod a adresa BREAK v Call Stack.</figcaption>
+</figure>
+<div class="warn"><p>Na skutečném Nextu se <code>FD 00</code> provede jako <code>NOP</code>, ale
+<code>DD 01</code> jako <code>LD BC,nn</code> a „spolkne“ další dva bajty. <code>DD 01</code>
+proto nenechávejte ve výsledném programu. Vypnutý <code>magicBreakpoint</code> se k <code>DD 01</code>
+chová stejně jako skutečný Next.</p></div>
+
+<!-- ================================================================== 8 -->
+<h2 id="obrazovka">Obrazovka emulátoru</h2>
+
+<p>Při startu ladění se vpravo vedle editoru otevře panel <b>ZX Spectrum Next</b> s obrazovkou
+emulátoru. Pokud ho zavřete, znovu ho otevřete příkazem <span class="cmd">MB Maniax Next: Show
+Emulator Screen</span> (<i>Zobrazit obrazovku emulátoru</i>) z palety příkazů. Panel je běžná záložka
+editoru – můžete ho přetáhnout za záložku jinam (dolů, do vlastního okna, na druhý monitor
+pravým tlačítkem na záložce a <span class="ui">Move into New Window</span>).</p>
+<figure class="shot" id="fig-screen">
+  <img src="img/cs/screen-panel.png" alt="">
+  <figcaption>Panel ZX Spectrum Next: nahoře lišta s pauzou, zvukem, stavem a tlačítkem Next.</figcaption>
+</figure>
+<p>Lišta nahoře v panelu:</p>
+<ul>
+  <li><b>⏸ / ▶</b> (<i>Pozastavit / pokračovat</i>) – pozastaví nebo rozběhne program, stejně jako
+  <kbd>F6</kbd> / <kbd>F5</kbd>.</li>
+  <li><b>🔇 / 🔊</b> (<i>Zvuk</i>) – vypne a zapne zvuk.</li>
+  <li><b>Stav</b> – <i>Čekám na ladění…</i> (žádné ladění neběží), <i>Zastaveno</i>, nebo <i>Běží ·
+  50 snímků/s</i> – skutečná rychlost emulace. Normální je 50 snímků/s; výrazně nižší
+  číslo znamená, že počítač emulaci nestíhá.</li>
+  <li><b>Next</b> – otevře panel Next (<a class="secref" href="#next"></a>).</li>
+</ul>
+
+<h3 id="klavesnice">Klávesnice</h3>
+<p>Klikněte do obrazu: dokud má obraz fokus, jde klávesnice PC do emulátoru. <kbd>Shift</kbd> je
+CAPS SHIFT, <kbd>Ctrl</kbd> je SYMBOL SHIFT a <kbd>Esc</kbd> je BREAK. Ostatní klávesy PC
+(šipky, <kbd>Backspace</kbd> …) emulátor převádí podle své mapy kláves. Kliknutím mimo obraz (například do
+editoru) klávesnice zase patří VS Code a všechny stisknuté klávesy emulátoru se pustí. Tato
+nápověda je i pod obrazem v panelu.</p>
+<div class="note"><p>Klávesové zkratky ladění (<kbd>F5</kbd>, <kbd>F10</kbd> …) fungují, jen když má
+fokus VS Code, ne obraz emulátoru. Když vám <kbd>F5</kbd> „nefunguje“, klikněte nejdřív do editoru.</p></div>
+
+<h3 id="zvuk">Zvuk</h3>
+<p>Prohlížeč uvnitř VS Code smí přehrávat zvuk až po akci uživatele – zvuk se proto zapne, až poprvé
+kliknete do obrazu (nebo na tlačítko 🔇). Zvuk hraje jen za běhu; v pauze a při krokování je ticho.
+Pokud je zvuk trhaný, emulace nestíhá – podívejte se na počet snímků za sekundu v liště
+a do kapitoly <a class="secref" href="#problemy"></a>.</p>
+
+<h3 id="pauza">Pauza, zastavení a obraz</h3>
+<p>Když program stojí (breakpoint, krok, pauza), obraz ukazuje stav v okamžiku zastavení. Zastaví-li
+se stroj uprostřed snímku, je horní část obrazu už nová a spodní ještě z předchozího snímku – tak to
+odpovídá paprsku. Panel Next může do obrazu kreslit zvýraznění vybraného spritu, dlaždice nebo
+řádku (<a class="secref" href="#next-zvyrazneni"></a>).</p>
+
+<!-- ================================================================== 9 -->
+<h2 id="next">Panel Next</h2>
+
+<p>Panel Next ukazuje stav hardwaru Nextu, který v registrech procesoru nevidíte: sprity, vzory,
+palety, jednotlivé vrstvy obrazu, Layer 2, tilemapu, program Copperu a všechny registry NEXTREG.</p>
+
+<h3 id="next-otevreni">Otevření a ovládání</h3>
+<p>Panel otevřete jedním ze tří způsobů:</p>
+<ul>
+  <li>tlačítkem na liště ladění (ikona vrstev, bublina <span class="cmd">Next Panel (Sprites,
+  Palettes, …)</span>),</li>
+  <li>tlačítkem <b>Next</b> v liště panelu s obrazovkou emulátoru,</li>
+  <li>příkazem <span class="cmd">MB Maniax: Next Panel (Sprites, Palettes, …)</span>
+  (<i>Panel Next (sprity, palety, …)</i>) z palety příkazů.</li>
+</ul>
+<p>Panel se otevře vedle editoru jako další záložka s názvem <b>Next</b>; jako každou záložku ho
+můžete přetáhnout jinam.</p>
+<figure class="shot" id="fig-next-vscode">
+  <img src="img/cs/next-panel-vscode.png" alt="">
+  <figcaption>Panel Next uvnitř VS Code vedle zdrojáku, záložka Sprity.</figcaption>
+</figure>
+<p>Nahoře v panelu je lišta:</p>
+<ul>
+  <li><b>Záložky</b> – <span class="ui">Sprity</span>, <span class="ui">Pattern RAM</span>,
+  <span class="ui">Palety</span>, <span class="ui">Vrstvy</span>, <span class="ui">Layer 2</span>,
+  <span class="ui">Tilemapa</span>, <span class="ui">Copper</span>, <span class="ui">NEXTREG</span>.
+  Panel si pamatuje naposledy otevřenou záložku.</li>
+  <li><b>Stav</b> – <i>Čekám na ladění…</i>, <i>Běží</i> nebo <i>Zastaveno</i>.</li>
+  <li><b>Obnovit</b> – načte znovu data zobrazené záložky.</li>
+  <li><b>Živě</b> – obnovuje zobrazenou záložku i za běhu, dvakrát za sekundu.</li>
+</ul>
+<p>Bez přepínače Živě se zobrazená záložka obnoví při každém zastavení stroje (breakpoint, krok,
+pauza) a tlačítkem Obnovit. Obnovuje se vždy jen ta záložka, která je vidět, takže skryté záložky
+nic nezdržují.</p>
+
+<h3 id="next-zvyrazneni">Zvýraznění v obrazovce emulátoru</h3>
+<p>Některé záložky umí ukázat vybranou věc přímo v obrazovce emulátoru (panel ZX Spectrum Next):
+na záložce Sprity sprite pod myší nebo vybraný sprite, na záložce Tilemapa dlaždici pod myší, na
+záložce Copper řádek, na který čeká instrukce WAIT pod myší. Obdélník zvýraznění se kreslí přes
+obraz; zmizí, když myš z položky odjede nebo když přepnete záložku.</p>
+
+<p>Následující oddíly popisují jednotlivé záložky. Čísla registrů jsou v zápisu <code>NR $xx</code>;
+téměř všechny popisky v panelu mají bublinu s vysvětlením (najeďte na ně myší).</p>
+
+<h3 id="next-sprity">Sprity</h3>
+<figure class="shot" id="fig-next-sprites">
+  <img src="img/cs/next-sprites.png" alt="">
+  <figcaption>Záložka Sprity: tabulka 128 spritů s náhledy a vpravo mini-mapa obrazovky.</figcaption>
+</figure>
+<p><b>Lišta:</b> <span class="ui">Jen viditelné</span> skryje sprity s vypnutým bitem viditelnosti
+(zapnuto ve výchozím stavu); <span class="ui">Náhled s transformací</span> kreslí náhledy se
+zrcadlením a rotací tak, jak vypadají na obrazovce. Vpravo je stav: průhledná barva
+(<code>Průhledná NR $4B = $E3</code>) a která paleta spritů se používá.</p>
+<p><b>Souhrnný řádek:</b> počet viditelných spritů (<code>Viditelných: 12 / 128</code>), zda jsou sprity
+zapnuté (<i>Sprity vypnuty (NR $15 b0)</i> je zvýrazněné jako varování), zda se kreslí přes okraj
+(<i>přes okraj</i>) a zda je sprite 0 nahoře (<i>sprite 0 nahoře</i>), a ořezové okno spritů –
+syrové hodnoty NR $19 i výsledné okno v souřadnicích obrazovky.</p>
+<p><b>Tabulka</b> má řádek pro každý sprite:</p>
+<table class="compact">
+  <thead><tr><th>Sloupec</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>#</code></td><td>číslo spritu 0–127</td></tr>
+    <tr><td>Kotva</td><td>u relativního spritu <code>rel → #n</code>: číslo kotvy, ke které patří</td></tr>
+    <tr><td>X, Y</td><td>poloha v souřadnicích 320 × 256 včetně okraje (X 0 = levý okraj, papír začíná na 32, 32)</td></tr>
+    <tr><td>Vzor</td><td>číslo vzoru (patternu), který hardware čte</td></tr>
+    <tr><td>Pal</td><td>paletový offset (horní 4 bity indexu barvy)</td></tr>
+    <tr><td>Vid.</td><td>bit viditelnosti</td></tr>
+    <tr><td>Zrc./rot.</td><td><code>X</code>, <code>Y</code> = zrcadlení, <code>R</code> = rotace</td></tr>
+    <tr><td>4bit</td><td>4bitový sprite (128 B na vzor) místo 8bitového (256 B)</td></tr>
+    <tr><td>Měřítko</td><td>zvětšení v X × Y (1, 2, 4, 8)</td></tr>
+    <tr><td>Náhled</td><td>vzor v barvách aktivní palety; šachovnice = průhledné pixely</td></tr>
+  </tbody>
+</table>
+<p>U relativních spritů (kotva + relativní sprity) ukazuje tabulka už <b>výsledné</b> hodnoty – polohu,
+vzor, paletu a transformace tak, jak je hardware nakreslí. Bublina nad řádkem ukazuje syrové
+atributy (5 bajtů), adresu vzoru v Pattern RAM a obdélník spritu na obrazovce. Neviditelné sprity
+jsou šedé.</p>
+<p><b>Mini-mapa</b> vpravo je celá oblast 320 × 256 (okraj + papír): papír 256 × 192 je orámovaný,
+ořezové okno čárkovaně, každý viditelný sprite obdélníkem. Najetím myší na řádek tabulky nebo na
+sprite v mini-mapě se sprite zvýrazní v mini-mapě i v obrazovce emulátoru. Kliknutím ho vyberete –
+zvýraznění pak zůstane, i když myš odjede (dalším kliknutím výběr zrušíte). Kliknutí do mini-mapy
+vybere vrchní sprite v tom místě a posune tabulku na jeho řádek.</p>
+
+<h3 id="next-patterns">Pattern RAM</h3>
+<figure class="shot" id="fig-next-patterns">
+  <img src="img/cs/next-patterns.png" alt="">
+  <figcaption>Záložka Pattern RAM: mřížka všech vzorů a detail vybraného vzoru.</figcaption>
+</figure>
+<p>Celá paměť vzorů spritů (16 KB) jako mřížka. <b>Lišta:</b></p>
+<ul>
+  <li><span class="ui">Formát vzorů</span> – <i>8bit · 64 vzorů</i> nebo <i>4bit · 128 vzorů</i>.</li>
+  <li><span class="ui">Paleta spritů</span> – <i>Aktivní paleta</i> (podle NR $43 bit 3, v závorce
+  která), nebo pevně <i>Sprity 1.</i> / <i>Sprity 2.</i></li>
+  <li><span class="ui">Offset</span> 0–15 – paletový offset pro náhled (u 4bitových vzorů horní nibble
+  indexu, u 8bitových se přičte k hornímu nibblu).</li>
+  <li><span class="ui">Zvětšení mřížky</span> a <span class="ui">Průhlednost</span> – pixely
+  s hodnotou NR $4B kreslit průhledně (šachovnicí).</li>
+</ul>
+<p>Bublina nad vzorem ukazuje jeho číslo a adresu a které sprity ho používají – zvlášť viditelné a
+neviditelné. <b>Klikněte na vzor</b>: pod mřížkou se ukáže zvětšený detail s adresami,
+seznamem spritů, které vzor používají, a po najetí myší na pixel jeho souřadnice, hodnota (u 4bitových
+i který nibble), index v paletě a barva v RGB333 i RGB888.</p>
+
+<h3 id="next-palety">Palety</h3>
+<figure class="shot" id="fig-next-palettes">
+  <img src="img/cs/next-palettes.png" alt="">
+  <figcaption>Záložka Palety: osm palet po 256 barvách s označením aktivní palety a cíle zápisu.</figcaption>
+</figure>
+<p>Všech osm palet Nextu, každá jako mřížka 16 × 16: <b>ULA 1.</b> a <b>2.</b>, <b>Layer 2 1.</b> a
+<b>2.</b>, <b>Sprity 1.</b> a <b>2.</b>, <b>Tilemapa 1.</b> a <b>2.</b> Index barvy roste po řádcích
+zleva doprava (první řádek 0–15).</p>
+<ul>
+  <li>Štítek <b>aktivní</b> – tuto paletu používá vykreslování.</li>
+  <li>Štítek <b>zápis</b> – sem právě míří zápisy přes NR $41/$44 (podle NR $43 bity 6:4).</li>
+  <li>Křížek <b>×</b> označuje průhlednou barvu: u ULA, Layer 2 a tilemapy barvu NR $14, u spritů index
+  NR $4B. Legenda pod paletou to vypisuje a u ULA popisuje, které indexy jsou ink, paper a okraj
+  (standardní ULA nebo ULANext s formátem z NR $42).</li>
+  <li><span class="ui">Ztlumit nepoužité (ULA)</span> – v paletách ULA ztlumí položky, které aktuální
+  režim nepoužívá.</li>
+</ul>
+<p>Řádek vedle přepínače ukazuje registry <code>NR $43 · $42 · $14 · $4B · $6B</code>. Po najetí myší
+na barvu se nahoře vypíše: paleta, index (hex i dec), RGB333 a jednotlivé složky R G B (0–7),
+8bitová hodnota RRRGGGBB, barva jako <code>#rrggbb</code> a role barvy (ink, paper, okraj, průhledná,
+nepoužitá…).</p>
+
+<h3 id="next-vrstvy">Vrstvy</h3>
+<figure class="shot" id="fig-next-layers">
+  <img src="img/cs/next-layers.png" alt="">
+  <figcaption>Záložka Vrstvy: zvolená vrstva obrazu, pořadí vrstev a ořezová okna.</figcaption>
+</figure>
+<p>Rozloží obraz na vrstvy, ze kterých ho Next skládá. V nabídce vlevo zvolíte, co vidět:
+<i>Složený obraz</i>, <i>ULA</i>, <i>ULA stínová</i>, <i>Layer 2</i>, <i>Layer 2 stínová</i>,
+<i>Sprity</i>, <i>Tilemapa</i>, <i>Pozadí</i>; vedle je zvětšení 1× / 2×. Zaškrtávátko
+<span class="ui">vše vedle sebe</span> ukáže náhledy všech vrstev najednou – kliknutím na náhled
+se zobrazí ve velkém.</p>
+<p>Šachovnice znamená, že vrstva v tom místě nic nekreslí (průhledné). Po najetí myší se pod obrazem
+vypíše souřadnice (<code>x</code>, <code>y</code> v prostoru 320 × 256 a sloupec v 640 bodech širokém
+obrazu) a barva pixelu (<code>#rrggbb</code> a RGB333). Vrstvy se kreslí pro celý snímek s registry
+přehranými po řádcích, takže se projeví i rozdělení obrazu rastrem nebo Copperem.</p>
+<p>Pod obrazem jsou tři bloky informací:</p>
+<ul>
+  <li><b>Pořadí shora</b> (NR $15, režim SLU, LSU …) – seznam vrstev od nejvyšší po nejnižší
+  s pozadím (NR $4A) na konci. U režimů míchání barev (L+U sčítání / odečítání) je popsané, jak se
+  ULA a tilemapa míchají s Layer 2. Vypnuté vrstvy jsou přeškrtnuté. Poznámka připomíná, že pixel
+  Layer 2 s prioritním bitem palety (NR $44 b7) jde vždy navrch.</li>
+  <li><b>Vrstvy</b> – zda jsou zapnuté ULA (NR $68 b7), LoRes, Layer 2 (NR $69 b7 / port $123B),
+  sprity (i v okraji, sprite 0 navrchu) a tilemapa (vždy nad ULA, nebo podle atributu).</li>
+  <li><b>Ořezová okna</b> – okna Layer 2, spritů, ULA a tilemapy.</li>
+</ul>
+<div class="note"><p>Zastaví-li se stroj uprostřed snímku, řádky pod paprskem jsou nakreslené s aktuálním
+stavem registrů – na obrazovce emulátoru je tam ještě předchozí snímek, proto se mohou lišit.</p></div>
+
+<h3 id="next-layer2">Layer 2</h3>
+<figure class="shot" id="fig-next-layer2">
+  <img src="img/cs/next-layer2.png" alt="">
+  <figcaption>Záložka Layer 2: celý obsah Layer 2 z paměti s vyznačenou viditelnou částí.</figcaption>
+</figure>
+<p>Celý obsah Layer 2 z paměti – nejen to, co je vidět. Přepínač vlevo volí banku:
+<i>Aktivní (NR $12)</i> nebo <i>Stínová (NR $13)</i>; dále zvětšení a <span class="ui">viditelná
+část</span>: čárkovaný obdélník ukazuje, co je po posunu (scroll) a ořezu na obrazovce, kroužek
+levý horní roh obrazovky.</p>
+<p>Informační řádky nahoře: režim (NR $70 – <i>256 × 192, 8 bpp</i>, <i>320 × 256, 8 bpp (po
+sloupcích)</i> nebo <i>640 × 256, 4 bpp (po sloupcích)</i>) a zda je Layer 2 zapnutá; banka a její
+stránky; scroll X/Y (NR $16/$71, $17) a ořez NR $18; paleta (první/druhá podle NR $43 b2), offset
+palety (NR $70 b3:0) a průhledná barva NR $14. Po najetí myší se vypíše banka a posun (i 8K stránka),
+bajt na tom místě (u 4bpp který nibble), index barvy a případně <i>(průhledná)</i>.</p>
+
+<h3 id="next-tilemap">Tilemapa</h3>
+<figure class="shot" id="fig-next-tilemap">
+  <img src="img/cs/next-tilemap.png" alt="">
+  <figcaption>Záložka Tilemapa: celá mapa s vyznačeným výřezem a pod ní definice dlaždic.</figcaption>
+</figure>
+<p>Nahoře celá mapa (40 × 32 nebo 80 × 32 dlaždic) se zvětšením 1× / 2× a volbou
+<span class="ui">viditelná část</span> (čárkovaný výřez po scrollu a ořezu, kroužek = levý horní roh
+obrazovky). Informační řádky: režim (NR $6B – počet sloupců, 4 bpp nebo textový 1 bpp, 256/512 dlaždic,
+s atributy nebo bez – pak platí výchozí atribut NR $6C), zda je tilemapa zapnutá a zda je vždy nad ULA;
+adresy mapy (NR $6E) a definic (NR $6F) v bance 5 nebo 7; scroll (NR $2F/$30, $31) a ořez NR $1B;
+paleta tilemapy (NR $6B b4) a průhledný index NR $4C (v textovém režimu barva NR $14).</p>
+<p><b>Najeďte myší na dlaždici v mapě:</b> vypíše se její sloupec a řádek, index dlaždice, atribut
+rozepsaný na paletu, zrcadlení, rotaci a prioritu vůči ULA, a adresa záznamu v mapě i definice.
+Dlaždice se zároveň orámuje v definicích pod mapou a <b>zvýrazní v obrazovce emulátoru</b> na místě,
+kde po scrollu leží.</p>
+<p><b>Definice dlaždic</b> pod mapou: všechny definované dlaždice v mřížce po 16; nad nimi
+<span class="ui">offset palety</span> pro náhled (0–15) a zvětšení 2× – 4×. Po najetí myší se
+ukáže číslo dlaždice a adresa její definice.</p>
+
+<h3 id="next-copper">Copper</h3>
+<figure class="shot" id="fig-next-copper">
+  <img src="img/cs/next-copper.png" alt="">
+  <figcaption>Záložka Copper: program Copperu s dekódovanými instrukcemi, řádek s PC je zvýrazněný.</figcaption>
+</figure>
+<p>Celý program Copperu (1024 instrukcí). Stavový řádek nahoře: <code>PC $xxx</code> (kde Copper
+právě je), <i>běží</i> / <i>stojí</i>, režim (NR $62 bity 7:6: <i>stop</i>, <i>start od 0</i>,
+<i>pokračuje od aktuálního PC</i>, <i>start od 0 a reset PC v každém snímku</i>), posun řádků NR $64
+a počet řádků snímku. Nabídka <span class="ui">Které instrukce zobrazit</span>: <i>Vše</i>, <i>Bez
+koncových NOPů</i>, <i>Do prvního HALT</i>; <span class="ui">sledovat PC</span> posouvá tabulku tak,
+aby byl vidět řádek s PC.</p>
+<table class="compact">
+  <thead><tr><th>Sloupec</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td>Index</td><td>pozice v programu (0–3FF)</td></tr>
+    <tr><td>Slovo</td><td>16bitová instrukce šestnáctkově</td></tr>
+    <tr><td>Instrukce</td><td><code>MOVE</code>, <code>WAIT</code>, <code>NOP</code>, <code>HALT</code></td></tr>
+    <tr><td>Operandy</td><td>u MOVE <code>NR $40 Palette Index ← $10</code> (bublina rozepíše bity hodnoty), u WAIT <code>řádek 100, h 0</code></td></tr>
+    <tr><td>Obraz</td><td>u WAIT řádek obrazovky (<code>y 132</code> v oblasti 320 × 256 s okrajem), <i>mimo obraz</i>, nebo <i>nikdy</i>, když snímek takový řádek nemá</td></tr>
+  </tbody>
+</table>
+<p><b>Najeďte myší na řádek s WAIT</b> – řádek, na který čeká, se zvýrazní vodorovnou čarou
+v obrazovce emulátoru. Bublina u WAIT vysvětluje, na jaký řádek a vodorovnou pozici čeká; HALT je
+WAIT na řádek 511, který nikdy nenastane.</p>
+
+<h3 id="next-nextreg">NEXTREG</h3>
+<figure class="shot" id="fig-next-nextreg">
+  <img src="img/cs/next-nextreg.png" alt="">
+  <figcaption>Záložka NEXTREG: registry Nextu s hodnotami, rozpisem bitů a zvýrazněním změn.</figcaption>
+</figure>
+<p>Tabulka registrů Nextu se jménem, skupinou, přístupem, hodnotou šestnáctkově, desítkově
+a dvojkově a s <b>rozpisem bitů</b> do pojmenovaných polí (například u NR $07 rychlost procesoru,
+u NR $15 pořadí vrstev). Lišta:</p>
+<ul>
+  <li><span class="ui">Hledat (číslo, jméno, bit)…</span> – filtruje podle čísla registru, jména nebo
+  názvu bitového pole.</li>
+  <li><span class="ui">Všechny skupiny</span> – omezí tabulku na skupinu: Stroj, Video, Layer 2, Sprity,
+  Tilemapa, Copper, Palety, MMU, Zvuk, Ostatní.</li>
+  <li><span class="ui">všech 256</span> – ukáže i čísla, která Next nedefinuje.</li>
+  <li><span class="ui">jen změněné</span> – jen registry změněné od minulého obnovení.</li>
+</ul>
+<p>Registry, které se od minulého obnovení změnily, mají podbarvený řádek a změněné bity jsou
+zvýrazněné – stačí krokovat a dívat se, co se mění. Počet je vpravo (<code>zobrazeno 84 · změněno 3</code>).
+Sloupec Přístup: <code>č/z</code> čtení i zápis, <code>č</code> jen čtení, <code>z</code> jen zápis –
+u registrů jen pro zápis je zobrazená hodnota poslední zápis (nebo 0, pokud ji emulátor neuchovává);
+hvězdička a bublina upozorňují, když se čtená hodnota liší od zapsané.</p>
+
+<!-- ================================================================== 10 -->
+<h2 id="stavy">Uložené stavy</h2>
+
+<p>Uložený stav je snímek celého stroje – paměti, registrů, hardwaru. Hodí se, když se chcete
+opakovaně vracet do stejného místa hry (před souboj s bossem, před chybou) bez toho, abyste se tam
+pokaždé „dohrávali“.</p>
+
+<h3 id="stavy-ulozit">Uložení a obnovení</h3>
+<ul>
+  <li><span class="cmd">MB Maniax: Save State…</span> (<i>Uložit stav…</i>) – tlačítko s ikonou
+  diskety na liště ladění nebo příkaz z palety. Nahoře se otevře pole <i>Uložit stav emulátoru</i>;
+  zadejte jméno a stiskněte <kbd>Enter</kbd>. Stejné jméno přepíše starší stav (rozšíření se nejdřív
+  zeptá).</li>
+  <li><span class="cmd">MB Maniax: Restore State…</span> (<i>Obnovit stav…</i>) – tlačítko s ikonou
+  hodin. Ze seznamu vyberte stav; stroj se do něj vrátí a <b>zůstane stát</b> (v Call Stack je důvod
+  <i>obnovení stavu</i>). Pokračujte <kbd>F5</kbd>.</li>
+</ul>
+<figure class="shot half" id="fig-save-state">
+  <img src="img/cs/save-state.png" alt="">
+  <figcaption>Uložení stavu: zadání jména.</figcaption>
+</figure>
+<figure class="shot half" id="fig-restore-state">
+  <img src="img/cs/restore-state.png" alt="">
+  <figcaption>Obnovení stavu: výběr z uložených stavů.</figcaption>
+</figure>
+<p>Stavy platí pro aktuální ladicí sezení (do <span class="ui">Stop</span>) – přežijí i Restart.
+V jednom sezení jich může být nejvýš <b>8</b>. Obnovení nemění breakpointy ani profiler.</p>
+
+<h3 id="stavy-snimek">Stav se ukládá na konci snímku</h3>
+<p>Emulátor umí uložit stav jen na hranici snímku. Běžící program je na ní vždy, takže uložení za běhu
+proběhne hned. Stojí-li stroj uprostřed snímku (breakpoint, krok), rozšíření se zeptá: <i>Stroj stojí
+uprostřed snímku. Stav lze uložit jen na konci snímku. Doběhnout na konec aktuálního snímku a uložit
+stav tam?</i> Tlačítkem <span class="ui">Doběhnout na konec snímku a uložit</span> program doběhne
+na konec snímku (breakpointy se při tom ignorují), zastaví se (důvod <i>hranice snímku</i>) a stav se
+uloží.</p>
+
+<h3 id="stavy-export">Export a import do souboru</h3>
+<p><span class="cmd">MB Maniax: Export State to File…</span> (<i>Exportovat stav do souboru…</i>)
+uloží aktuální stav do souboru <code>.mbxstate</code>, <span class="cmd">MB Maniax: Import State from
+File…</span> (<i>Importovat stav ze souboru…</i>) ho načte – i v jiném ladicím sezení. Oba příkazy
+jsou jen v paletě příkazů a jen během ladění. Soubor jde načíst <b>jen ve stejné verzi rozšíření</b>
+a pro stejný typ stroje; po aktualizaci rozšíření staré soubory nepůjdou načíst.</p>
+
+<!-- ================================================================== 11 -->
+<h2 id="profiler">Profiler</h2>
+
+<p>Profiler měří, kde program tráví čas. Sčítá T-stavy (takty procesoru) strávené na každé instrukci
+a výsledek ukáže přímo ve zdrojáku: u každého řádku, kolik stál, a barvou, jak je drahý vůči
+ostatním.</p>
+
+<h3 id="profiler-start">Spuštění</h3>
+<ol class="steps">
+  <li>Během ladění klikněte na liště ladění na tlačítko <span class="cmd">Start Profiler</span>
+  (ikona „tepu“), nebo v paletě příkazů <span class="cmd">MB Maniax: Start Profiler</span>
+  (<i>Spustit profiler</i>). Vlevo dole ve stavovém řádku se objeví <b>Profiler</b>.</li>
+  <li>Nechte program běžet tu část, kterou chcete měřit (například pár sekund hry).</li>
+  <li>Zastavte program (<kbd>F6</kbd>, breakpoint). Při každém zastavení se výsledek ukáže
+  v otevřených editorech a ve stavovém řádku přibude součet: <code>Profiler: 3 512 000 T</code>.</li>
+</ol>
+
+<h3 id="profiler-cteni">Jak číst výsledky</h3>
+<figure class="shot" id="fig-profiler-editor">
+  <img src="img/cs/profiler-editor.png" alt="">
+  <figcaption>Výsledky profileru ve zdrojáku: T-stavy a podíl za koncem řádků, barevné pozadí podle ceny
+  řádku, značky v posuvníku.</figcaption>
+</figure>
+<ul>
+  <li><b>Šedý text za koncem řádku</b>, např. <code>1 234 T · 12,3 %</code>: řádek spotřeboval
+  1 234 T-stavů, což je 12,3 % všech T-stavů za dobu měření (včetně času mimo váš zdroják).
+  Po najetí myší na řádek to bublina zopakuje.</li>
+  <li><b>Pozadí řádku</b> od světle žluté po červenou: cena řádku vůči <b>nejdražšímu řádku</b>
+  (8 stupňů). Nejdražší řádky jsou nejvíc červené – na ně se dívejte nejdřív.</li>
+  <li><b>Značky v posuvníku</b> vpravo (přehled souboru): stejné barvy, takže drahá místa najdete
+  i v dlouhém souboru bez listování.</li>
+</ul>
+<p>Řádek, který se provádí mnohokrát, je drahý, i když je instrukce sama rychlá – profiler ukazuje
+<b>celkový</b> čas, ne čas jednoho průchodu. Započítává se vše, co procesor provede: i čekání v
+<code>HALT</code> (každé opakování) a přijetí přerušení (připíše se instrukci, před kterou přišlo).
+Nepočítá se doba, kdy procesor stojí kvůli DMA, ani doba pauzy. Instrukce v makru se připíšou řádku,
+odkud je makro voláno.</p>
+
+<h3 id="profiler-funkce">Nejdražší funkce</h3>
+<p><span class="cmd">MB Maniax: Show Profiler Results</span> (<i>Zobrazit výsledky profileru</i>) –
+z palety příkazů, nebo kliknutím na <b>Profiler</b> ve stavovém řádku – otevře seznam
+<i>Nejdražší funkce</i> seřazený od nejdražší. Funkce je úsek kódu od globálního návěští po další
+globální návěští (lokální návěští s tečkou patří ke svému nadřazenému). U každé je součet T-stavů
+s podílem a soubor s řádkem; výběrem se na ni přesunete. Položka <i>Mimo zdroják (ROM, kód bez
+SLD)</i> na konci sčítá čas strávený mimo váš zdroják.</p>
+<figure class="shot" id="fig-profiler-top">
+  <img src="img/cs/profiler-top.png" alt="">
+  <figcaption>Seznam nejdražších funkcí.</figcaption>
+</figure>
+
+<h3 id="profiler-dalsi">Živé obnovování, zastavení, vynulování</h3>
+<ul>
+  <li><span class="cmd">MB Maniax: Toggle Live Profiler Updates</span> (<i>Přepnout živé obnovování
+  profileru</i>) – výsledky se obnovují i za běhu, každou sekundu. Hodí se, když chcete vidět, jak se
+  čísla mění během hraní.</li>
+  <li><span class="cmd">MB Maniax: Stop Profiler</span> (<i>Zastavit profiler</i>, tlačítko na liště
+  ladění) – měření skončí, poslední výsledky zůstanou v editoru (i po konci ladění). Objeví se hláška
+  s naměřeným součtem a tlačítkem <b>Zobrazit výsledky</b>; součet zůstane i ve stavovém řádku dole a kliknutím
+  na něj seznam nejdražších funkcí otevřete kdykoli znovu.</li>
+  <li><span class="cmd">MB Maniax: Clear Profiler Data</span> (<i>Vynulovat profiler</i>) – začne
+  počítat od nuly a obarvení odstraní. Profiler přitom běží dál.</li>
+</ul>
+
+<h3 id="profiler-tipy">Tipy</h3>
+<ul>
+  <li>Měřte jen to, co vás zajímá: spusťte program, dojeďte na místo, dejte
+  <span class="cmd">Clear Profiler Data</span>, nechte běžet a zastavte.</li>
+  <li>Hlavní smyčka hry čekající na <code>HALT</code> ukáže velké číslo právě u <code>HALT</code> – to
+  je volný čas snímku, ne chyba. Čím menší podíl má HALT, tím méně rezervy máte.</li>
+  <li>Restart a nové nahrání programu čítače vynulují; profiler zůstane zapnutý.</li>
+  <li>Profiler počítá podle fyzické adresy (stránka + posun), takže kód ve stránkách se nepomíchá,
+  i když běží na stejné adrese.</li>
+</ul>
+
+<!-- ================================================================== 12 -->
+<h2 id="rewind">Krok zpět</h2>
+
+<p>Krok zpět (<span class="ui">Step Back</span>) vrátí stroj o instrukci zpět – i několikrát po sobě.
+Emulátor si k tomu pamatuje posledních <b>10 sekund</b> běhu. Je to užitečné, když se program zastaví
+na chybě a vy chcete vidět, jak se do ní dostal.</p>
+
+<h3 id="rewind-zapnuti">Zapnutí</h3>
+<p>Krok zpět je ve výchozím stavu vypnutý, protože záznam stopy instrukcí emulaci zpomaluje –
+u Nextu na 28 MHz asi o čtvrtinu. Zapněte ho v launch.json:</p>
+<pre><code>"rewind": true</code></pre>
+<p>a spusťte ladění znovu. Bez toho tlačítko Step Back ohlásí <i>Krok zpět je vypnutý – zapněte
+"rewind": true v launch.json (emulace pak běží pomaleji)</i>.</p>
+
+<h3 id="rewind-pouziti">Použití</h3>
+<p>Když program stojí, klikněte na liště ladění na <span class="ui">Step Back</span> (šipka s obloukem
+dozadu). Každé kliknutí vrátí jednu instrukci; registry, paměť i obraz odpovídají stavu před ní.
+Pak můžete znovu krokovat vpřed. Tlačítko <span class="ui">Reverse</span> (zpětný běh až
+k breakpointu) zatím není – ohlásí <i>Zpětný běh zatím není – použijte Step Back</i>.</p>
+<div class="tip"><p>Pokud vám zpomalení vadí jen občas, mějte v launch.json dvě konfigurace – jednu
+s <code>"rewind": true</code> a jednu bez – a vybírejte mezi nimi v seznamu vedle zeleného tlačítka
+v Run and Debug.</p></div>
+
+<!-- ================================================================== 13 -->
+<h2 id="launch">Nastavení a launch.json</h2>
+
+<h3 id="launch-atributy">Atributy konfigurace v launch.json</h3>
+<p>Konfigurace typu <code>"mbx-next"</code> v <code>.vscode/launch.json</code>. Při psaní nabízí VS Code
+názvy atributů a jejich popis (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</p>
+<table class="ref">
+  <thead><tr><th>Atribut</th><th>Výchozí</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>type</code></td><td>–</td><td>Vždy <code>"mbx-next"</code>.</td></tr>
+    <tr><td><code>request</code></td><td>–</td><td>Vždy <code>"launch"</code>.</td></tr>
+    <tr><td><code>name</code></td><td>–</td><td>Jméno konfigurace v seznamu Run and Debug.</td></tr>
+    <tr><td><code>program</code></td><td>(povinný)</td><td>Program ke spuštění (<code>.nex</code>, <code>.sna</code>, <code>.tap</code>, …), např. <code>${workspaceFolder}/game.nex</code>.</td></tr>
+    <tr><td><code>sld</code></td><td>–</td><td>Soubor ladicích informací ze sjasmplus (<code>--sld</code>). Bez něj se ladí jen v disassembleru a rozšíření na to upozorní.</td></tr>
+    <tr><td><code>sourceRoot</code></td><td>složka SLD</td><td>Složka, vůči které jsou cesty ke zdrojákům v SLD (když SLD nemá celé cesty).</td></tr>
+    <tr><td><code>stopOnEntry</code></td><td><code>false</code></td><td>Zastavit hned na první instrukci programu.</td></tr>
+    <tr><td><code>machine</code></td><td><code>"next"</code></td><td>Emulovaný stroj: <code>next</code>, <code>48k</code>, <code>128k</code>, <code>plus3</code>, <code>pentagon</code>. Jiné než Next potřebují SD kartu s ROM (<code>sdImage</code>).</td></tr>
+    <tr><td><code>sdImage</code></td><td>–</td><td>Obraz SD karty (<code>.img</code>). Bez něj program přes esxDOS vidí složku, ve které leží.</td></tr>
+    <tr><td><code>esxdosRoot</code></td><td>složka programu</td><td>Složka, kterou program bez SD karty vidí přes esxDOS.</td></tr>
+    <tr><td><code>rewind</code></td><td><code>false</code></td><td>Krok zpět – emulátor si pamatuje posledních 10 sekund; emulace je pomalejší (<a class="secref" href="#rewind"></a>).</td></tr>
+    <tr><td><code>magicBreakpoint</code></td><td><code>true</code></td><td>Zastavit na instrukci BREAK z CSpectu (<code>FD 00</code>, <code>DD 01</code>) a na <code>ED FF</code> ze ZEsarUX. Vypnuté: <code>DD 01</code> se chová jako <code>LD BC,nn</code>.</td></tr>
+    <tr><td><code>wpmem</code></td><td><code>true</code></td><td>Watchpointy z komentářů WPMEM.</td></tr>
+    <tr><td><code>logpoints</code></td><td><code>true</code></td><td>Logpointy z komentářů LOGPOINT.</td></tr>
+    <tr><td><code>assertions</code></td><td><code>true</code></td><td>Aserce z komentářů ASSERTION.</td></tr>
+    <tr><td><code>preLaunchTask</code></td><td>–</td><td>(atribut VS Code) Úloha z tasks.json, která se spustí před laděním – typicky překlad.</td></tr>
+  </tbody>
+</table>
+<p>Cesty mohou obsahovat proměnné VS Code: <code>${workspaceFolder}</code> (otevřená složka),
+<code>${fileDirname}</code> (složka otevřeného souboru) a další. Příklad úplné konfigurace:</p>
+<pre><code>{
+    "type": "mbx-next",
+    "request": "launch",
+    "name": "Ladit hru (s krokem zpět)",
+    "program": "${workspaceFolder}/build/game.nex",
+    "sld": "${workspaceFolder}/build/game.sld",
+    "stopOnEntry": false,
+    "rewind": true,
+    "esxdosRoot": "${workspaceFolder}/data",
+    "preLaunchTask": "sjasmplus"
+}</code></pre>
+
+<h3 id="nastaveni">Nastavení rozšíření</h3>
+<p>Nastavení (<kbd>Ctrl</kbd>+<kbd>,</kbd>, vyhledat <code>mbxNext</code>):</p>
+<table class="ref">
+  <thead><tr><th>Nastavení</th><th>Výchozí</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>mbxNext.language</code></td><td><code>auto</code></td><td>Jazyk rozšíření (hlášení, obrazovka emulátoru, panel Next), viz <a class="secref" href="#jazyk"></a>.</td></tr>
+    <tr><td><code>mbxNext.serverPath</code></td><td>prázdné</td><td>Cesta k ladicímu serveru <code>mbx-next-server</code>; prázdné = server přibalený k rozšíření. Měnit jen při vývoji nebo podle pokynů autora.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="prikazy">Přehled příkazů</h3>
+<table class="ref">
+  <thead><tr><th>Příkaz (anglické VS Code)</th><th>České VS Code</th><th>Kde</th></tr></thead>
+  <tbody>
+    <tr><td><span class="cmd">MB Maniax Next: Show Emulator Screen</span></td><td>Zobrazit obrazovku emulátoru</td><td>paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Next Panel (Sprites, Palettes, …)</span></td><td>Panel Next (sprity, palety, …)</td><td>lišta ladění, paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Save State…</span></td><td>Uložit stav…</td><td>lišta ladění, paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Restore State…</span></td><td>Obnovit stav…</td><td>lišta ladění, paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Export State to File…</span></td><td>Exportovat stav do souboru…</td><td>paleta (při ladění)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Import State from File…</span></td><td>Importovat stav ze souboru…</td><td>paleta (při ladění)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Start Profiler</span></td><td>Spustit profiler</td><td>lišta ladění, paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Stop Profiler</span></td><td>Zastavit profiler</td><td>lišta ladění, paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Show Profiler Results</span></td><td>Zobrazit výsledky profileru</td><td>paleta, stavový řádek</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Toggle Live Profiler Updates</span></td><td>Přepnout živé obnovování profileru</td><td>paleta (při ladění)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Clear Profiler Data</span></td><td>Vynulovat profiler</td><td>paleta (při ladění)</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================== 14 -->
+<h2 id="problemy">Řešení problémů</h2>
+
+<dl>
+<dt>Breakpoint nejde dát – po najetí myší do okraje se neobjeví červená tečka</dt>
+<dd>
+<p>VS Code povoluje breakpointy jen v souborech, jejichž <b>jazyk</b> nějaký ladicí nástroj podporuje.
+Toto rozšíření je hlásí pro jazyky <code>z80-asm</code>, <code>asm-collection</code>,
+<code>z80-macroasm</code>, <code>asm</code>, <code>asm-x86-nasm</code>, <code>nasm</code>,
+<code>masm</code>, <code>c6510</code> a <code>plaintext</code> (prostý text). Pokud máte nainstalované
+rozšíření pro jiný assembler, které si <code>.asm</code> přivlastní pod jiným jazykem, breakpointy
+nepůjdou.</p>
+<ol class="steps">
+  <li>Podívejte se vpravo dole do stavového řádku – je tam jazyk otevřeného souboru (např.
+  <span class="ui">Plain Text</span>, <span class="ui">Z80 Assembly</span>, <span class="ui">ARM</span>…).</li>
+  <li>Klikněte na něj. Nahoře se otevře výběr jazyka; zvolte
+  <span class="ui">Configure File Association for '.asm'…</span> a vyberte jazyk Z80
+  (podle nainstalovaného rozšíření např. <i>Z80 Assembly</i>, <i>Z80 Macro-Assembler</i>), nebo
+  <span class="ui">Plain Text</span>.</li>
+</ol>
+<p>VS Code tím zapíše do nastavení <code>files.associations</code>. Totéž můžete napsat ručně
+(<span class="cmd">Preferences: Open User Settings (JSON)</span> z palety příkazů):</p>
+<pre><code>"files.associations": {
+    "*.asm": "z80-macroasm",
+    "*.i.asm": "z80-macroasm"
+}</code></pre>
+<p>Hodnota musí být identifikátor jazyka ze seznamu výše, který máte k dispozici (<code>plaintext</code>
+je vždy).</p>
+</dd>
+
+<dt>Breakpoint je šedý a prázdný</dt>
+<dd><p>Breakpoint není ověřený. Najeďte na něj myší – bublina řekne proč: <i>Chybí SLD ze sjasmplus
+(atribut "sld")</i> → doplňte <code>"sld"</code> do launch.json; <i>Na řádku ani pod ním není instrukce
+(podle SLD)</i> → řádek není ve SLD (je to komentář, data, nebo soubor nebyl přeložen s tímto SLD);
+chyba podmínky → opravte podmínku (<a class="secref" href="#vyrazy"></a>).</p></dd>
+
+<dt>Program se na breakpointu nezastaví</dt>
+<dd>
+<ul>
+  <li>Chybí SLD nebo je starý: přeložte s <code>--sld=… --fullpath</code> a zkontrolujte, že
+  launch.json ukazuje na stejný soubor. Při startu bez SLD rozšíření ukáže upozornění <i>Chybí "sld"
+  v launch.json…</i> nebo <i>SLD nejde načíst…</i>.</li>
+  <li>Cesty v SLD nesedí se soubory v editoru: použijte <code>--fullpath</code>, nebo nastavte
+  <code>sourceRoot</code>.</li>
+  <li>Překládáte jinou kopii souboru, než máte otevřenou v editoru (jiná složka).</li>
+  <li>Kód ve stránkované paměti: breakpoint zastaví jen při namapované stránce
+  (<a class="secref" href="#bp"></a>). Zkontrolujte v Variables › Stroj (MMU, čas), která stránka je ve
+  slotu.</li>
+  <li>Breakpoint je vypnutý (nezaškrtnutý v sekci Breakpoints), nebo jsou vypnuté všechny
+  (tlačítko <span class="ui">Toggle Active Breakpoints</span> v záhlaví sekce).</li>
+  <li>Program se po změně nepřeložil – <code>preLaunchTask</code> v launch.json chybí, nebo překlad
+  selhal (záložka <span class="ui">Problems</span>, <span class="ui">Terminal</span>).</li>
+</ul>
+</dd>
+
+<dt>Ladění se nespustí</dt>
+<dd>
+<ul>
+  <li><i>Program nenalezen: …</i> – cesta v <code>"program"</code> je špatně, nebo program ještě nebyl
+  přeložen.</li>
+  <li><i>Ladicí server nenalezen (…)</i> – rozšíření je poškozené nebo je špatně nastavené
+  <code>mbxNext.serverPath</code>; nastavení vymažte, případně rozšíření přeinstalujte.</li>
+  <li><i>Ladicí server neodpovídá</i> / <i>Ladicí server skončil při startu</i> – zkuste ladění spustit
+  znovu; podrobnosti (výpis serveru) bývají v Debug Console. Spuštění serveru může blokovat i
+  antivirus.</li>
+  <li>Úloha <code>sjasmplus</code> nejde spustit – sjasmplus není v <code>PATH</code>
+  (<a class="secref" href="#prvni-sjasmplus"></a>).</li>
+</ul>
+</dd>
+
+<dt>Trhaný zvuk, pomalá emulace</dt>
+<dd>
+<ul>
+  <li>Podívejte se na <i>Běží · N snímků/s</i> v liště obrazovky. Pod 50 počítač emulaci nestíhá.</li>
+  <li>Vypněte krok zpět (<code>"rewind": false</code>) – stopa instrukcí zpomaluje asi o čtvrtinu.</li>
+  <li>Vypněte <span class="ui">Živě</span> v panelu Next a živé obnovování profileru; zavřete panel Next,
+  když ho nepotřebujete.</li>
+  <li>Logpointy, které se vypisují tisíckrát za sekundu, zpomalí výpis do Debug Console – použijte
+  počet průchodů (<code>% 50</code>) nebo podmínku.</li>
+  <li>Panel s obrazovkou překresluje jen tehdy, když je vidět; schovaný za jinou záložkou nic nestojí.</li>
+</ul>
+</dd>
+
+<dt>Panel s obrazovkou nebo panel Next zmizel</dt>
+<dd><p>Panely jsou záložky editoru: zkuste je najít v jiné skupině záložek, nebo je otevřete znovu –
+<span class="cmd">MB Maniax Next: Show Emulator Screen</span> a <span class="cmd">MB Maniax: Next Panel
+(Sprites, Palettes, …)</span>.</p></dd>
+
+<dt>Klávesnice nefunguje v emulátoru / zkratky nefungují ve VS Code</dt>
+<dd><p>Klávesy jdou do emulátoru jen tehdy, když má fokus obraz (klikněte do něj). Naopak zkratky
+VS Code (<kbd>F5</kbd>, <kbd>F10</kbd>) fungují, jen když fokus obraz nemá – klikněte do editoru.</p></dd>
+
+<dt>Zvuk nehraje</dt>
+<dd><p>Klikněte do obrazu nebo na tlačítko 🔇 – zvuk se smí zapnout až po kliknutí. Zkontrolujte, že
+program běží (v pauze je ticho) a že je ikona 🔊.</p></dd>
+
+<dt>Rozšíření mluví jiným jazykem, než chci</dt>
+<dd><p>Nastavte <code>mbxNext.language</code> (<a class="secref" href="#jazyk"></a>) a spusťte ladění znovu.
+Názvy příkazů a popisy v nastavení se řídí jazykem VS Code (příkaz <span class="cmd">Configure Display
+Language</span>), ne tímto nastavením.</p></dd>
+
+<dt>Po aktualizaci se pořád chová stará verze</dt>
+<dd><p>Ukončete ladění a obnovte okno: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> →
+<span class="cmd">Developer: Reload Window</span> (<a class="secref" href="#reload"></a>).</p></dd>
+
+<dt>Uložený stav ze souboru nejde importovat</dt>
+<dd><p>Soubor <code>.mbxstate</code> jde načíst jen ve stejné verzi rozšíření a pro stejný typ stroje
+(<code>machine</code>).</p></dd>
+</dl>
+
+<!-- ================================================================== 15 -->
+<h2 id="zkratky">Klávesové zkratky</h2>
+<p>Výchozí klávesové zkratky VS Code ve Windows, které se při ladění hodí. Vlastní zkratky nastavíte
+v <span class="ui">File › Preferences › Keyboard Shortcuts</span> (<kbd>Ctrl</kbd>+<kbd>K</kbd>
+<kbd>Ctrl</kbd>+<kbd>S</kbd>).</p>
+<table class="keys">
+  <thead><tr><th>Zkratka</th><th>Akce</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>F5</kbd></td><td>Spustit ladění / Continue (pokračovat)</td></tr>
+    <tr><td><kbd>F6</kbd></td><td>Pause (pozastavit)</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Stop (ukončit ladění)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Restart</td></tr>
+    <tr><td><kbd>F10</kbd></td><td>Step Over</td></tr>
+    <tr><td><kbd>F11</kbd></td><td>Step Into</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>F11</kbd></td><td>Step Out</td></tr>
+    <tr><td><kbd>F9</kbd></td><td>Breakpoint na řádku s kurzorem (zapnout / vypnout)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd></td><td>Panel Run and Debug</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd></td><td>Debug Console</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, <kbd>F1</kbd></td><td>Command Palette (paleta příkazů)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td><td>Spustit výchozí úlohu překladu (sjasmplus)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></td><td>Problems (chyby překladu)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>`</kbd></td><td>Terminal</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>J</kbd></td><td>Zobrazit / skrýt spodní panel</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd></td><td>Explorer (soubory)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd></td><td>Extensions (rozšíření)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>,</kbd></td><td>Settings (nastavení)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Rychle otevřít soubor podle jména</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Přejít na řádek</td></tr>
+    <tr><td><kbd>F12</kbd></td><td>Přejít na definici (má-li rozšíření pro assembler tuto funkci)</td></tr>
+  </tbody>
+</table>
+<p>V obrazovce emulátoru (když má fokus): <kbd>Shift</kbd> = CAPS SHIFT, <kbd>Ctrl</kbd> = SYMBOL SHIFT,
+<kbd>Esc</kbd> = BREAK.</p>
+
+</main>
+
+<script src="out/pages.cs.js"></script>
+<script src="manual.js"></script>
+</body>
+</html>

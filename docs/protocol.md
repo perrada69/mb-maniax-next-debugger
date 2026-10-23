@@ -1,0 +1,235 @@
+# Protokol rozšíření ↔ ladicí server
+
+Rozšíření spouští `mbx-next-server` jako podproces a mluví s ním přes stdin/stdout. Výpisy
+serveru (JNEXT) jdou na stderr.
+
+## Rámce
+
+`[u32 délka][u8 typ][data]`, délka = 1 + délka dat, little endian.
+
+| typ | směr | obsah |
+| --- | --- | --- |
+| 1 | oba | JSON (UTF-8) |
+| 2 | server → | obraz: u16 šířka, u16 výška, pixely RGBA (posílá se, jen když se změnil) |
+| 3 | server → | zvuk: int16 stereo, 44,1 kHz (asi 882 vzorků za snímek) |
+
+## Příkazy (JSON od rozšíření)
+
+`{"cmd": "...", "id": 7, ...}` – s `id` přijde odpověď `{"id": 7, "ok": true, ...}` nebo
+`{"id": 7, "ok": false, "error": "..."}`; bez `id` se neodpovídá (klávesy, myš).
+
+| příkaz | argumenty | odpověď |
+| --- | --- | --- |
+| `hello` | | `version` |
+| `launch` | `program`, `machine`, `sdImage`, `esxdosRoot`, `rom`, `stopOnEntry`, `rewind`, `magicBreakpoint` (výchozí true) | |
+| `pause`, `continue`, `stepIn`, `stepOver`, `stepOut`, `runToEndOfFrame` | | |
+| `stepBack` | `count` | |
+| `runTo` | `addr` | |
+| `reset` | `hard` | |
+| `state` | | `paused`, `pc`, `frame`, `tstates`, `cycleInFrame` |
+| `registers` | | `registers` {AF … PC, I, R, IFF1, IFF2, IM, halted} + `state` |
+| `setRegister` | `name`, `value` | |
+| `readMemory` | `addr`, `length`, `page`? | `data` (base64); bez `page` paměť CPU, `length` nejvýš 0x10000; s `page` fyzická 8K stránka, `length` až 0x30000 souvisle přes stránky `page`, `page`+1, … (`addr` ≥ 0x2000 posune začátek do další stránky); stránka ≥ 0xE0 → chyba `invalid_page` |
+| `writeMemory` | `addr`, `data` (base64), `page`? | `written` |
+| `disassemble` | `addr`, `count` | `lines` [{addr, bytes, text}] |
+| `callStack` | | `frames` [{caller, target, sp, type}] (poslední = nejvnitřnější) |
+| `mmu` | | `slots` [{nr, page}] |
+| `nextregs` | | `data` (256 B, base64), `clips` {`layer2`, `sprites`, `ula`, `tilemap`: {`x1`, `x2`, `y1`, `y2`}} – celá ořezová okna (NR $18/$19/$1A/$1B čtou jen jednu souřadnici) |
+| `sprites` | | `sprites` [128 × {x, y, pattern, paletteOffset, visible, xMirror, yMirror, rotate, is4bit, xScale, yScale, relative, anchor}], `attrs` (base64, 128 × 5 B), `clip` {x1, x2, y1, y2} – viz níže |
+| `patternRam` | | `data` (base64, 16384 B) |
+| `palettes` | | `banks` {ula0, ula1, layer2_0, layer2_1, sprite0, sprite1, tilemap0, tilemap1: 256 × RGB333}, `activeUla` (0/1) |
+| `copper` | | `pc` (0–1023), `running`, `mode` (0–3), `program` (base64, 1024 × u16 LE) |
+| `renderLayer` | `layer`: composite, ula, ulaShadow, layer2, layer2Shadow, sprites, tilemap, background | `width` (640), `height` (256), `data` (base64 RGBA) |
+| `raster` | | `vc`, `hc`, `x`, `y`, `frame`, `cycleInFrame`, `linesPerFrame` – viz níže |
+| `soundState` | | `chips` [3 × {`regs`: 16 čísel}], `turbosound`, `ayMode` (AY / YM / reset), `dac` [4 čísla] nebo null |
+| `pageUsage` | | `nonzero` [224 čísel], `rom` [] |
+| `evaluate` | `expr` | `value` |
+| `loadSymbols` | `path` (řádky `JMÉNO = $ADRESA`) | `count` |
+| `setBreakpoints` | `breakpoints` [{id, addr, page?, condition?, hitCondition?, logMessage?}] | `breakpoints` [{id, verified, message?}] |
+| `setWatchpoints` | `watchpoints` [{id, addr, length, access: read/write/readWrite, condition?}] | `watchpoints` |
+| `setEventBreakpoints` | `events` [{id, kind, condition?, …}] – kind: interrupt, nmi, nextreg (`regs`), port (`mask`, `value`, `access`), scanline (`line`), frame, copper, dma, reset | `events` |
+| `key` | `scancode` (SDL), `down` | – |
+| `releaseKeys` | | – |
+| `joy` | `bits` (Kempston: R L D U F1 F2) | – |
+| `mouse` | `dx`, `dy`, `buttons` | – |
+| `audio` | `on` | |
+| `screen` | (pošli obraz znovu) | |
+| `stateSave` | `name`, `advance`? | – (chyby `notAtFrameBoundary`, `limit`) |
+| `stateRestore` | `name` | – (chyba `notFound`) |
+| `stateList` | | `names` [..] (v pořadí uložení) |
+| `stateExport` | `advance`? | `data` (base64), `size` (chyba `notAtFrameBoundary`) |
+| `stateImport` | `data` (base64) | – (chyba `incompatible`) |
+| `profilerStart` | | `active` |
+| `profilerStop` | | |
+| `profilerClear` | | (`active`, pokud běží) |
+| `profilerState` | | `active` |
+| `profilerData` | `format`? (`json` výchozí, `binary`) | `active`, `total`, `count`, `entries` [{page, offset, pc, t}] nebo `data` (base64) |
+| `quit` | | |
+
+Každý seznam breakpointů (`setBreakpoints`, `setWatchpoints`, `setEventBreakpoints`) nahrazuje
+předchozí seznam stejného druhu. Podmínky jsou v jazyce výrazů JNEXT (`script/expr_compiler.h`).
+
+### Hardware Nextu (panel „Next“, docs/next-views.md)
+
+`sprites`, `patternRam`, `palettes`, `copper`, `renderLayer` jen čtou a fungují za běhu i v pauze
+(za běhu mezi snímky).
+
+**`sprites`** – pořadí 0–127. `x`, `y` jsou 9bitové (0–511) v prostoru 320 × 256 včetně okraje
+(x 0 = levý okraj, y 0 = horní okraj; na obraze 640 × 256 je x zdvojené). Rozměr spritu je
+16 << `xScale` × 16 << `yScale` (scale 0–3 = 1×, 2×, 4×, 8×).
+- `pattern` je číslo vzoru, které hardware čte: u 8bitového spritu (`is4bit` false) N5:N0 (0–63),
+  vzor = 256 B od `pattern × 256`; u 4bitového N5:N0:N6 (0–127), vzor = 128 B od `pattern × 128`
+  (dva pixely v bajtu, horní nibble vlevo). Barva = paleta spritů [(`paletteOffset` << 4) + nibble]
+  u 4bitových, u 8bitových [(`paletteOffset` << 4) + bajt] & 0xFF.
+- Relativní sprity (`relative` true; rozšířený sprite s atributem 4 bity 7–6 = 01) jsou už
+  rozvedené ke kotvě: x, y, pattern, paletteOffset, zrcadlení, rotace, is4bit, zvětšení
+  a visible jsou výsledné hodnoty, jak je kreslí JNEXT (`SpriteEngine::resolve_relative`).
+  `anchor` = index kotvy (posledního nerelativního spritu před ním), u ostatních −1. JNEXT sám
+  (SpriteInfo) relativní sprity nerozvádí – x/y tam jsou syrové posuny – proto to dělá server.
+- `attrs` jsou syrové atributy (5 B na sprite: X, Y, paleta/zrcadlení/rotace/X8, viditelnost/
+  rozšíření/N5:N0, 4bit/N6/scale/Y8).
+- `clip` jsou syrové hodnoty NR 0x19 (x1, x2, y1, y2); jak se uplatní (bez spritů přes okraj
+  posun o 32, přes okraj s ořezem x × 2, přes okraj bez ořezu se nepoužije), záleží na NR 0x15.
+
+**`palettes`** – RGB333 = 0–511, bity 8–6 R, 5–3 G, 2–0 B (tak je drží i JNEXT, nic se nepřevádí).
+Priorita Layer 2 (NR 0x44 bit 7) v hodnotách není.
+
+**`copper`** – `mode` = NR 0x62 bity 7–6 (0 stop, 1 start od 0, 2 pokračuje od `pc`, 3 od 0 a znovu v každém snímku);
+`running` = mode ≠ 0. Slovo programu: bit 15 = 1 WAIT (bity 14–9 vodorovná pozice, 8–0 řádek),
+bit 15 = 0 MOVE (bity 14–8 registr, 7–0 hodnota; 0x0000 = NOOP). Každé slovo jde jako u16
+little endian (dolní bajt první).
+
+**`renderLayer`** – kreslí JNEXT (`Debugger::render_layer`): celý snímek, řádky 0–255 (vc = 255),
+s registry přehranými po řádcích jako při skládání obrazu (rozdělení rastru, Copper). Obraz má
+stejné souřadnice jako rámec obrazu (640 × 256 = 320 × 256 zdvojené vodorovně). Pixely R, G, B, A;
+alfa 0 = vrstva tam nic nekreslí (průhledné), `composite` a `background` jsou celé neprůhledné.
+Zastaví-li se stroj uprostřed snímku, řádky pod paprskem jsou kreslené s aktuálním stavem
+registrů (na obrazovce je tam ještě předchozí snímek). Odpověď má asi 870 kB.
+
+### Paprsek, zvuk, paměť (docs/next-views.md, „Doplňky“)
+
+`raster`, `soundState`, `pageUsage` jen čtou a fungují za běhu i v pauze (za běhu mezi snímky –
+paprsek tam stojí na začátku snímku, vc 0).
+
+**`raster`** (`Debugger::raster()`, `machine()`, `time()`):
+- `vc`, `hc` – syrové čítače VHDL (`RasterState::raw_vc`/`raw_hc`): 0 = levý horní roh celého
+  snímku včetně zatemnění, `hc` v tikách 7 MHz (Next 50 Hz: 456 na řádek, 311 řádků).
+- `x`, `y` – kde paprsek kreslí v prostoru 320 × 256 (= rámec obrazu 640 × 256 / 2 vodorovně,
+  stejný prostor jako sprity a `highlight`), přepočet jako při kreslení v JNEXT:
+  `x = 32 + phc` (sloupec v rámci 640 je `DISP_X 64 + 2·phc`, video/renderer.cpp; `phc` = 0 na
+  prvním pixelu papíru, záporné v levém okraji), `y = vc − vblank_top` (core/emulator.cpp, `fb_row`;
+  `vblank_top` = c_min_vactive − 32, u Nextu 50 Hz 32, takže papír začíná na y 32 a vc 287 je y 255).
+  Každá osa zvlášť je −1, když je mimo rámec (zatemnění, okraj, který obraz nezobrazuje) – `y`
+  tak platí i během řádkového zatemnění, kdy je `x` −1.
+- `frame` a `cycleInFrame` jako u `state` (cykly 28 MHz od začátku snímku, asi 4 × (vc × 456 + hc)),
+  `linesPerFrame` = `MachineInfo::lines` (Next 50 Hz 311, 48K 312).
+
+**`soundState`**:
+- `chips` – registry R0–R15 tří AY (`ay_registers(0..2)`), čísla 0–255.
+- `turbosound` – živý signál zapnutí TurboSoundu (NR 0x08 bit 1).
+- `ayMode` – `"AY"` / `"YM"` (`ay_mode()`, NR 0x06 bit 0), `"reset"`, když NR 0x06 bity 1–0 = 11
+  (všechny čipy drží v resetu; jen Next).
+- `dac` – 8bitové kanály A, B, C, D DAC (Soundrive; na ně míří i porty Covox a Specdrum; 0x80 =
+  ticho; A+B levý, C+D pravý kanál). `null`, když je DAC vypnutý (NR 0x08 bit 3) nebo ho stroj
+  nemá (48K/128K/+3/Pentagon). JNEXT hodnoty nevystavuje getterem, server je čte ze stavu `Dac`.
+
+**`pageUsage`** – `nonzero`[i] = počet nenulových bajtů (0–8192) v 8K stránce RAM i (číslování
+NR 0x50–0x57, 0–223), čteno přes `peek(MemSpace::page)`; stránka, kterou nejde přečíst, má −1.
+`rom` je vždy prázdné pole: ROM v tomto číslování neleží (u Nextu je v SRAM pod stránkou 0,
+u ostatních strojů zvláštní obraz). Vyřízení: server 1–2 ms (224 × 8 KB = 1,8 MB, nezávisle na
+obsahu), celé kolo s odpovědí v pauze kolem 5 ms, za běhu do 20 ms (čeká na konec snímku);
+Best Time i hello.
+
+### Magic breakpoint
+
+Instrukce `BREAK` z CSpectu (`DD 01`; sjasmplus ji s `--zxnext=cspect` zná jako `BREAK`, jinak
+`DB $DD,$01`) a `ED FF` (ZEsarUX) zastaví stroj, když je `magicBreakpoint` zapnutý (výchozí;
+`launch` ho nastaví i do konfigurace studeného startu, takže přežije `reset` a nahrání programu).
+Instrukce se provede jako dvoubajtový NOP (8 T) a stroj stojí **za ní** (PC = adresa BREAK + 2);
+`stopped` má `reason` magic a `pc` je adresa následující instrukce. Pokračuje se normálně
+(`continue`, kroky). Krok (`stepIn`/`stepOver`) přes BREAK hlásí také `reason` magic. Vypnutý
+(`magicBreakpoint` false) se `DD 01` chová jako na skutečném Nextu (prefix DD před `LD BC,nn`,
+spotřebuje další dva bajty).
+
+### Uložené stavy
+
+Celý stav stroje (paměť a podsystémy, u Nextu 2 154 296 B) jde uložit jen **na hranici snímku**.
+Běžící stroj na ní stojí vždy (příkazy se vyřizují mezi snímky). Stroj zastavený uprostřed snímku
+(breakpoint, krok) bez `advance` → `ok: false, error: "notAtFrameBoundary"`; s `advance: true` se
+dojede na konec snímku (breakpointy se při tom nehlásí) a server pošle `stopped` s `reason`
+frameBoundary (rozšíření obnoví registry, paměť, obraz). Totéž platí pro `stateExport`.
+
+- `stateSave` – záložka pod jménem; stejné jméno přepíše. Nejvýš 8 záložek (limit JNEXT na
+  klienta), deváté nové jméno → `error: "limit"`. Záložky žijí v paměti serveru (do konce
+  ladění), přežijí `reset` i nové `launch`.
+- `stateRestore` – neznámé jméno → `error: "notFound"`; jiný typ stroje → `refused_unavailable`.
+  Po obnovení stroj **stojí** a přijde `stopped` s `reason` restore (běžel-li, server ho nejdřív
+  zastaví; jiné zastavení se nehlásí). Obraz se překreslí až dalším snímkem.
+- `stateExport` / `stateImport` – syrové bajty `Emulator::save_state` (bez hlavičky, mezi verzemi
+  serveru nepřenosné). Import zkontroluje délku proti stavu tohoto stroje (jiný stroj →
+  `error: "incompatible"`, nic se nezmění), jinak se chová jako `stateRestore`.
+
+Obnovení nemění breakpointy, profiler ani nastavení serveru.
+
+### Profiler
+
+T-stavy CPU na fyzickou adresu (8K stránka + posun), `Emulator::profiler()` z JNEXT. Počítá každá
+provedená instrukce – za běhu, v krocích, při `runToEndOfFrame` i při posunu na hranici snímku –
+a to i HALT (každé opakování) a přijetí přerušení (připíše se instrukci, před kterou přišlo).
+Nepočítá se doba, kdy sběrnici drží DMA (CPU stojí; u Best Time asi 0,7 % snímku). V pauze se
+nic nepřičítá.
+
+- `profilerStart` – zapne (alokuje 32 MB, čítače nulové); běží-li, nic.
+- `profilerStop` – vypne a **data zahodí** (nejdřív si je stáhni přes `profilerData`).
+- `profilerClear` – vynuluje čítače, profiler běží dál.
+- Studený start (`reset` hard, `launch`) a nahrání programu čítače vynulují, profiler zůstane
+  zapnutý.
+- `profilerData` – jen nenulové položky, vzestupně podle fyzické adresy:
+  `page` 0–255, `offset` 0–8191 (v 8K stránce), `pc` (poslední logická adresa, ze které se tam
+  vykonávalo), `t` (T-stavy). `total` = součet `t`, `count` = počet položek. Neběží-li, `active`
+  false a prázdná data. S `format: "binary"` místo `entries` přijde `data` (base64), 16 B na
+  položku little endian: u8 page, u8 0, u16 offset, u16 pc, u16 0, u64 t. Best Time (asi 4 400
+  položek po 3 s závodu): JSON 197 kB, binárně 79 kB, vyřízení kolem 20 ms.
+
+## Události (JSON od serveru)
+
+| událost | obsah |
+| --- | --- |
+| `ready` | `version` – server je připravený |
+| `stopped` | `reason` (entry, breakpoint, step, pause, data breakpoint, goto, exception, event, magic, frameBoundary, restore), `eventKind` (jen u `reason` event: druh z `setEventBreakpoints` – interrupt, nmi, nextreg, port, …), `pc`, `ids` (breakpointy, které zastavily), `text` |
+| `continued` | |
+| `reset` | `hard` |
+| `output` | `text` – logpointy, výpisy backendu; u hlášek serveru navíc `key` a `args` (viz níže) |
+| `exited` | `code` |
+
+### Texty pro uživatele
+
+Server nic nepřekládá: `text` je vždy anglicky (s koncem řádku) a hlášky serveru mají vedle něj
+`key` a `args` (pole řetězců), podle kterých je rozšíření přeloží (`session.ts`, `SERVER_TEXTS`
+→ `l10n/session.json`). Neznámý `key` → rozšíření ukáže `text`. Logpointy a výpisy backendu
+(JNEXT) `key` nemají a jdou tak, jak jsou. Breakpoint na událost hlásí `reason` event a druh
+v `eventKind`; popisek důvodu (přeložený název filtru z panelu Breakpoints) dává rozšíření.
+
+| `key` | `args` | `text` |
+| --- | --- | --- |
+| `loadFailed` | cesta k programu | `Failed to load the program: …` |
+| `rewindFailed` | výsledek `resize_rewind_buffer`, `set_rewind_enabled` | `Cannot enable Step Back: … / …` |
+| `conditionError` | text podmínky, chyba za běhu | `Condition "…": …` |
+| `esxdosWritable` | složka esxDOS | `esxDOS works in the folder … with write access: the program's writes change files on disk immediately and Step Back cannot undo them.` |
+
+`esxdosWritable` je informace, ne chyba: přijde jednou za `launch`, když server bez SD karty
+zpřístupní programu jeho složku přes esxDOS se zápisem (nahrazuje varování JNEXT
+„--esxdos-stub-writable: …“, které chodilo při každém resetu a nahrání).
+
+**Potlačené výpisy.** Server propouští výpisy JNEXT (stderr, úroveň warn a výš; rozšíření je ukazuje
+v Debug Console) a řádky backendu (`output`) beze změny, kromě šumu, který při ladění přichází
+při každém startu a resetu:
+- `warm start: no SD image is mounted …` (error) – bez SD karty očekávané, ROM dává server sám;
+- `--esxdos-stub-writable: …` (warning) – místo něj `esxdosWritable` výše;
+- `MUTATE … by <klient serveru>` (`output`) – záznam backendu o změně, kterou udělal sám ladicí
+  server (reset, nahrání programu, zápis do paměti a registrů, obnovení stavu); řádky
+  s `FAILED` projdou.
+Ostatní chyby a varování (např. `--esxdos-stub-root: …`, odmítnutá SD karta) jdou dál.
+
+Chyby v odpovědích (`error`) a `message` u neověřených breakpointů jsou anglické kódy a hlášky
+backendu (`dbg::result_name`, překladač výrazů JNEXT) a nepřekládají se.

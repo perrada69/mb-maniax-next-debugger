@@ -1,0 +1,289 @@
+/* MB Maniax Next Debugger – manuál (společná sazba pro manual.cs.html a manual.en.html).
+   Tisková sazba A4 pro Edge/Chromium (--print-to-pdf), čitelné i v prohlížeči. */
+
+:root {
+    --ink: #1d1f24;
+    --muted: #5d6470;
+    --rule: #c9ced6;
+    --accent: #b8432f;       /* červená z ikony */
+    --accent2: #c48a12;      /* žlutá */
+    --accent3: #3f7d47;      /* zelená */
+    --code-bg: #f3f4f6;
+    --note-bg: #eef4fb;
+    --note-rule: #4a7fb5;
+    --tip-bg: #eef7ef;
+    --tip-rule: #3f7d47;
+    --warn-bg: #fdf3e6;
+    --warn-rule: #c48a12;
+    --th-bg: #e9ecf0;
+}
+
+@page {
+    size: A4;
+    margin: 20mm 18mm 20mm 20mm;
+    /* text záhlaví (podle jazyka) doplňuje <style> v manual.<jazyk>.html */
+    @top-right {
+        font: 8pt "Segoe UI", sans-serif;
+        color: #8a909a;
+        vertical-align: bottom;
+        padding-bottom: 3mm;
+    }
+    @bottom-center {
+        content: counter(page);
+        font: 9pt "Segoe UI", sans-serif;
+        color: #5d6470;
+        vertical-align: top;
+        padding-top: 4mm;
+    }
+}
+@page :first {
+    @top-right { content: none; }
+    @bottom-center { content: none; }
+}
+
+html { background: #fff; }
+body {
+    margin: 0;
+    color: var(--ink);
+    font-family: Cambria, "Cambria Math", Georgia, serif;
+    font-size: 10.5pt;
+    line-height: 1.42;
+    hyphens: auto;
+    text-rendering: optimizeLegibility;
+}
+@media screen {
+    body { max-width: 180mm; margin: 0 auto; padding: 10mm 12mm 30mm; }
+    .title-page { min-height: 240mm; }
+}
+
+/* ---------------------------------------------------------------- titulní strana */
+.title-page {
+    break-after: page;
+    height: 255mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: "Segoe UI", sans-serif;
+}
+.title-page .stripes { display: flex; gap: 4mm; margin-top: 25mm; }
+.title-page .stripes span { display: block; width: 9mm; height: 46mm; transform: skewX(-20deg); }
+.title-page .stripes span:nth-child(1) { background: var(--accent); }
+.title-page .stripes span:nth-child(2) { background: var(--accent2); }
+.title-page .stripes span:nth-child(3) { background: var(--accent3); }
+.title-page .stripes span:nth-child(4) { background: #2f6fa8; }
+.title-page h1 {
+    font-family: "Segoe UI", sans-serif;
+    font-weight: 600;
+    font-size: 30pt;
+    line-height: 1.12;
+    margin: 14mm 0 4mm;
+    letter-spacing: -0.3pt;
+    break-before: avoid;
+}
+.title-page .subtitle { font-size: 16pt; color: var(--muted); margin: 0 0 10mm; font-weight: 300; }
+.title-page .lead { font-family: Cambria, serif; font-size: 11.5pt; max-width: 135mm; color: #333a45; }
+.title-page .meta { font-size: 9.5pt; color: var(--muted); border-top: 0.6pt solid var(--rule); padding-top: 4mm; }
+.title-page .meta b { color: var(--ink); font-weight: 600; }
+
+/* ---------------------------------------------------------------- obsah */
+nav.toc { break-after: page; font-family: "Segoe UI", sans-serif; }
+nav.toc h2 { counter-increment: none; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; }
+nav.toc li { margin: 0; }
+nav.toc a { color: inherit; text-decoration: none; display: flex; align-items: baseline; gap: 2mm; }
+nav.toc .l2 > a { font-weight: 600; font-size: 10pt; margin-top: 1.8mm; }
+nav.toc .l3 > a { font-size: 9pt; line-height: 1.28; padding-left: 8mm; color: #333a45; }
+nav.toc .num { min-width: 8mm; display: inline-block; }
+nav.toc .l3 .num { min-width: 10mm; }
+nav.toc .dots { flex: 1; border-bottom: 0.7pt dotted #9aa1ab; transform: translateY(-1mm); }
+nav.toc .pg { min-width: 7mm; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------- nadpisy */
+h1, h2, h3, h4 {
+    font-family: "Segoe UI", sans-serif;
+    color: #15171b;
+    break-after: avoid;
+    page-break-after: avoid;
+    break-inside: avoid;
+}
+h2 {
+    font-size: 19pt;
+    font-weight: 600;
+    margin: 0 0 5mm;
+    padding-bottom: 2mm;
+    border-bottom: 1.2pt solid var(--accent);
+    break-before: page;
+}
+h2 .num { color: var(--accent); margin-right: 2mm; }
+h3 { font-size: 13pt; font-weight: 600; margin: 7mm 0 2mm; }
+h3 .num { color: var(--muted); margin-right: 1.5mm; font-weight: 400; }
+h4 { font-size: 10.5pt; font-weight: 600; margin: 5mm 0 1.5mm; }
+/* nadpis + první odstavec drží spolu */
+h2 + *, h3 + *, h4 + * { break-before: avoid; }
+
+p { margin: 0 0 2.4mm; orphans: 3; widows: 3; }
+ul, ol { margin: 0 0 2.6mm; padding-left: 6mm; }
+li { margin: 0 0 1mm; }
+li > ul, li > ol { margin-top: 1mm; }
+strong, b { font-weight: 700; }
+a { color: #2b5f93; text-decoration: none; }
+
+/* Prvky rozhraní: tlačítka, názvy panelů, příkazy */
+.ui {
+    font-family: "Segoe UI", sans-serif;
+    font-size: 0.92em;
+    font-weight: 600;
+    color: #1f3f63;
+    white-space: nowrap;
+}
+.cmd { font-family: "Segoe UI", sans-serif; font-size: 0.92em; font-weight: 600; color: #6b2a1f; }
+kbd {
+    font-family: "Segoe UI", sans-serif;
+    font-size: 0.82em;
+    font-weight: 600;
+    padding: 0.2mm 1.4mm;
+    border: 0.6pt solid #a9b0ba;
+    border-bottom-width: 1.4pt;
+    border-radius: 1.2mm;
+    background: #fafbfc;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- kód */
+code, pre, .mono { font-family: Consolas, "Courier New", monospace; }
+code { font-size: 0.9em; background: var(--code-bg); padding: 0 0.5mm; border-radius: 0.8mm; }
+pre {
+    font-size: 8.6pt;
+    line-height: 1.38;
+    background: var(--code-bg);
+    border-left: 2pt solid #9aa5b5;
+    padding: 2.2mm 3mm;
+    margin: 1mm 0 3mm;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    hyphens: none;
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+pre .c { color: #6a737d; }          /* komentář */
+pre .k { color: #8a2c1c; }          /* klíčové slovo */
+
+/* ---------------------------------------------------------------- tabulky */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5mm 0 4mm;
+    font-size: 9.2pt;
+    line-height: 1.3;
+    hyphens: none;
+}
+thead { display: table-header-group; }
+table { break-inside: avoid; }   /* krátké tabulky celé na jedné straně; dlouhé se stejně zalomí */
+tr { break-inside: avoid; }
+th, td { border: 0.5pt solid var(--rule); padding: 1.2mm 1.8mm; vertical-align: top; text-align: left; }
+th { background: var(--th-bg); font-family: "Segoe UI", sans-serif; font-weight: 600; font-size: 8.8pt; }
+td code { white-space: nowrap; }
+td.wrap code { white-space: normal; }
+table.compact td, table.compact th { padding: 0.8mm 1.6mm; }
+table.keys td:first-child { white-space: nowrap; width: 34mm; }
+table.ref td:first-child { white-space: nowrap; }
+caption { caption-side: top; text-align: left; font-family: "Segoe UI", sans-serif; font-size: 9pt; color: var(--muted); padding-bottom: 1mm; }
+
+/* ---------------------------------------------------------------- rámečky */
+.note, .tip, .warn {
+    border-left: 3pt solid var(--note-rule);
+    background: var(--note-bg);
+    padding: 2mm 3.5mm;
+    margin: 2mm 0 3.5mm;
+    break-inside: avoid;
+    font-size: 9.8pt;
+}
+.tip { border-color: var(--tip-rule); background: var(--tip-bg); }
+.warn { border-color: var(--warn-rule); background: var(--warn-bg); }
+.note > :last-child, .tip > :last-child, .warn > :last-child { margin-bottom: 0; }
+.note::before, .tip::before, .warn::before {
+    display: block;
+    font-family: "Segoe UI", sans-serif;
+    font-weight: 700;
+    font-size: 8.4pt;
+    letter-spacing: 0.5pt;
+    text-transform: uppercase;
+    margin-bottom: 0.8mm;
+}
+html:lang(cs) .note::before { content: "Poznámka"; color: var(--note-rule); }
+html:lang(cs) .tip::before { content: "Tip"; color: var(--tip-rule); }
+html:lang(cs) .warn::before { content: "Pozor"; color: #9a6a06; }
+html:lang(en) .note::before { content: "Note"; color: var(--note-rule); }
+html:lang(en) .tip::before { content: "Tip"; color: var(--tip-rule); }
+html:lang(en) .warn::before { content: "Caution"; color: #9a6a06; }
+
+/* ---------------------------------------------------------------- obrázky */
+figure.shot {
+    margin: 2mm 0 5mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    text-align: center;
+}
+figure.shot img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 125mm;
+    border: 0.6pt solid #b9bfc8;
+    box-shadow: 0 0.6mm 1.6mm rgba(0, 0, 0, 0.12);
+}
+figure.shot.small img { max-width: 70%; max-height: 90mm; }
+figure.shot.half img { max-width: 85%; max-height: 95mm; }
+figure.shot .ph { display: none; }
+figure.shot.missing img { display: none; }
+figure.shot.missing .ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 52mm;
+    border: 0.8pt dashed #9aa1ab;
+    background: repeating-linear-gradient(45deg, #fafbfc 0 3mm, #f1f3f5 3mm 6mm);
+    color: var(--muted);
+    font-family: "Segoe UI", sans-serif;
+    font-size: 9pt;
+}
+figure.shot.missing.small .ph { width: 70%; margin: 0 auto; }
+figure.shot .ph code { background: none; font-size: 8.5pt; margin-top: 1mm; }
+figcaption {
+    font-family: "Segoe UI", sans-serif;
+    font-size: 8.8pt;
+    color: #3d434d;
+    margin-top: 2mm;
+    text-align: left;
+    line-height: 1.35;
+}
+figcaption .fignum { font-weight: 700; color: var(--ink); margin-right: 1.5mm; }
+
+/* Legenda k přehledovému snímku */
+ol.legend { padding-left: 0; list-style: none; counter-reset: lg; font-size: 9.6pt; }
+ol.legend > li { counter-increment: lg; padding-left: 8mm; position: relative; margin-bottom: 1.4mm; }
+ol.legend > li::before {
+    content: counter(lg);
+    position: absolute;
+    left: 0;
+    top: 0.2mm;
+    width: 5mm;
+    height: 5mm;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font: 700 8pt/5mm "Segoe UI", sans-serif;
+    text-align: center;
+}
+
+/* Kroky postupu */
+ol.steps > li { margin-bottom: 1.8mm; }
+ol.steps > li::marker { font-family: "Segoe UI", sans-serif; font-weight: 700; color: var(--accent); }
+
+dl { margin: 0 0 3mm; }
+dt { font-family: "Segoe UI", sans-serif; font-weight: 600; font-size: 9.8pt; margin-top: 2mm; break-after: avoid; }
+dd { margin: 0.5mm 0 0 6mm; }
+
+.keep { break-inside: avoid; }
+.muted { color: var(--muted); }
+.small { font-size: 9pt; }

@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "mbx-next",
+            "request": "launch",
+            "name": "Ladit features.nex",
+            "program": "${workspaceFolder}/features.nex",
+            "sld": "${workspaceFolder}/features.sld",
+            "stopOnEntry": false,
+            "preLaunchTask": "sjasmplus"
+        }
+    ]
+}

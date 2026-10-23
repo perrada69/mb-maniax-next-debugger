@@ -1,0 +1,145 @@
+{
+    "en": {
+        "reload.notDebugging": "No MB Maniax Next debug session is running.",
+        "reload.busy": "Rebuild and reload is already in progress.",
+        "reload.taskNotFound": "Build task \"{0}\" (preLaunchTask) not found. The program was not reloaded.",
+        "reload.building": "Building ({0})…",
+        "reload.buildFailed": "Build failed (task \"{0}\", exit code {1}). The program was not reloaded.",
+        "reload.buildFailedError": "Build task \"{0}\" could not run: {1}",
+        "reload.loading": "Reloading the program…",
+        "reload.failed": "Reload failed: {0}",
+        "reload.done": "Program rebuilt and reloaded"
+    },
+    "cs": {
+        "reload.notDebugging": "Neběží žádné ladění MB Maniax Next.",
+        "reload.busy": "Překlad a nové nahrání už probíhá.",
+        "reload.taskNotFound": "Úloha překladu „{0}“ (preLaunchTask) nenalezena. Program se znovu nenahrál.",
+        "reload.building": "Překlad ({0})…",
+        "reload.buildFailed": "Překlad selhal (úloha „{0}“, návratový kód {1}). Program se znovu nenahrál.",
+        "reload.buildFailedError": "Úlohu překladu „{0}“ nelze spustit: {1}",
+        "reload.loading": "Nahrávám program znovu…",
+        "reload.failed": "Nové nahrání selhalo: {0}",
+        "reload.done": "Program přeložen a nahrán znovu"
+    },
+    "sk": {
+        "reload.notDebugging": "Nebeží žiadne ladenie MB Maniax Next.",
+        "reload.busy": "Preklad a nové nahratie už prebieha.",
+        "reload.taskNotFound": "Úloha prekladu „{0}“ (preLaunchTask) sa nenašla. Program sa znova nenahral.",
+        "reload.building": "Preklad ({0})…",
+        "reload.buildFailed": "Preklad zlyhal (úloha „{0}“, návratový kód {1}). Program sa znova nenahral.",
+        "reload.buildFailedError": "Úlohu prekladu „{0}“ nemožno spustiť: {1}",
+        "reload.loading": "Nahrávam program znova…",
+        "reload.failed": "Nové nahratie zlyhalo: {0}",
+        "reload.done": "Program preložený a nahraný znova"
+    },
+    "es": {
+        "reload.notDebugging": "No hay ninguna sesión de depuración de MB Maniax Next en ejecución.",
+        "reload.busy": "Ya se está recompilando y recargando.",
+        "reload.taskNotFound": "No se encontró la tarea de compilación \"{0}\" (preLaunchTask). El programa no se ha recargado.",
+        "reload.building": "Compilando ({0})…",
+        "reload.buildFailed": "Error de compilación (tarea \"{0}\", código de salida {1}). El programa no se ha recargado.",
+        "reload.buildFailedError": "No se pudo ejecutar la tarea de compilación \"{0}\": {1}",
+        "reload.loading": "Recargando el programa…",
+        "reload.failed": "Error al recargar: {0}",
+        "reload.done": "Programa recompilado y recargado"
+    },
+    "de": {
+        "reload.notDebugging": "Es läuft keine MB Maniax Next-Debugsitzung.",
+        "reload.busy": "Neu erstellen und neu laden läuft bereits.",
+        "reload.taskNotFound": "Buildtask „{0}“ (preLaunchTask) nicht gefunden. Das Programm wurde nicht neu geladen.",
+        "reload.building": "Erstellen ({0})…",
+        "reload.buildFailed": "Build fehlgeschlagen (Task „{0}“, Exitcode {1}). Das Programm wurde nicht neu geladen.",
+        "reload.buildFailedError": "Buildtask „{0}“ konnte nicht ausgeführt werden: {1}",
+        "reload.loading": "Programm wird neu geladen…",
+        "reload.failed": "Neuladen fehlgeschlagen: {0}",
+        "reload.done": "Programm neu erstellt und neu geladen"
+    },
+    "fr": {
+        "reload.notDebugging": "Aucune session de débogage MB Maniax Next n'est en cours.",
+        "reload.busy": "Recompilation et rechargement déjà en cours.",
+        "reload.taskNotFound": "Tâche de build « {0} » (preLaunchTask) introuvable. Le programme n'a pas été rechargé.",
+        "reload.building": "Compilation ({0})…",
+        "reload.buildFailed": "Échec de la compilation (tâche « {0} », code de sortie {1}). Le programme n'a pas été rechargé.",
+        "reload.buildFailedError": "Impossible d'exécuter la tâche de build « {0} » : {1}",
+        "reload.loading": "Rechargement du programme…",
+        "reload.failed": "Échec du rechargement : {0}",
+        "reload.done": "Programme recompilé et rechargé"
+    },
+    "it": {
+        "reload.notDebugging": "Nessuna sessione di debug MB Maniax Next in esecuzione.",
+        "reload.busy": "Ricompilazione e ricaricamento già in corso.",
+        "reload.taskNotFound": "Attività di compilazione \"{0}\" (preLaunchTask) non trovata. Il programma non è stato ricaricato.",
+        "reload.building": "Compilazione ({0})…",
+        "reload.buildFailed": "Compilazione non riuscita (attività \"{0}\", codice di uscita {1}). Il programma non è stato ricaricato.",
+        "reload.buildFailedError": "Impossibile eseguire l'attività di compilazione \"{0}\": {1}",
+        "reload.loading": "Ricaricamento del programma…",
+        "reload.failed": "Ricaricamento non riuscito: {0}",
+        "reload.done": "Programma ricompilato e ricaricato"
+    },
+    "pl": {
+        "reload.notDebugging": "Nie działa żadna sesja debugowania MB Maniax Next.",
+        "reload.busy": "Kompilacja i ponowne ładowanie już trwa.",
+        "reload.taskNotFound": "Nie znaleziono zadania kompilacji „{0}” (preLaunchTask). Program nie został ponownie załadowany.",
+        "reload.building": "Kompilacja ({0})…",
+        "reload.buildFailed": "Kompilacja nie powiodła się (zadanie „{0}”, kod wyjścia {1}). Program nie został ponownie załadowany.",
+        "reload.buildFailedError": "Nie można uruchomić zadania kompilacji „{0}”: {1}",
+        "reload.loading": "Ponowne ładowanie programu…",
+        "reload.failed": "Ponowne ładowanie nie powiodło się: {0}",
+        "reload.done": "Program skompilowany i załadowany ponownie"
+    },
+    "pt-br": {
+        "reload.notDebugging": "Nenhuma sessão de depuração do MB Maniax Next em execução.",
+        "reload.busy": "A recompilação e o recarregamento já estão em andamento.",
+        "reload.taskNotFound": "Tarefa de build \"{0}\" (preLaunchTask) não encontrada. O programa não foi recarregado.",
+        "reload.building": "Compilando ({0})…",
+        "reload.buildFailed": "Falha no build (tarefa \"{0}\", código de saída {1}). O programa não foi recarregado.",
+        "reload.buildFailedError": "Não foi possível executar a tarefa de build \"{0}\": {1}",
+        "reload.loading": "Recarregando o programa…",
+        "reload.failed": "Falha ao recarregar: {0}",
+        "reload.done": "Programa recompilado e recarregado"
+    },
+    "ru": {
+        "reload.notDebugging": "Сеанс отладки MB Maniax Next не запущен.",
+        "reload.busy": "Пересборка и перезагрузка уже выполняются.",
+        "reload.taskNotFound": "Задача сборки «{0}» (preLaunchTask) не найдена. Программа не перезагружена.",
+        "reload.building": "Сборка ({0})…",
+        "reload.buildFailed": "Ошибка сборки (задача «{0}», код выхода {1}). Программа не перезагружена.",
+        "reload.buildFailedError": "Не удалось запустить задачу сборки «{0}»: {1}",
+        "reload.loading": "Перезагрузка программы…",
+        "reload.failed": "Ошибка перезагрузки: {0}",
+        "reload.done": "Программа пересобрана и перезагружена"
+    },
+    "uk": {
+        "reload.notDebugging": "Сеанс налагодження MB Maniax Next не запущено.",
+        "reload.busy": "Перезбирання й перезавантаження вже тривають.",
+        "reload.taskNotFound": "Завдання збирання «{0}» (preLaunchTask) не знайдено. Програму не перезавантажено.",
+        "reload.building": "Збирання ({0})…",
+        "reload.buildFailed": "Помилка збирання (завдання «{0}», код виходу {1}). Програму не перезавантажено.",
+        "reload.buildFailedError": "Не вдалося запустити завдання збирання «{0}»: {1}",
+        "reload.loading": "Перезавантаження програми…",
+        "reload.failed": "Помилка перезавантаження: {0}",
+        "reload.done": "Програму перезібрано й перезавантажено"
+    },
+    "ja": {
+        "reload.notDebugging": "MB Maniax Next のデバッグ セッションは実行されていません。",
+        "reload.busy": "再ビルドと再読み込みは既に実行中です。",
+        "reload.taskNotFound": "ビルド タスク \"{0}\" (preLaunchTask) が見つかりません。プログラムは再読み込みされませんでした。",
+        "reload.building": "ビルド中 ({0})…",
+        "reload.buildFailed": "ビルドに失敗しました (タスク \"{0}\"、終了コード {1})。プログラムは再読み込みされませんでした。",
+        "reload.buildFailedError": "ビルド タスク \"{0}\" を実行できませんでした: {1}",
+        "reload.loading": "プログラムを再読み込みしています…",
+        "reload.failed": "再読み込みに失敗しました: {0}",
+        "reload.done": "プログラムを再ビルドして再読み込みしました"
+    },
+    "zh-cn": {
+        "reload.notDebugging": "没有正在运行的 MB Maniax Next 调试会话。",
+        "reload.busy": "已在重新生成并重新加载。",
+        "reload.taskNotFound": "找不到生成任务“{0}”(preLaunchTask)。程序未重新加载。",
+        "reload.building": "正在生成 ({0})…",
+        "reload.buildFailed": "生成失败（任务“{0}”，退出代码 {1}）。程序未重新加载。",
+        "reload.buildFailedError": "无法运行生成任务“{0}”：{1}",
+        "reload.loading": "正在重新加载程序…",
+        "reload.failed": "重新加载失败：{0}",
+        "reload.done": "已重新生成并重新加载程序"
+    }
+}

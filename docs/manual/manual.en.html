@@ -1,0 +1,1602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MB Maniax Next Debugger – User Manual</title>
+<link rel="stylesheet" href="manual.css">
+<style>
+@page { @top-right { content: "MB Maniax Next Debugger · User Manual"; } }
+@page :first { @top-right { content: none; } }
+</style>
+</head>
+<body>
+
+<section class="title-page">
+  <div>
+    <div class="stripes"><span></span><span></span><span></span><span></span></div>
+    <h1>MB Maniax <br>Next Debugger</h1>
+    <p class="subtitle">User Manual</p>
+    <p class="lead">A ZX Spectrum Next emulator and debugger right inside Visual Studio Code. A program
+    built with sjasmplus runs in an accurate emulator and you debug it in its source: breakpoints,
+    stepping, registers, memory, the emulator screen and views of the Next hardware – sprites,
+    palettes, tilemap, Copper and more.</p>
+  </div>
+  <div class="meta">
+    <b>Extension version 0.1.0</b> · October 2026<br>
+    MB Maniax · <a href="https://mb-maniax.cz">mb-maniax.cz</a><br>
+    The extension is licensed under the GNU GPL 3 or later. JNEXT emulator core © Jorge González
+    Villalonga (GPL 3). ZX Spectrum 48K ROM © Amstrad, who allow it to be distributed with emulators.
+  </div>
+</section>
+
+<nav class="toc">
+  <h2 class="nonum" id="toc">Contents</h2>
+</nav>
+
+<main>
+
+<!-- ================================================================== 1 -->
+<h2 id="uvod">Introduction</h2>
+
+<p><b>MB Maniax Next Debugger</b> is an extension for Visual Studio Code (VS Code from here on) that
+adds a ZX Spectrum Next emulator and a debugger to the editor. A program built with
+<b>sjasmplus</b> runs in an emulator based on the <a href="https://github.com/jorgegv/jnext">JNEXT</a>
+core and you debug it right in its source code: stop it on a line, inspect registers and memory,
+step instruction by instruction – with the emulator screen next to your code.</p>
+
+<p>If you are used to CSpect or DeZog, much of this will feel familiar: the CSpect
+<code>BREAK</code> instruction works, and the special comments <code>WPMEM</code>,
+<code>LOGPOINT</code> and <code>ASSERTION</code> use the same syntax as DeZog. The difference is that
+there is nothing else to install or start – the emulator is part of the extension.</p>
+
+<h3 id="co-umi">Features</h3>
+<ul>
+  <li><b>Source breakpoints</b> based on the sjasmplus debug information (the SLD file), including
+  the Next's 8K pages – a breakpoint in paged code stops only when its page is mapped in.</li>
+  <li><b>Conditional breakpoints with no slowdown</b> – the condition (<code>A == 5</code>,
+  <code>mem[counter] == 3</code>, <code>nextreg[$50] == 10</code>, <code>FRAME &gt; 100</code> …) is
+  evaluated by the emulator itself. Labels from the source can be used directly.</li>
+  <li><b>Hit counts</b> (<code>3</code>, <code>&gt;= 10</code>, <code>% 4</code>) and
+  <b>logpoints</b>, which print a message with values instead of stopping.</li>
+  <li><b>Machine event breakpoints</b>: IM 1 / IM 2 interrupts, NMI, NEXTREG writes, port
+  input/output, Copper, DMA, reset.</li>
+  <li><b>Watchpoints</b> – stop on a memory read or write.</li>
+  <li><b>Stepping</b> (Step Into / Over / Out), call stack with labels, registers and flags
+  (editable), MMU pages, disassembly, memory viewer and editor, expressions in the Watch view and
+  on hover.</li>
+  <li><b>Step Back</b> – the emulator remembers the last 10 seconds.</li>
+  <li><b>Emulator screen</b> in a VS Code panel, with sound and keyboard.</li>
+  <li><b>Next panel</b> with views of the hardware: sprites, Pattern RAM, palettes, layers,
+  Layer 2, tilemap, the Copper program and all NEXTREG registers.</li>
+  <li><b>Saved states</b> of the whole machine, and export to a file.</li>
+  <li><b>Profiler</b> showing how many T-states the program spent on every source line.</li>
+</ul>
+
+<h3 id="pozadavky">Requirements</h3>
+<ul>
+  <li><b>Windows (x64)</b> – the extension package <code>mbx-next-debugger-win32-x64-0.1.0.vsix</code>
+  contains the debug server for 64-bit Windows.</li>
+  <li><b>Visual Studio Code 1.100 or newer</b>.</li>
+  <li><b>sjasmplus</b> – the assembler you build the program with. It should be on the
+  <code>PATH</code>, so that the command <code>sjasmplus</code> works in a terminal.</li>
+  <li>No SD card and no Next ROMs are needed: the extension has its own ZX Spectrum 48K ROM and
+  starts the program directly. An SD card with ROMs is only needed to emulate machines other than
+  the Next (see <a class="secref" href="#launch"></a>).</li>
+</ul>
+
+<h3 id="konvence">How to read this manual</h3>
+<p>The manual does not assume you know VS Code. Whenever a part of the window is mentioned, it says
+where to find it and which keyboard shortcut gets you there. Conventions:</p>
+<ul>
+  <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> – a keyboard shortcut (press the keys together).</li>
+  <li><span class="ui">Run and Debug</span> – the name of a part of the VS Code window, a button or a
+  tab, exactly as it appears on screen.</li>
+  <li><span class="cmd">MB Maniax: Save State…</span> – a command run from the Command Palette
+  (<a class="secref" href="#paleta"></a>).</li>
+  <li><code>mem[counter]</code> – text you type (an expression, code, a setting).</li>
+</ul>
+<div class="note">
+<p><b>Language.</b> The manual assumes VS Code itself is in English (the default). Texts of the
+extension – the emulator screen, the Next panel, messages, the groups in the Variables view – follow
+the language of the extension (<a class="secref" href="#jazyk"></a>). <b>Command names</b> and the
+descriptions in Settings follow the VS Code display language instead.</p>
+</div>
+
+<!-- ================================================================== 2 -->
+<h2 id="instalace">Installation</h2>
+
+<p>The extension comes as a single file with the <code>.vsix</code> extension (for example
+<code>mbx-next-debugger-win32-x64-0.1.0.vsix</code>). It is a package VS Code installs by
+itself – do not unpack it.</p>
+
+<h3 id="instalace-vsix">Installing from a .vsix file</h3>
+<ol class="steps">
+  <li>Start VS Code.</li>
+  <li>Open the Extensions view: in the narrow vertical strip of icons on the far left
+  (the <span class="ui">Activity Bar</span>) click the icon with four squares, or press
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>. The <span class="ui">Extensions</span> list opens on
+  the left.</li>
+  <li>In the header of the list (top right, above the search box) click the three dots
+  <span class="ui">…</span> (<span class="ui">Views and More Actions</span>) and choose
+  <span class="ui">Install from VSIX…</span>.</li>
+  <li>Select the <code>.vsix</code> file in the dialog and confirm with <span class="ui">Install</span>.
+  A notification in the bottom right corner reports when installation is complete.</li>
+</ol>
+<p>The same is available from the Command Palette: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>,
+type <code>vsix</code> and choose <span class="cmd">Extensions: Install from VSIX…</span>. From the
+command line:</p>
+<pre><code>code --install-extension mbx-next-debugger-win32-x64-0.1.0.vsix</code></pre>
+
+<h3 id="aktualizace">Updating to a new version</h3>
+<p>A new version is installed exactly the same way – install the new <code>.vsix</code>; there is no
+need to uninstall the old one first. If a debug session is running, stop it first
+(<kbd>Shift</kbd>+<kbd>F5</kbd>). After installation VS Code usually offers a button to restart
+extensions; if it does not, or you are not sure the new version is running, reload the window
+(next section).</p>
+
+<h3 id="reload">Reloading the window (Developer: Reload Window)</h3>
+<p>After installing or updating the extension, the safest step is to reload the window – VS Code
+reloads all extensions, while open files and the window layout stay as they are:</p>
+<ol class="steps">
+  <li>Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> (or <kbd>F1</kbd>). The Command Palette input
+  box opens at the top centre of the window.</li>
+  <li>Type <code>reload</code>.</li>
+  <li>Choose <span class="cmd">Developer: Reload Window</span> and press <kbd>Enter</kbd>.</li>
+</ol>
+<p>The window disappears for a moment and is drawn again. Closing and restarting VS Code works
+too.</p>
+
+<h3 id="kontrola">Checking the installation</h3>
+<p>In the <span class="ui">Extensions</span> list (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd>) type
+<code>MB Maniax</code> into the search box. <b>MB Maniax Next Debugger</b> with its version number
+should be listed among the installed extensions (<span class="ui">Installed</span>). Click it to open
+its description page.</p>
+
+<h3 id="jazyk">Extension language</h3>
+<p>The extension is available in English, Czech, Slovak, Spanish, German, French, Italian, Polish,
+Portuguese (Brazil), Russian, Ukrainian, Japanese and Simplified Chinese. The language is chosen by
+the <code>mbxNext.language</code> setting:</p>
+<ul>
+  <li><code>auto</code> (default, shown as <span class="ui">Automatic</span>) – the VS Code display
+  language if it is not English; otherwise the Windows language; otherwise English. On, say, Czech
+  Windows with English VS Code the extension therefore speaks Czech.</li>
+  <li>or a fixed language: <code>en</code>, <code>cs</code>, <code>sk</code>, <code>es</code>,
+  <code>de</code>, <code>fr</code>, <code>it</code>, <code>pl</code>, <code>pt-br</code>, <code>ru</code>,
+  <code>uk</code>, <code>ja</code>, <code>zh-cn</code>.</li>
+</ul>
+<p>To change it:</p>
+<ol class="steps">
+  <li>Open Settings: <kbd>Ctrl</kbd>+<kbd>,</kbd> (comma), or the menu
+  <span class="ui">File › Preferences › Settings</span>.</li>
+  <li>Type <code>mbxNext</code> into the search box at the top.</li>
+  <li>Choose the language in the <span class="ui">Mbx Next: Language</span> drop-down.</li>
+</ol>
+<figure class="shot" id="fig-settings">
+  <img src="img/en/settings-language.png" alt="">
+  <figcaption>VS Code Settings filtered to <code>mbxNext</code>: the extension language and the path
+  to the debug server.</figcaption>
+</figure>
+<p>A change takes effect with the next debug session; panels that are open (emulator screen, Next
+panel) are rebuilt in the new language right away. Command names and the descriptions in Settings
+and launch.json follow the VS Code display language, not this setting.</p>
+
+<!-- ================================================================== 3 -->
+<h2 id="orientace">Finding your way around VS Code</h2>
+
+<p>This chapter is for those who are new to VS Code. It describes the parts of the window you will
+meet while debugging and where to find them. Figure <a class="figref" href="#fig-overview"></a> shows the
+window while debugging the example program.</p>
+
+<figure class="shot" id="fig-overview">
+  <img src="img/en/debug-overview.png" alt="">
+  <figcaption>The VS Code window while debugging: the program is stopped at a breakpoint (yellow line),
+  the debug views are on the left, the debug toolbar at the top, the emulator screen on the right.</figcaption>
+</figure>
+
+<ol class="legend">
+  <li><b>Activity Bar</b> – the narrow vertical strip of icons on the far left. It switches what the
+  side bar shows: files (<span class="ui">Explorer</span>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>),
+  search, extensions and, above all, <span class="ui">Run and Debug</span> (the “play” triangle with
+  a bug, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>).</li>
+  <li><b>Run and Debug side bar</b> – to the right of the Activity Bar. At the top is the green
+  ▶ button with the name of the debug configuration (starts debugging), below it the
+  <span class="ui">Variables</span>, <span class="ui">Watch</span>, <span class="ui">Call Stack</span>
+  and <span class="ui">Breakpoints</span> sections. Click a section header to expand or collapse it.</li>
+  <li><b>Debug toolbar</b> – a floating row of buttons at the top centre of the window; it appears
+  only while debugging.</li>
+  <li><b>Editor</b> – in the middle. Left of the line numbers is a narrow margin (the gutter) where
+  you click to set breakpoints. The line the program is stopped on is highlighted in yellow with a
+  yellow arrow in the margin.</li>
+  <li><b>ZX Spectrum Next panel</b> – the emulator screen; it opens to the right of the editor when
+  debugging starts (<a class="secref" href="#obrazovka"></a>).</li>
+  <li><b>Bottom panel</b> (Panel) – tabs <span class="ui">Problems</span>, <span class="ui">Output</span>,
+  <span class="ui">Debug Console</span>, <span class="ui">Terminal</span>. Show and hide it with
+  <kbd>Ctrl</kbd>+<kbd>J</kbd>.</li>
+  <li><b>Status Bar</b> – at the very bottom. It changes colour while debugging (usually to orange).
+  On its right side is, among other things, the language of the open file (for example
+  <span class="ui">Plain Text</span>) – chapter <a class="secref" href="#problemy"></a> comes back to
+  it.</li>
+</ol>
+
+<h3 id="run-debug">Run and Debug</h3>
+<p>Start debugging with <kbd>F5</kbd>, or with the green ▶ button at the top of the
+<span class="ui">Run and Debug</span> side bar (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>). Next to the
+button is a drop-down list of debug configurations from <code>.vscode/launch.json</code> – if you have
+more than one, this is where you pick which one to start. If the folder has no launch.json, the
+side bar shows a <span class="ui">create a launch.json file</span> link
+(<a class="secref" href="#prvni-launch"></a>).</p>
+
+<h3 id="lista">Debug toolbar</h3>
+<p>While debugging, a floating toolbar appears at the top centre of the window. You can drag it by
+its left edge. The buttons from the left:</p>
+<table class="compact">
+  <thead><tr><th>Button</th><th>Key</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ui">Continue</span> / <span class="ui">Pause</span></td><td><kbd>F5</kbd> / <kbd>F6</kbd></td><td>Runs a stopped program / stops a running one.</td></tr>
+    <tr><td><span class="ui">Step Over</span></td><td><kbd>F10</kbd></td><td>Executes one instruction; steps over <code>CALL</code>, <code>RST</code> and <code>DJNZ</code> (the subroutine or loop runs to completion).</td></tr>
+    <tr><td><span class="ui">Step Into</span></td><td><kbd>F11</kbd></td><td>Executes exactly one instruction (enters subroutines).</td></tr>
+    <tr><td><span class="ui">Step Out</span></td><td><kbd>Shift</kbd>+<kbd>F11</kbd></td><td>Runs until the current subroutine returns.</td></tr>
+    <tr><td><span class="ui">Step Back</span>, <span class="ui">Reverse</span></td><td>–</td><td>Step Back (<a class="secref" href="#rewind"></a>); Reverse Continue is not available yet.</td></tr>
+    <tr><td><span class="ui">Restart</span></td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Loads the program again and starts it from the beginning.</td></tr>
+    <tr><td><span class="ui">Stop</span></td><td><kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Ends debugging and the emulator.</td></tr>
+  </tbody>
+</table>
+<p>They are followed by the buttons of this extension (icons; hover to see the name):
+<span class="cmd">Next Panel (Sprites, Palettes, …)</span> – opens the Next panel,
+<span class="cmd">Save State…</span> and <span class="cmd">Restore State…</span> – saved states,
+<span class="cmd">Start Profiler</span> / <span class="cmd">Stop Profiler</span> – the profiler.
+If not all buttons fit, VS Code hides some of them behind an arrow or three dots at the end of the
+toolbar.</p>
+
+<h3 id="variables">Variables – registers and machine state</h3>
+<p>The <span class="ui">Variables</span> section of the Run and Debug side bar shows the machine state
+whenever the program is stopped. It has four groups:</p>
+<ul>
+  <li><b>Registers</b> – <code>AF BC DE HL IX IY SP PC</code> in hex and decimal
+  (<code>$8000 (32768)</code>), followed by the label the value points to (<code>start</code>,
+  <code>main_loop+3</code>); then <code>I</code>, <code>R</code>, the interrupt mode <code>IM</code>
+  and <code>IFF1</code>.</li>
+  <li><b>Flags</b> – <code>S Z H P/V N C</code> as 0 or 1.</li>
+  <li><b>Shadow registers</b> – <code>AF' BC' DE' HL'</code> (collapsed by default).</li>
+  <li><b>Machine (MMU, time)</b> – <b>Frame</b> (frame number since start), <b>Total T-states</b>
+  and the eight MMU slots: <code>MMU0 ($0000)</code> … <code>MMU7 ($E000)</code> with the number of the
+  8K page mapped into the slot (<code>page 10 ($0A)</code>).</li>
+</ul>
+<figure class="shot half" id="fig-variables">
+  <img src="img/en/variables-crop.png" alt="">
+  <figcaption>The Variables section: registers with labels, flags and the Machine (MMU, time) group.</figcaption>
+</figure>
+<p>Register and flag values can be changed (<a class="secref" href="#registry-zmena"></a>).</p>
+
+<h3 id="watch">Watch</h3>
+<p>The <span class="ui">Watch</span> section holds expressions you want to keep an eye on – for
+example <code>mem[counter]</code> or <code>HL</code>. Add them with the <b>+</b> button in the
+section header (it appears when you hover over the header), or select text in the editor,
+right-click and choose <span class="ui">Add to Watch</span>. The values are recalculated every time
+the program stops. Details in <a class="secref" href="#watch-hover"></a>.</p>
+
+<h3 id="callstack">Call Stack</h3>
+<p>The <span class="ui">Call Stack</span> section shows where the program is stopped and how it got
+there: the current location at the top (the name of the nearest label), below it the places
+subroutines were called from. Click a line to move the editor to that place in the source.
+Locations outside your source (ROM, code without debug information) are greyed out and show their
+address. The section header also shows the <b>reason for stopping</b> – for example
+<span class="ui">Paused on breakpoint</span>, <span class="ui">Paused on step</span>,
+<span class="ui">Paused on BREAK</span> or the name of an event.</p>
+
+<h3 id="breakpoints-sekce">Breakpoints</h3>
+<p>The <span class="ui">Breakpoints</span> section lists all breakpoints and logpoints; the check box
+disables one temporarily, a double-click takes you to its line. At the top of the list are the
+<b>machine event</b> check boxes of this extension (<span class="ui">Interrupt (IM 1 / IM 2)</span>,
+<span class="ui">NMI</span>, <span class="ui">NEXTREG write</span> …), see
+<a class="secref" href="#udalosti"></a>. The section header has buttons to deactivate and remove all
+breakpoints.</p>
+
+<h3 id="debug-console">Debug Console</h3>
+<p><span class="ui">Debug Console</span> is a tab of the bottom panel. Open it with
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd>, the menu <span class="ui">View › Debug Console</span>,
+or by clicking the <span class="ui">Debug Console</span> tab in the bottom panel
+(<kbd>Ctrl</kbd>+<kbd>J</kbd> shows the panel). Logpoint output, messages of the extension and
+emulator output appear here. At the very bottom is an input line with a <code>&gt;</code> prompt:
+type an expression (for example <code>HL</code>) and press <kbd>Enter</kbd> – its value is printed.
+The command <code>m address</code> dumps memory (<a class="secref" href="#konzole"></a>). The
+<kbd>↑</kbd> <kbd>↓</kbd> arrows browse previously entered commands.</p>
+
+<h3 id="paleta">Command Palette</h3>
+<p>The <span class="ui">Command Palette</span> is where you can run any command of VS Code and its
+extensions. Open it with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> or <kbd>F1</kbd>, or from the menu
+<span class="ui">View › Command Palette…</span>. An input box appears at the top centre of the window;
+type part of a command name (for example <code>mb maniax</code>) and pick it with the arrow keys.
+Commands of this extension start with <span class="cmd">MB Maniax:</span> (the emulator screen with
+<span class="cmd">MB Maniax Next:</span>). Some of them are listed only while a debug session is
+running.</p>
+
+<h3 id="terminal">Terminal and Problems</h3>
+<p>The <span class="ui">Terminal</span> (<kbd>Ctrl</kbd>+<kbd>`</kbd>, the key below <kbd>Esc</kbd>) is a
+command line in the bottom panel – this is where sjasmplus prints its output while building. Build
+errors also appear in the <span class="ui">Problems</span> tab
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>); click an error to jump to its source line.</p>
+
+<!-- ================================================================== 4 -->
+<h2 id="prvni">Your first program</h2>
+
+<p>In this chapter you build and run the example program <b>hello</b> from the
+<code>examples/hello</code> folder. The program changes the border colour and counts in memory how
+many times it did so. The procedure is the same for your own project.</p>
+
+<pre><code><span class="c">; examples/hello/hello.asm (shortened)</span>
+        DEVICE ZXSPECTRUMNEXT
+        SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
+        ORG $8000
+start:  ei
+        ld sp, stack_top
+        nextreg $07, 3          <span class="c">; 28 MHz</span>
+        ld a, 0
+        ld (counter), a
+main_loop:
+        call next_colour
+        ld b, 25
+.wait:  halt
+        djnz .wait
+        jr main_loop
+next_colour:
+        ld a, (counter)
+        inc a
+        and 7
+        ld (counter), a
+        out ($fe), a
+        ret
+counter:    db 0
+            ds 64
+stack_top:
+        SAVENEX OPEN "hello.nex", start, stack_top
+        SAVENEX CORE 3, 0, 0
+        SAVENEX AUTO
+        SAVENEX CLOSE</code></pre>
+
+<h3 id="prvni-sjasmplus">Building with debug information</h3>
+<p>For the debugger to know which source line corresponds to which address, it needs an <b>SLD</b>
+file (Source Level Debugging) from sjasmplus. sjasmplus writes it with the <code>--sld</code>
+option:</p>
+<pre><code>sjasmplus --sld=hello.sld --fullpath hello.asm</code></pre>
+<ul>
+  <li><code>--sld=hello.sld</code> – writes the debug information (lines, addresses, 8K pages, labels,
+  keywords from comments).</li>
+  <li><code>--fullpath</code> – writes full source paths into the SLD, so the extension reliably
+  matches lines with the files open in the editor (even when the source is split into several files
+  with <code>INCLUDE</code>).</li>
+</ul>
+<p>The program itself (<code>hello.nex</code>) is written by the <code>SAVENEX</code> directive in the
+source.</p>
+<div class="tip"><p>Check that sjasmplus can be started: open a terminal (<kbd>Ctrl</kbd>+<kbd>`</kbd>) and
+type <code>sjasmplus --version</code>. If Windows does not know the command, add the sjasmplus folder
+to the <code>PATH</code> variable (then close and restart VS Code), or put the full path to
+<code>sjasmplus.exe</code> into tasks.json.</p></div>
+
+<h3 id="prvni-slozka">Opening the folder</h3>
+<p>VS Code works with <b>folders</b> (workspaces), not single files – debug and task settings are
+looked up in the <code>.vscode</code> subfolder of the open folder.</p>
+<ol class="steps">
+  <li>Menu <span class="ui">File › Open Folder…</span> (<kbd>Ctrl</kbd>+<kbd>K</kbd>
+  <kbd>Ctrl</kbd>+<kbd>O</kbd>) and select the <code>examples\hello</code> folder.</li>
+  <li>If VS Code asks whether you trust the authors of the folder (<span class="ui">Do you trust the
+  authors…</span>), confirm with <span class="ui">Yes, I trust the authors</span> – otherwise it would
+  not be allowed to run tasks (the build).</li>
+  <li>In the <span class="ui">Explorer</span> on the left (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>)
+  click <code>hello.asm</code>; it opens in the editor.</li>
+</ol>
+
+<h3 id="prvni-launch">The launch.json file – how to debug</h3>
+<p>The <code>.vscode/launch.json</code> file tells VS Code what to start on <kbd>F5</kbd>. The example
+already has one:</p>
+<pre><code>{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "mbx-next",
+            "request": "launch",
+            "name": "Ladit hello.nex",
+            "program": "${workspaceFolder}/hello.nex",
+            "sld": "${workspaceFolder}/hello.sld",
+            "stopOnEntry": true,
+            "preLaunchTask": "sjasmplus"
+        }
+    ]
+}</code></pre>
+<ul>
+  <li><code>"type": "mbx-next"</code> – debug with this extension.</li>
+  <li><code>"name"</code> – the name shown in the list next to the green ▶ button (in the example it
+  is Czech, “Debug hello.nex”; use any name you like).</li>
+  <li><code>"program"</code> and <code>"sld"</code> – the built program and its debug information;
+  <code>${workspaceFolder}</code> is the open folder.</li>
+  <li><code>"stopOnEntry": true</code> – stop at the program's first instruction.</li>
+  <li><code>"preLaunchTask": "sjasmplus"</code> – before starting, build the program with the
+  <code>sjasmplus</code> task from tasks.json (next section).</li>
+</ul>
+<figure class="shot" id="fig-launch">
+  <img src="img/en/launch-json.png" alt="">
+  <figcaption>The .vscode/launch.json file with an mbx-next configuration in the editor.</figcaption>
+</figure>
+<p>For your own project create launch.json like this: in the <span class="ui">Run and Debug</span>
+side bar click <span class="ui">create a launch.json file</span> and choose <span class="ui">MB Maniax
+Next Debugger</span>. You get a configuration “Debug on ZX Spectrum Next” with
+<code>program.nex</code> and <code>program.sld</code> – replace the names with yours. To add another
+configuration to an existing launch.json, click <span class="ui">Add Configuration…</span> at the
+bottom right of the launch.json editor and choose <span class="ui">MB Maniax Next Debugger: Next
+program (sjasmplus)</span>. All attributes are described in <a class="secref" href="#launch"></a>.</p>
+
+<h3 id="prvni-tasks">The tasks.json file – how to build</h3>
+<p>A task is a command VS Code runs for you – here the sjasmplus build. The example's
+<code>.vscode/tasks.json</code>:</p>
+<pre><code>{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "sjasmplus",
+            "type": "shell",
+            "command": "sjasmplus",
+            "args": ["--sld=hello.sld", "--fullpath", "--lst=hello.lst", "hello.asm"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": {
+                "owner": "sjasmplus",
+                "fileLocation": ["autoDetect", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.*)\\((\\d+)\\):\\s+(error|warning)[^:]*:\\s+(.*)$",
+                    "file": 1, "line": 2, "severity": 3, "message": 4
+                }
+            }
+        }
+    ]
+}</code></pre>
+<ul>
+  <li><code>"label"</code> – the task name; <code>preLaunchTask</code> in launch.json refers to it.</li>
+  <li><code>"args"</code> – sjasmplus options (<code>--lst</code> also writes a listing).</li>
+  <li><code>"group": … "isDefault": true</code> – the default build task: run it any time with
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>, even without debugging.</li>
+  <li><code>"problemMatcher"</code> – sjasmplus errors and warnings appear in the
+  <span class="ui">Problems</span> tab and as squiggles in the source.</li>
+</ul>
+
+<h3 id="prvni-f5">Starting: F5</h3>
+<ol class="steps">
+  <li>Press <kbd>F5</kbd>. The <span class="ui">Terminal</span> opens in the bottom panel and the build
+  runs. (If the build fails, VS Code offers <span class="ui">Debug Anyway</span> or
+  <span class="ui">Show Errors</span> – look into <span class="ui">Problems</span>.)</li>
+  <li>The emulator starts and the <b>ZX Spectrum Next</b> panel with the screen opens to the right of
+  the editor.</li>
+  <li>Because the example has <code>"stopOnEntry": true</code>, the program stops right at its first
+  instruction (<code>ei</code> after the <code>start</code> label) – the line is yellow and the
+  Variables and Call Stack sections on the left fill in.</li>
+  <li>Click in the margin left of the line number of <code>call next_colour</code> – a red dot
+  appears: a breakpoint.</li>
+  <li>Press <kbd>F5</kbd> (Continue). The program runs and stops at the breakpoint.</li>
+  <li>Press <kbd>F11</kbd> (Step Into) – you are inside <code>next_colour</code>. Keep stepping with
+  <kbd>F11</kbd> and watch <code>A</code> change in the Variables section; after
+  <code>out ($fe), a</code> the border colour on the emulator screen changes.</li>
+  <li>Hover over the word <code>counter</code> in the source – a tooltip shows its address and the
+  memory content. In the Debug Console (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd>) type
+  <code>m counter</code> and press <kbd>Enter</kbd>.</li>
+  <li>End debugging with <kbd>Shift</kbd>+<kbd>F5</kbd> or the <span class="ui">Stop</span> button on the
+  debug toolbar.</li>
+</ol>
+
+<h3 id="bez-launch">Without launch.json</h3>
+<p>For a quick try, launch.json is not required: open an <code>.asm</code> file in the editor (also
+<code>.a80</code>, <code>.z80</code> or <code>.s</code>) and press <kbd>F5</kbd>. The extension starts
+the <code>.nex</code> and <code>.sld</code> of the same name from the same folder (for
+<code>game.asm</code> that is <code>game.nex</code> and <code>game.sld</code>). In this mode the program
+is <b>not built</b> – build it first (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> or in the terminal).
+If VS Code asks which debugger to use (<span class="ui">Select debugger</span>), choose
+<span class="ui">MB Maniax Next Debugger</span>.</p>
+
+<div class="note"><p><b>Program data and esxDOS.</b> Without an SD card image, the program sees its own
+folder through esxDOS (loading data, saved games). A different folder or an SD card image is set in
+launch.json with the <code>esxdosRoot</code> and <code>sdImage</code> attributes.</p></div>
+
+<!-- ================================================================== 5 -->
+<h2 id="ladeni">Debugging</h2>
+
+<h3 id="bp">Breakpoints</h3>
+<p>A breakpoint stops the program just <b>before</b> the instruction on its line is executed.</p>
+<ul>
+  <li><b>With the mouse:</b> move the pointer into the narrow margin left of the line numbers – a
+  faint red dot appears. Click to set it, click again to remove the breakpoint.</li>
+  <li><b>With the keyboard:</b> put the cursor on the line and press <kbd>F9</kbd> (toggle).</li>
+  <li><b>From the context menu:</b> right-clicking the margin offers <span class="ui">Add
+  Breakpoint</span>, <span class="ui">Add Conditional Breakpoint…</span> and <span class="ui">Add
+  Logpoint…</span>; right-clicking an existing dot offers <span class="ui">Edit Breakpoint…</span>,
+  <span class="ui">Disable Breakpoint</span> and <span class="ui">Remove Breakpoint</span>.</li>
+</ul>
+<p>You can set breakpoints before debugging starts; they are sent to the emulator at startup. If
+there is no instruction on the line (a comment, an empty line, a label on its own), the breakpoint
+moves to the nearest following line with an instruction (at most 20 lines down). If there is none
+there either, the dot stays <b>grey and hollow</b> (unverified breakpoint) and its tooltip says why –
+for example <i>No instruction on this line or below it (according to SLD)</i> or <i>SLD from sjasmplus
+is missing ("sld" attribute)</i>.</p>
+<div class="note"><p><b>Paged memory.</b> The sjasmplus SLD knows the 8K page of every line (when the
+source uses <code>DEVICE ZXSPECTRUMNEXT</code>). The breakpoint then stops only when that page is
+actually mapped into the corresponding MMU slot – code of another page at the same address does not
+trigger it. When the same line is assembled into several pages, the breakpoint applies to all of
+them.</p></div>
+<div class="tip"><p>If you cannot set a dot in the margin at all (nothing appears on hover), VS Code does
+not consider the file a language the extension reports breakpoints for. See chapter
+<a class="secref" href="#problemy"></a>.</p></div>
+
+<h3 id="krokovani">Stepping</h3>
+<p>While the program is stopped, control it with the debug toolbar buttons or keys:</p>
+<table class="compact">
+  <thead><tr><th>Key</th><th>Action</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>F5</kbd></td><td>Continue</td><td>Runs until the next breakpoint, event or pause.</td></tr>
+    <tr><td><kbd>F6</kbd></td><td>Pause</td><td>Stops the running program at the next instruction boundary.</td></tr>
+    <tr><td><kbd>F11</kbd></td><td>Step Into</td><td>One instruction. On <code>HALT</code> it waits until an interrupt ends it.</td></tr>
+    <tr><td><kbd>F10</kbd></td><td>Step Over</td><td>Like Step Into, but <code>CALL</code>, <code>RST</code> and <code>DJNZ</code> run to completion and the machine stops at the following instruction.</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>F11</kbd></td><td>Step Out</td><td>Runs until the program returns from the current subroutine (one level up the stack).</td></tr>
+  </tbody>
+</table>
+<p>You can also pause and resume the program with the ⏸ / ▶ button in the emulator screen panel.</p>
+
+<h3 id="run-to-cursor">Run to Cursor and Jump to Cursor</h3>
+<p>While the machine is stopped, right-click a source line:</p>
+<ul>
+  <li><span class="ui">Run to Cursor</span> – the program runs until it gets to this line (like a
+  one-shot breakpoint).</li>
+  <li><span class="ui">Jump to Cursor</span> – moves <code>PC</code> to this line <b>without running the
+  code in between</b>. Useful for skipping a piece of code or repeating an instruction. If the line is
+  assembled at several addresses (several pages), VS Code offers a choice – the items look like
+  <code>$C000 (page 12)</code>, and pages that are not mapped at the moment are marked <i>not
+  mapped</i>.</li>
+</ul>
+
+<h3 id="podminky">Conditional breakpoints</h3>
+<p>A conditional breakpoint stops only when its condition holds. The condition is evaluated by the
+emulator itself on every pass, so it <b>does not slow the program down</b> – feel free to put one
+into a loop that runs thousands of times per frame.</p>
+<ol class="steps">
+  <li>Right-click the margin left of the line and choose <span class="ui">Add Conditional
+  Breakpoint…</span> (for an existing breakpoint <span class="ui">Edit Breakpoint…</span>).</li>
+  <li>A small input box opens below the line. It has a drop-down on the left: leave it at
+  <span class="ui">Expression</span>.</li>
+  <li>Type the condition and press <kbd>Enter</kbd>. The breakpoint dot gets an <code>=</code> sign.</li>
+</ol>
+<p>Example conditions:</p>
+<pre><code>A == 5
+HL &gt; $4000 and not ZF
+mem[counter] == 3
+mem16[score] &gt;= 1000
+nextreg[$50] == 10
+FRAME &gt; 100
+B == 0 or (IX &gt;= enemies and IX &lt; enemies_end)</code></pre>
+<p>Labels from the source (<code>counter</code>, <code>score</code>) are written directly. The full
+expression language is described in chapter <a class="secref" href="#vyrazy"></a>. An error in the
+condition (a typo, an unknown name) is caught by the emulator right away: the breakpoint stays grey
+and its tooltip shows the error. A run-time error (e.g. division by zero) is printed to the Debug
+Console.</p>
+
+<h3 id="pocty">Hit counts</h3>
+<p>In the breakpoint edit box choose <span class="ui">Hit Count</span> in the drop-down and enter which
+pass should stop:</p>
+<table class="compact">
+  <thead><tr><th>Entry</th><th>Stops</th></tr></thead>
+  <tbody>
+    <tr><td><code>3</code> or <code>== 3</code></td><td>exactly on the 3rd pass</td></tr>
+    <tr><td><code>&gt;= 10</code></td><td>on the 10th pass and every one after it</td></tr>
+    <tr><td><code>&gt; 10</code>, <code>&lt; 5</code>, <code>&lt;= 5</code></td><td>likewise</td></tr>
+    <tr><td><code>% 4</code></td><td>on every 4th pass (4th, 8th, 12th …)</td></tr>
+  </tbody>
+</table>
+<p>A condition and a hit count can be combined – passes are then counted only when the condition
+holds. The counter starts from zero whenever breakpoints change.</p>
+
+<h3 id="logpointy">Logpoints</h3>
+<p>A logpoint <b>does not stop</b> the program; it only prints a message to the Debug Console – a debug
+print you do not have to write into the program. Right-click the margin and choose <span class="ui">Add
+Logpoint…</span> (or <span class="ui">Log Message</span> in the breakpoint edit box) and type the
+message. Expressions in curly braces are replaced by their values:</p>
+<pre><code>colour {A}, score {mem16[score]}
+HL={HL:hex} DE={DE:hex} flags {F:flags}</code></pre>
+<p>A format may follow a colon: <code>hex</code>, <code>unsigned</code> (default), <code>signed</code>,
+<code>char</code> (ASCII character), <code>bits</code> (binary), <code>flags</code> (flags as
+<code>SZHPNC</code>, cleared ones as <code>-</code>), <code>labels</code> (the label at the address).
+A logpoint has a diamond shape in the margin. The message is printed on every pass; with a hit count,
+only when the count matches.</p>
+
+<h3 id="udalosti">Machine event breakpoints</h3>
+<p>Some bugs are not tied to a particular line: “who keeps overwriting register $50?”, “when did the
+interrupt come?”. For these the extension adds event check boxes to the
+<span class="ui">Breakpoints</span> section. Ticking a box enables the event; when you hover over the
+item, a pencil (<span class="ui">Edit Condition</span>) appears on the right for entering a condition –
+without a condition every event of that kind stops.</p>
+<figure class="shot half" id="fig-breakpoints">
+  <img src="img/en/breakpoints-view.png" alt="">
+  <figcaption>The Breakpoints section: machine event check boxes, a breakpoint with the condition
+  <code>A == 3</code> and a logpoint.</figcaption>
+</figure>
+<table>
+  <thead><tr><th>Event</th><th>Stops</th><th>Extra names for the condition</th></tr></thead>
+  <tbody>
+    <tr><td><span class="ui">Interrupt (IM 1 / IM 2)</span></td><td>at the start of a maskable interrupt handler</td><td>– (e.g. <code>IM == 2</code>, <code>FRAME &gt; 50</code>)</td></tr>
+    <tr><td><span class="ui">NMI</span></td><td>non-maskable interrupt (Multiface, DivMMC)</td><td>–</td></tr>
+    <tr><td><span class="ui">NEXTREG write</span></td><td>on a write to a Next register (with the <code>NEXTREG</code> instruction, through ports $243B/$253B, or by the Copper)</td><td><code>REG</code> register number, <code>VALUE</code> value written, <code>PREV</code> previous value, <code>SOURCE</code> who writes (<code>CPU</code>, <code>COPPER</code>, <code>DMA</code>)</td></tr>
+    <tr><td><span class="ui">Port input / output</span></td><td>on an <code>IN</code> or <code>OUT</code> instruction</td><td><code>PORT</code> port number, <code>VALUE</code> value, <code>SOURCE</code></td></tr>
+    <tr><td><span class="ui">Copper (MOVE)</span></td><td>when the Copper executes a MOVE</td><td><code>CPC</code> address in the Copper program (0–1023), <code>CVC</code> line, <code>HC_ULA</code> horizontal position</td></tr>
+    <tr><td><span class="ui">DMA (transfer start)</span></td><td>at the start of a DMA transfer</td><td><code>SRC</code> source address, <code>DST</code> destination address</td></tr>
+    <tr><td><span class="ui">Machine reset</span></td><td>on reset</td><td>(no condition)</td></tr>
+  </tbody>
+</table>
+<p>All event conditions can also use registers, memory and the other names from chapter
+<a class="secref" href="#vyrazy"></a>; here <code>PC</code> is the address of the instruction that
+caused the event. The machine stops right after that instruction. Examples:
+<code>REG == $50 or REG == $51</code>, <code>(PORT &amp; $FF) == $FE</code>,
+<code>REG == $15 and SOURCE == CPU</code>. After stopping on an event, its name is shown in the Call
+Stack header.</p>
+<div class="note"><p><code>PORT</code> is the full 16-bit port address as seen on the bus – for
+<code>out ($fe),a</code> the high byte is the value of <code>A</code> (port <code>$01FE</code>,
+<code>$02FE</code> …). The condition <code>PORT == $FE</code> would therefore stop only when
+<code>A = 0</code>. For ports decoded by the low byte only (ULA <code>$FE</code>, Kempston
+<code>$1F</code> …) write <code>(PORT &amp; $FF) == $FE</code>; compare the full number for 16-bit ports
+(<code>PORT == $243B</code>).</p></div>
+
+<h3 id="watchpointy">Watchpoints – stopping on memory access</h3>
+<p>A watchpoint (a “data breakpoint” in VS Code) stops the program when an instruction reads or
+writes the chosen memory. The machine stops right after the instruction that made the access.</p>
+<ul>
+  <li><b>On a register:</b> in the <span class="ui">Variables</span> section right-click
+  <code>BC</code>, <code>DE</code>, <code>HL</code>, <code>IX</code>, <code>IY</code> or <code>SP</code> and
+  choose <span class="ui">Break on Value Change</span> (write), <span class="ui">Break on Value
+  Read</span> (read) or <span class="ui">Break on Value Access</span> (both). It watches the byte <b>the
+  register currently points to</b> – not the register itself.</li>
+  <li><b>On a label or address:</b> add an expression to the <span class="ui">Watch</span> section that
+  is just a label name (<code>counter</code>) or a number (<code>$5B00</code>), right-click it and choose
+  <span class="ui">Break on Value Change</span>.</li>
+  <li><b>With a comment in the source:</b> <code>; WPMEM</code> (<a class="secref" href="#wpmem"></a>) –
+  handy for areas longer than a byte and for watchpoints you want to keep.</li>
+</ul>
+<p>Watchpoints are listed in the <span class="ui">Breakpoints</span> section, where you also disable or
+remove them. Newer VS Code versions also offer <span class="ui">Add Data Breakpoint at Address</span> in
+the Breakpoints section header, where you enter an address and length directly.</p>
+
+<h3 id="watch-hover">Expressions in Watch and on hover</h3>
+<p>You can type any expression from chapter <a class="secref" href="#vyrazy"></a> into the
+<span class="ui">Watch</span> section: <code>mem[counter]</code>, <code>HL</code>,
+<code>nextreg[$07]</code>, <code>mem16[stack_top - 2]</code>, <code>mmu[3]</code>. The result is shown in
+hex and decimal (<code>$03 (3)</code>). If the expression is just a label name, its address is shown
+together with the memory content there: <code>$8023 (32803)  → [$03] [$0003]</code> – the byte and the
+16-bit word in square brackets.</p>
+<figure class="shot half" id="fig-watch">
+  <img src="img/en/watch-view.png" alt="">
+  <figcaption>The Watch section with the expressions <code>mem[counter]</code>, <code>HL</code> and
+  <code>nextreg[$07]</code>.</figcaption>
+</figure>
+<p>While the program is stopped, just <b>hover</b> over a register or label in the editor – a tooltip
+shows the value and the memory it points to. The tooltip appears only for words that are a valid
+expression.</p>
+
+<h3 id="konzole">Debug Console and memory dump</h3>
+<p>Type an expression into the Debug Console input line (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd>, the
+line with <code>&gt;</code> at the very bottom) and press <kbd>Enter</kbd>; its value is printed just like
+in Watch. In addition, there is a memory dump command:</p>
+<pre><code>m address
+m address, length</code></pre>
+<p>Both the address and the length are expressions (a number, label, register…). Without a length,
+128 bytes are dumped; the maximum is 4096. Each line has the address, 16 bytes in hex, the same bytes
+as text (non-printable ones as <code>.</code>) and the label that starts at or precedes the
+address:</p>
+<pre><code>&gt; m start, 32
+$8000  FB 31 64 80 ED 91 07 03 3E 00 32 23 80 CD 17 80  .1d.....&gt;.2#....  start
+$8010  06 19 76 10 FD 18 F6 3A 23 80 3C E6 07 32 23 80  ..v....:#.&lt;..2#.  main_loop+3
+&gt; m HL, 16
+&gt; m stack_top - 16, 16</code></pre>
+<figure class="shot" id="fig-console">
+  <img src="img/en/debug-console.png" alt="">
+  <figcaption>Debug Console: a memory dump with <code>m start</code> and the value of the expression
+  <code>A</code>.</figcaption>
+</figure>
+
+<h3 id="pamet">Viewing and editing memory</h3>
+<p>When you hover over a 16-bit register in the <span class="ui">Variables</span> section, a small
+<span class="ui">View Binary Data</span> icon appears on the right. It opens memory from the address in
+the register in the VS Code hex editor (the Microsoft <i>Hex Editor</i> extension – if you do not have
+it, VS Code offers to install it). Bytes can be overwritten in the hex editor; the write goes straight
+into the emulator's memory. The memory is shown as the CPU sees it (64 KB according to the current MMU
+mapping).</p>
+
+<h3 id="disasm">Disassembly</h3>
+<p>When the program stops outside your source (in ROM, in code without SLD, in data), or when you want
+to see the actual instructions, open the disassembly: right-click in the editor and choose
+<span class="ui">Open Disassembly View</span>, or run <span class="cmd">Debug: Open Disassembly View</span>
+from the Command Palette. Instructions are shown with labels from the SLD and source lines. In the
+disassembly too you can click left of an address to set a breakpoint, and step by instruction.
+Without an SLD file this is the only place to debug.</p>
+
+<h3 id="registry-zmena">Editing registers and flags</h3>
+<p>In the <span class="ui">Variables</span> section double-click a register value (or right-click
+<span class="ui">Set Value</span>), type a new value and press <kbd>Enter</kbd>. Numbers can be written as
+<code>$FF</code>, <code>0xFF</code>, <code>#FF</code>, <code>FFh</code>, <code>255</code> or in binary
+<code>%1010</code>. Flags (<code>S Z H P/V N C</code>) take 0 or 1. To move <code>PC</code> to another
+line, Jump to Cursor (<a class="secref" href="#run-to-cursor"></a>) is more convenient – the editor
+follows it.</p>
+
+<!-- ================================================================== 6 -->
+<h2 id="vyrazy">Expression language</h2>
+
+<p>The same expression language is used everywhere: in breakpoint and watchpoint conditions, in event
+conditions, in logpoints (inside curly braces), in the Watch section, on hover, in the Debug Console and
+in keywords in comments (<a class="secref" href="#klicova"></a>). Expressions are evaluated by the
+emulator in 32-bit signed integers. A condition holds when the result is non-zero.</p>
+
+<h3 id="vyrazy-cisla">Numbers</h3>
+<table class="compact">
+  <thead><tr><th>Written as</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>255</code></td><td>decimal</td></tr>
+    <tr><td><code>$FF</code>, <code>0xFF</code></td><td>hexadecimal</td></tr>
+    <tr><td><code>0b1010</code></td><td>binary</td></tr>
+    <tr><td><code>true</code>, <code>false</code></td><td>1 and 0</td></tr>
+  </tbody>
+</table>
+<div class="warn"><p>The forms <code>#FF</code>, <code>0FFh</code> and <code>%1010</code> do <b>not</b> work in
+conditions entered in VS Code (<code>%</code> is the remainder operator). They work only in
+WPMEM / LOGPOINT / ASSERTION comments and when editing a register value.</p></div>
+
+<h3 id="vyrazy-registry">Registers and flags</h3>
+<table>
+  <thead><tr><th>Name</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>A F B C D E H L I R</code></td><td>8-bit registers</td></tr>
+    <tr><td><code>AF BC DE HL IX IY SP PC</code></td><td>16-bit registers</td></tr>
+    <tr><td><code>AF' BC' DE' HL'</code></td><td>shadow registers (also written <code>AF2 BC2 DE2 HL2</code>)</td></tr>
+    <tr><td><code>IXH IXL IYH IYL</code></td><td>high and low halves of <code>IX</code> and <code>IY</code></td></tr>
+    <tr><td><code>CF ZF SF PF HF NF</code></td><td>flags carry, zero, sign, parity/overflow, half-carry, subtract (0/1)</td></tr>
+    <tr><td><code>IFF1 IFF2 IM HALTED</code></td><td>interrupt flip-flops, interrupt mode, CPU halted on HALT</td></tr>
+  </tbody>
+</table>
+<p>Register names from the first four rows (including <code>AF'</code> and <code>IXH</code>) and
+<code>IM</code>, <code>IFF1</code>, <code>IFF2</code> may also be written in lower case (the extension
+converts them); write all other names (<code>AF2</code>, the flags, <code>HALTED</code>, the names in the
+following tables) in <b>upper case</b> as in the table.</p>
+
+<h3 id="vyrazy-pamet">Memory, Next registers and MMU</h3>
+<table>
+  <thead><tr><th>Written as</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td><code>mem[a]</code></td><td>byte at address <code>a</code> (CPU memory 0–$FFFF with the current mapping)</td></tr>
+    <tr><td><code>mem16[a]</code></td><td>16-bit word at address <code>a</code> (little endian)</td></tr>
+    <tr><td><code>stack[n]</code></td><td>word on the stack: <code>stack[0]</code> = at <code>SP</code>, <code>stack[1]</code> = at <code>SP+2</code> …</td></tr>
+    <tr><td><code>phys[page, offset]</code></td><td>byte in physical 8K page (offset 0–$1FFF), regardless of mapping</td></tr>
+    <tr><td><code>nextreg[r]</code></td><td>value of Next register <code>r</code> (0–255)</td></tr>
+    <tr><td><code>mmu[s]</code></td><td>8K page set for slot <code>s</code> (0–7) by the MMU registers</td></tr>
+    <tr><td><code>page[s]</code></td><td>8K page slot <code>s</code> actually uses</td></tr>
+  </tbody>
+</table>
+<p>Reads in expressions have no side effects: they do not trigger watchpoints and do not change the
+state of registers whose reads have side effects.</p>
+
+<h3 id="vyrazy-cas">Time and raster</h3>
+<table>
+  <thead><tr><th>Name</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td><code>FRAME</code></td><td>frame number since start</td></tr>
+    <tr><td><code>CYCLE</code></td><td>time since start in 28 MHz master clock cycles</td></tr>
+    <tr><td><code>TFRAME</code></td><td>time since the start of the frame in 28 MHz cycles</td></tr>
+    <tr><td><code>VC_ULA</code></td><td>display line (0 = first paper line, 0–191 paper)</td></tr>
+    <tr><td><code>PHC</code></td><td>pixel column (0 = first paper pixel)</td></tr>
+    <tr><td><code>CVC</code></td><td>line as compared by the Copper and the line interrupt (NR $1E/$1F); = <code>VC_ULA</code> + NR $64</td></tr>
+    <tr><td><code>HC_ULA</code></td><td>7 MHz horizontal counter used by the Copper</td></tr>
+    <tr><td><code>RAW_HC</code>, <code>RAW_VC</code></td><td>raw raster counters</td></tr>
+    <tr><td><code>MACHINE</code></td><td>machine type: 0 = 48K, 1 = 128K, 2 = +3, 3 = Pentagon, 4 = Next</td></tr>
+  </tbody>
+</table>
+
+<h3 id="vyrazy-navesti">Labels</h3>
+<p>Global labels from the source (from the SLD) are written directly and evaluate to their address:
+<code>mem[counter]</code>, <code>HL == next_colour</code>, <code>mem16[score] &gt; 100</code>. The case
+must match the source. If a label has the same name as a register, the register wins; force the label
+with an at sign: <code>@c</code>. <b>Local labels with a dot</b> work too, in their full form:
+<code>main_loop.wait</code> evaluates to the address of the local label <code>.wait</code> inside
+<code>main_loop</code>.</p>
+
+<h3 id="vyrazy-operatory">Operators</h3>
+<p>From the lowest precedence to the highest (operators on one line have the same precedence):</p>
+<table class="compact">
+  <thead><tr><th>Operators</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>or</code></td><td>logical OR (short-circuit)</td></tr>
+    <tr><td><code>and</code></td><td>logical AND (short-circuit)</td></tr>
+    <tr><td><code>not</code></td><td>logical negation</td></tr>
+    <tr><td><code>== != &lt; &gt; &lt;= &gt;=</code></td><td>comparison (result 1 or 0, signed)</td></tr>
+    <tr><td><code>| ^</code></td><td>bitwise OR, XOR</td></tr>
+    <tr><td><code>&amp;</code></td><td>bitwise AND</td></tr>
+    <tr><td><code>&lt;&lt; &gt;&gt;</code></td><td>shifts</td></tr>
+    <tr><td><code>+ -</code></td><td>addition, subtraction</td></tr>
+    <tr><td><code>* / %</code></td><td>multiplication, integer division, remainder</td></tr>
+    <tr><td><code>-x ~x</code></td><td>unary minus, bitwise NOT</td></tr>
+  </tbody>
+</table>
+<p>Unlike C, the bitwise operators bind <b>tighter</b> than comparisons, so
+<code>A &amp; $80 == $80</code> means <code>(A &amp; $80) == $80</code>. Parentheses never hurt, though.
+Write <code>and</code>, <code>or</code> and <code>not</code> instead of <code>&amp;&amp;</code>,
+<code>||</code> and <code>!</code>.</p>
+
+<h3 id="vyrazy-udalosti">Names for events and watchpoints</h3>
+<p>In event conditions (<a class="secref" href="#udalosti"></a>) data about the event are available as
+well: <code>REG</code>, <code>VALUE</code>, <code>PREV</code>, <code>PORT</code>, <code>SOURCE</code> (with
+the constants <code>CPU</code>, <code>COPPER</code>, <code>DMA</code>), <code>CPC</code>, <code>SRC</code>,
+<code>DST</code> – the table in the events section shows which of them each event has. In a watchpoint
+condition (the fourth WPMEM parameter) there are <code>ADDR</code> (the accessed address) and
+<code>VALUE</code> (the byte transferred). A name the event does not carry is rejected by the emulator
+when the condition is entered.</p>
+
+<h3 id="vyrazy-priklady">Examples</h3>
+<table>
+  <thead><tr><th>Expression</th><th>True when…</th></tr></thead>
+  <tbody>
+    <tr><td><code>A == 5</code></td><td>register A is 5</td></tr>
+    <tr><td><code>HL &gt;= $4000 and HL &lt; $5800</code></td><td>HL points into the ULA screen</td></tr>
+    <tr><td><code>not ZF</code></td><td>the Z flag is clear</td></tr>
+    <tr><td><code>mem[counter] == 3</code></td><td>the byte at label <code>counter</code> is 3</td></tr>
+    <tr><td><code>stack[0] == main_loop</code></td><td>the return address on top of the stack is <code>main_loop</code></td></tr>
+    <tr><td><code>nextreg[$07] &amp; 3 == 3</code></td><td>the CPU runs at 28 MHz</td></tr>
+    <tr><td><code>mmu[6] == 20</code></td><td>page 20 is in slot 6 ($C000)</td></tr>
+    <tr><td><code>FRAME % 50 == 0</code></td><td>every fiftieth frame</td></tr>
+    <tr><td><code>VC_ULA &gt;= 192</code></td><td>the beam is below the paper (bottom border)</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================== 7 -->
+<h2 id="klicova">sjasmplus keywords in comments</h2>
+
+<p>Watchpoints, logpoints and assertions can be written right into the source as <b>special
+comments</b> (the same syntax as in DeZog). The advantage: they are part of the code, do not get lost,
+and work in every debug session without clicking.</p>
+
+<h3 id="sldopt">SLDOPT – enabling them in sjasmplus</h3>
+<p>sjasmplus writes these comments into the SLD file only when the source contains (preferably at
+the beginning) the line:</p>
+<pre><code>    SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION</code></pre>
+<p>List just the words you use. sjasmplus looks for the word anywhere in the comment and is
+case-sensitive (write them in upper case); it does not write block comments <code>/* */</code> into
+the SLD. A comment on a line of its own applies to the next instruction, a comment after an
+instruction to the instruction on the same line. In a macro the comment refers to the place the macro
+is invoked from.</p>
+
+<h3 id="wpmem">WPMEM – watchpoint</h3>
+<pre><code>; WPMEM [address [, size [, access [, condition]]]]</code></pre>
+<ul>
+  <li><b>address</b> – an expression; without it, the address of the line the comment is on
+  (typically a data label).</li>
+  <li><b>size</b> – the number of bytes watched, 1 by default.</li>
+  <li><b>access</b> – <code>r</code> read, <code>w</code> write, <code>rw</code> both (default).</li>
+  <li><b>condition</b> – optional; stops only when it holds (<code>ADDR</code> and <code>VALUE</code>
+  can be used).</li>
+</ul>
+<pre><code>score:  dw 0            <span class="c">; WPMEM            – watch the 1 byte at "score" (read and write)</span>
+buffer: ds 16           <span class="c">; WPMEM buffer,16,w – stop on a write into the 16 bytes</span>
+lives:  db 3            <span class="c">; WPMEM lives,1,w,VALUE == 0 – stop when zero is written</span>
+        <span class="c">; WPMEM $4000, $1800, w   – any write into the ULA bitmap</span></code></pre>
+<p>After stopping, the Call Stack header shows the reason <b>WPMEM</b> and the Debug Console a line with
+the address range and the comment location, for example
+<code>WPMEM $8030–$803F (game.asm:120) – WPMEM buffer,16,w</code>.</p>
+
+<h3 id="logpoint">LOGPOINT – debug print</h3>
+<pre><code>; LOGPOINT [GROUP] text ${expression} text ${expression:format}</code></pre>
+<p>Prints the text to the Debug Console on every pass; <code>${…}</code> is replaced by the value of the
+expression. The formats are the same as for VS Code logpoints: <code>hex</code>, <code>unsigned</code>,
+<code>signed</code>, <code>char</code>, <code>bits</code>, <code>flags</code>, <code>labels</code>. An
+optional group in square brackets right after the word is printed at the start of the line
+(<code>[AI] …</code>). The output in the Debug Console links to the source line; click it to go
+there.</p>
+<pre><code>        ld a,(hl)
+        <span class="c">; LOGPOINT [MAP] read ${A:hex} from ${HL:hex}</span>
+        ld (de),a</code></pre>
+
+<h3 id="assertion">ASSERTION – assertion</h3>
+<pre><code>; ASSERTION expression</code></pre>
+<p>Stops the program when the expression is <b>false</b> (zero). An empty <code>ASSERTION</code> always
+stops. The Call Stack header shows the reason <b>assertion</b> with the description <i>ASSERTION failed:
+A &lt; 10</i>; the same text with the source location is printed to the Debug Console.</p>
+<pre><code>        cp 10           <span class="c">; ASSERTION A &lt; 10 – stop when the expression is false</span>
+        <span class="c">; ASSERTION SP &gt; stack_bottom and SP &lt;= stack_top</span>
+        ret</code></pre>
+<figure class="shot" id="fig-keywords">
+  <img src="img/en/keywords-stop.png" alt="">
+  <figcaption>Stopped on an ASSERTION: the reason in Call Stack, LOGPOINT output in the Debug Console,
+  and the source with the comments.</figcaption>
+</figure>
+
+<h3 id="klicova-kdy">When keywords are evaluated</h3>
+<p>LOGPOINT and ASSERTION are breakpoints at the address of their line – they are evaluated
+<b>before</b> the instruction on that line is executed. In the example
+<code>ld a,(hl) ; LOGPOINT … ${A}</code>, <code>A</code> would be printed before the load. To see the
+result of an instruction, put the comment on a line of its own below it (it then applies to the next
+instruction), as in the example above.</p>
+
+<h3 id="klicova-syntaxe">Expression syntax in comments</h3>
+<p>Comments accept the language from chapter <a class="secref" href="#vyrazy"></a> plus the DeZog forms,
+which the extension converts:</p>
+<table class="compact">
+  <thead><tr><th>DeZog</th><th>The same in the expression language</th></tr></thead>
+  <tbody>
+    <tr><td><code>b@(x)</code>, <code>w@(x)</code></td><td><code>mem[x]</code>, <code>mem16[x]</code></td></tr>
+    <tr><td><code>&amp;&amp;</code>, <code>||</code>, <code>!</code></td><td><code>and</code>, <code>or</code>, <code>not</code></td></tr>
+    <tr><td><code>=</code></td><td><code>==</code></td></tr>
+    <tr><td><code>#FF</code>, <code>0FFh</code></td><td><code>$FF</code></td></tr>
+    <tr><td><code>%1010</code> (where a number is expected)</td><td><code>0b1010</code></td></tr>
+  </tbody>
+</table>
+<p>Errors in comments (unknown label, invalid size, unknown access or format) are reported by the
+extension as a notification in the bottom right corner, in the form <i>WPMEM in a comment
+(game.asm:120): …</i>; the other keywords keep working.</p>
+
+<h3 id="klicova-vypnuti">Turning them off</h3>
+<p>Each kind can be turned off in launch.json without changing the source: <code>"wpmem": false</code>,
+<code>"logpoints": false</code>, <code>"assertions": false</code> (all default to <code>true</code>).</p>
+
+<h3 id="break">CSpect BREAK</h3>
+<p>The <code>BREAK</code> instruction from the CSpect emulator stops the program like a breakpoint –
+handy where writing a stop into the code is easier than clicking.</p>
+<ul>
+  <li>sjasmplus with <code>--zxnext=cspect</code> assembles <code>BREAK</code> as <code>FD 00</code>. The
+  older CSpect <code>DD 01</code> and ZEsarUX <code>ED FF</code> also work.</li>
+  <li>The machine stops just <b>after</b> the instruction (PC = BREAK address + 2): the yellow line is on
+  the instruction after <code>BREAK</code>, the Call Stack description gives the address of the BREAK.</li>
+</ul>
+<p>The Call Stack header shows the reason <b>BREAK</b> with the description <i>Paused on BREAK at
+$8003</i>. Continue as usual (<kbd>F5</kbd>, steps). Turn stopping off in launch.json:
+<code>"magicBreakpoint": false</code>.</p>
+<figure class="shot" id="fig-break">
+  <img src="img/en/break-stop.png" alt="">
+  <figcaption>Stopped on a BREAK instruction: the reason and the BREAK address in Call Stack.</figcaption>
+</figure>
+<div class="warn"><p>On real hardware <code>FD 00</code> runs as a <code>NOP</code>, but <code>DD 01</code> runs as
+<code>LD BC,nn</code> and swallows the next two bytes. Don't leave <code>DD 01</code> in release builds.
+With <code>magicBreakpoint</code> off, <code>DD 01</code> behaves exactly as on a real Next.</p></div>
+
+<!-- ================================================================== 8 -->
+<h2 id="obrazovka">Emulator screen</h2>
+
+<p>When debugging starts, the <b>ZX Spectrum Next</b> panel with the emulator screen opens to the right
+of the editor. If you close it, reopen it with <span class="cmd">MB Maniax Next: Show Emulator
+Screen</span> from the Command Palette. The panel is an ordinary editor tab – drag it by its tab
+elsewhere (to the bottom, into its own window, onto a second monitor: right-click the tab and choose
+<span class="ui">Move into New Window</span>).</p>
+<figure class="shot" id="fig-screen">
+  <img src="img/en/screen-panel.png" alt="">
+  <figcaption>The ZX Spectrum Next panel: the bar at the top with pause, sound, status and the Next
+  button.</figcaption>
+</figure>
+<p>The bar at the top of the panel:</p>
+<ul>
+  <li><b>⏸ / ▶</b> (<i>Pause / continue</i>) – pauses or resumes the program, like <kbd>F6</kbd> /
+  <kbd>F5</kbd>.</li>
+  <li><b>🔇 / 🔊</b> (<i>Sound</i>) – turns sound off and on.</li>
+  <li><b>Status</b> – <i>Waiting for a debug session…</i> (no debug session), <i>Paused</i>, or
+  <i>Running · 50 frames/s</i> – the actual emulation speed. 50 frames/s is normal; a markedly lower
+  number means the computer cannot keep up with the emulation.</li>
+  <li><b>Next</b> – opens the Next panel (<a class="secref" href="#next"></a>).</li>
+</ul>
+
+<h3 id="klavesnice">Keyboard</h3>
+<p>Click the screen: while it has the focus, the PC keyboard goes to the emulator. <kbd>Shift</kbd> is
+CAPS SHIFT, <kbd>Ctrl</kbd> is SYMBOL SHIFT and <kbd>Esc</kbd> is BREAK. Other PC keys (arrows,
+<kbd>Backspace</kbd> …) are translated by the emulator's key map. Clicking outside the screen (for
+example into the editor) gives the keyboard back to VS Code and releases all keys held in the emulator.
+This hint is also shown below the screen in the panel.</p>
+<div class="note"><p>Debugging shortcuts (<kbd>F5</kbd>, <kbd>F10</kbd> …) work only when VS Code has the
+focus, not the emulator screen. If <kbd>F5</kbd> “does nothing”, click into the editor first.</p></div>
+
+<h3 id="zvuk">Sound</h3>
+<p>The browser inside VS Code may play sound only after a user action – sound therefore starts the
+first time you click the screen (or the 🔇 button). Sound plays only while running; it is silent while
+paused and stepping. If the sound is choppy, the emulation cannot keep up – check the frames per second
+in the bar and chapter <a class="secref" href="#problemy"></a>.</p>
+
+<h3 id="pauza">Pause, stops and the picture</h3>
+<p>While the program is stopped (breakpoint, step, pause), the screen shows the state at the moment it
+stopped. If the machine stops in the middle of a frame, the top part of the picture is already new and
+the bottom part still from the previous frame – just like the beam. The Next panel can draw a highlight
+of the selected sprite, tile or line onto the screen (<a class="secref" href="#next-zvyrazneni"></a>).</p>
+
+<!-- ================================================================== 9 -->
+<h2 id="next">Next panel</h2>
+
+<p>The Next panel shows the state of the Next hardware that CPU registers don't show: sprites,
+patterns, palettes, the individual display layers, Layer 2, the tilemap, the Copper program and all
+NEXTREG registers.</p>
+
+<h3 id="next-otevreni">Opening and controls</h3>
+<p>Open the panel in one of three ways:</p>
+<ul>
+  <li>with the button on the debug toolbar (layers icon, tooltip <span class="cmd">Next Panel (Sprites,
+  Palettes, …)</span>),</li>
+  <li>with the <b>Next</b> button in the bar of the emulator screen panel,</li>
+  <li>with the command <span class="cmd">MB Maniax: Next Panel (Sprites, Palettes, …)</span> from the
+  Command Palette.</li>
+</ul>
+<p>The panel opens next to the editor as another tab named <b>Next</b>; like any tab, it can be dragged
+elsewhere.</p>
+<figure class="shot" id="fig-next-vscode">
+  <img src="img/en/next-panel-vscode.png" alt="">
+  <figcaption>The Next panel inside VS Code next to the source, Sprites tab.</figcaption>
+</figure>
+<p>At the top of the panel is a bar:</p>
+<ul>
+  <li><b>Tabs</b> on the left – <span class="ui">Sprites</span>, <span class="ui">Pattern RAM</span>,
+  <span class="ui">Palettes</span>, <span class="ui">Layers</span>, <span class="ui">Layer 2</span>,
+  <span class="ui">Tilemap</span>, <span class="ui">Copper</span>, <span class="ui">NEXTREG</span>. The
+  panel remembers the last open tab.</li>
+  <li>On the right the <b>status</b> – <i>Waiting for a debug session…</i>, <i>Running</i> or
+  <i>Paused</i>,</li>
+  <li><b>Refresh</b> – reloads the data of the displayed tab,</li>
+  <li><b>Live</b> – refreshes the displayed tab while running too, twice per second.</li>
+</ul>
+<p>Without Live, the displayed tab is refreshed every time the machine stops (breakpoint, step, pause)
+and with the Refresh button. Only the visible tab is refreshed, so hidden tabs cost nothing.</p>
+
+<h3 id="next-zvyrazneni">Highlighting on the emulator screen</h3>
+<p>Some tabs can point out the selected item right on the emulator screen (the ZX Spectrum Next
+panel): the Sprites tab the sprite under the mouse or the selected sprite, the Tilemap tab the tile
+under the mouse, the Copper tab the line the WAIT under the mouse waits for. The highlight rectangle is
+drawn over the picture; it disappears when the mouse leaves the item or you switch tabs.</p>
+
+<p>The following sections describe the individual tabs. Register numbers are written as
+<code>NR $xx</code>; almost every label in the panel has a tooltip with an explanation (hover over
+it).</p>
+
+<h3 id="next-sprity">Sprites</h3>
+<figure class="shot" id="fig-next-sprites">
+  <img src="img/en/next-sprites.png" alt="">
+  <figcaption>The Sprites tab: a table of 128 sprites with previews and a screen mini-map on the right.</figcaption>
+</figure>
+<p><b>Toolbar:</b> <span class="ui">Visible only</span> hides sprites with the visibility bit cleared
+(on by default); <span class="ui">Transformed preview</span> draws previews with mirroring and
+rotation as they appear on screen. To the right is the status: the transparent colour
+(<code>Transparent NR $4B = $E3</code>) and which sprite palette is used.</p>
+<p><b>Summary line:</b> the number of visible sprites (<code>Visible: 12 / 128</code>), whether sprites are
+enabled (<i>Sprites disabled (NR $15 b0)</i> is highlighted as a warning), whether they are drawn over
+the border (<i>over border</i>) and whether sprite 0 is on top (<i>sprite 0 on top</i>), and the sprite
+clip window – the raw NR $19 values and the resulting window in screen coordinates.</p>
+<p>The <b>table</b> has a row for each sprite:</p>
+<table class="compact">
+  <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>#</code></td><td>sprite number 0–127</td></tr>
+    <tr><td>Anchor</td><td>for a relative sprite <code>rel → #n</code>: the number of its anchor</td></tr>
+    <tr><td>X, Y</td><td>position in 320 × 256 coordinates including the border (X 0 = left border edge, the paper starts at 32, 32)</td></tr>
+    <tr><td>Pattern</td><td>the pattern number the hardware reads</td></tr>
+    <tr><td>Pal</td><td>palette offset (the upper 4 bits of the colour index)</td></tr>
+    <tr><td>Vis.</td><td>visibility bit</td></tr>
+    <tr><td>Mir./rot.</td><td><code>X</code>, <code>Y</code> = mirroring, <code>R</code> = rotation</td></tr>
+    <tr><td>4bit</td><td>4-bit sprite (128 B per pattern) instead of 8-bit (256 B)</td></tr>
+    <tr><td>Scale</td><td>magnification X × Y (1, 2, 4, 8)</td></tr>
+    <tr><td>Preview</td><td>the pattern in the colours of the active palette; checkerboard = transparent pixels</td></tr>
+  </tbody>
+</table>
+<p>For relative sprites (anchor + relative sprites) the table already shows the <b>resolved</b>
+values – position, pattern, palette and transformations as the hardware draws them. The tooltip over a
+row shows the raw attributes (5 bytes), the pattern address in Pattern RAM and the sprite's rectangle on
+screen. Invisible sprites are greyed out.</p>
+<p>The <b>mini-map</b> on the right is the whole 320 × 256 area (border + paper): the 256 × 192 paper is
+outlined, the clip window dashed, each visible sprite drawn as a rectangle. Hovering over a table row or
+a sprite in the mini-map highlights the sprite in the mini-map and on the emulator screen. Click to
+select it – the highlight then stays even when the mouse moves away (click again to deselect). Clicking
+the mini-map selects the topmost sprite at that point and scrolls the table to its row.</p>
+
+<h3 id="next-patterns">Pattern RAM</h3>
+<figure class="shot" id="fig-next-patterns">
+  <img src="img/en/next-patterns.png" alt="">
+  <figcaption>The Pattern RAM tab: a grid of all patterns and the detail of the selected pattern.</figcaption>
+</figure>
+<p>The whole sprite pattern memory (16 KB) as a grid. <b>Toolbar:</b></p>
+<ul>
+  <li><span class="ui">Pattern format</span> – <i>8bit · 64 patterns</i> or <i>4bit · 128 patterns</i>.</li>
+  <li><span class="ui">Sprite palette</span> – <i>Active palette</i> (per NR $43 bit 3, which one in
+  parentheses), or fixed <i>Sprites 1</i> / <i>Sprites 2</i>.</li>
+  <li><span class="ui">Offset</span> 0–15 – the palette offset for the preview (for 4-bit patterns the
+  upper nibble of the index, for 8-bit ones added to the upper nibble).</li>
+  <li><span class="ui">Grid zoom</span> and <span class="ui">Transparency</span> – draw pixels with the
+  NR $4B value as transparent (checkerboard).</li>
+</ul>
+<p>The tooltip over a pattern shows its number and address and which sprites use it – visible and
+hidden ones separately. <b>Click a pattern</b>: an enlarged detail appears below the grid with the
+addresses, the list of sprites using it and, when you hover over a pixel, its coordinates, value (for
+4-bit patterns also which nibble), palette index and colour in RGB333 and RGB888.</p>
+
+<h3 id="next-palety">Palettes</h3>
+<figure class="shot" id="fig-next-palettes">
+  <img src="img/en/next-palettes.png" alt="">
+  <figcaption>The Palettes tab: eight palettes of 256 colours with the active palette and the write
+  target marked.</figcaption>
+</figure>
+<p>All eight Next palettes, each as a 16 × 16 grid: <b>ULA #1</b> and <b>#2</b>, <b>Layer 2 #1</b> and
+<b>#2</b>, <b>Sprites #1</b> and <b>#2</b>, <b>Tilemap #1</b> and <b>#2</b>. The colour index increases row
+by row from left to right (the first row is 0–15).</p>
+<ul>
+  <li>The <b>active</b> badge – this palette is used for rendering.</li>
+  <li>The <b>write</b> badge – writes through NR $41/$44 currently go here (per NR $43 bits 6:4).</li>
+  <li>A cross <b>×</b> marks the transparent colour: for ULA, Layer 2 and tilemap the colour NR $14, for
+  sprites the index NR $4B. The legend below the palette says so and, for ULA, describes which indexes
+  are ink, paper and border (standard ULA or ULANext with the format from NR $42).</li>
+  <li><span class="ui">Dim unused (ULA)</span> – in the ULA palettes, dims the entries the current mode
+  does not use.</li>
+</ul>
+<p>The line next to the check box shows the registers <code>NR $43 · $42 · $14 · $4B · $6B</code>.
+Hovering over a colour prints at the top: the palette, index (hex and dec), RGB333 and the R G B
+components (0–7), the 8-bit RRRGGGBB value, the colour as <code>#rrggbb</code> and the role of the
+colour (ink, paper, border, transparent, unused…).</p>
+
+<h3 id="next-vrstvy">Layers</h3>
+<figure class="shot" id="fig-next-layers">
+  <img src="img/en/next-layers.png" alt="">
+  <figcaption>The Layers tab: the selected display layer, layer order and clip windows.</figcaption>
+</figure>
+<p>Splits the picture into the layers the Next composes it from. The drop-down on the left selects what
+to see: <i>Composite</i>, <i>ULA</i>, <i>ULA shadow</i>, <i>Layer 2</i>, <i>Layer 2 shadow</i>,
+<i>Sprites</i>, <i>Tilemap</i>, <i>Background</i>; next to it is the 1× / 2× zoom. The
+<span class="ui">all side by side</span> check box shows thumbnails of all layers at once – click a
+thumbnail to show it large.</p>
+<p>A checkerboard means the layer draws nothing there (transparent). Hovering prints the coordinates
+below the picture (<code>x</code>, <code>y</code> in the 320 × 256 space and the column in the 640 pixel
+wide picture) and the pixel colour (<code>#rrggbb</code> and RGB333). Layers are drawn for the whole frame
+with the registers replayed line by line, so raster splits and Copper effects show up too.</p>
+<p>Below the picture are three blocks of information:</p>
+<ul>
+  <li><b>Order from top</b> (NR $15, mode SLU, LSU …) – the layers from the top down, with the background
+  (NR $4A) at the end. For the colour blending modes (L+U add / subtract) it describes how ULA and
+  tilemap are blended with Layer 2. Disabled layers are struck through. A note reminds you that a
+  Layer 2 pixel with the palette priority bit (NR $44 b7) is always on top.</li>
+  <li><b>Layers</b> – whether ULA (NR $68 b7), LoRes, Layer 2 (NR $69 b7 / port $123B), sprites (also in
+  border, sprite 0 on top) and tilemap (always above ULA, or by attribute) are enabled.</li>
+  <li><b>Clip windows</b> – the Layer 2, sprite, ULA and tilemap windows.</li>
+</ul>
+<div class="note"><p>If the machine stops in the middle of a frame, lines below the beam are drawn with the
+current register state – on the emulator screen the previous frame is still there, so they may
+differ.</p></div>
+
+<h3 id="next-layer2">Layer 2</h3>
+<figure class="shot" id="fig-next-layer2">
+  <img src="img/en/next-layer2.png" alt="">
+  <figcaption>The Layer 2 tab: the whole Layer 2 content from memory with the visible part marked.</figcaption>
+</figure>
+<p>The whole Layer 2 content from memory – not just what is visible. The drop-down on the left selects
+the bank: <i>Active (NR $12)</i> or <i>Shadow (NR $13)</i>; then the zoom and <span class="ui">visible
+area</span>: a dashed rectangle shows what is on screen after scroll and clip, a circle marks the top-left
+corner of the screen.</p>
+<p>Info lines at the top: the mode (NR $70 – <i>256 × 192, 8 bpp</i>, <i>320 × 256, 8 bpp
+(column-major)</i> or <i>640 × 256, 4 bpp (column-major)</i>) and whether Layer 2 is on; the bank and its
+pages; scroll X/Y (NR $16/$71, $17) and clip NR $18; the palette (first/second per NR $43 b2), palette
+offset (NR $70 b3:0) and the transparent colour NR $14. Hovering prints the bank and offset (and the 8K
+page), the byte at that point (for 4 bpp which nibble), the colour index and, if so,
+<i>(transparent)</i>.</p>
+
+<h3 id="next-tilemap">Tilemap</h3>
+<figure class="shot" id="fig-next-tilemap">
+  <img src="img/en/next-tilemap.png" alt="">
+  <figcaption>The Tilemap tab: the whole map with the visible part marked, and the tile definitions
+  below it.</figcaption>
+</figure>
+<p>At the top is the whole map (40 × 32 or 80 × 32 tiles) with 1× / 2× zoom and the
+<span class="ui">visible area</span> option (dashed visible part after scroll and clip, circle = top-left
+corner of the screen). Info lines: the mode (NR $6B – number of columns, 4 bpp or text 1 bpp, 256/512
+tiles, with or without attributes – then the default attribute NR $6C applies), whether the tilemap is on
+and whether it is always above ULA; the map (NR $6E) and definitions (NR $6F) addresses in bank 5 or 7;
+scroll (NR $2F/$30, $31) and clip NR $1B; the tilemap palette (NR $6B b4) and the transparent index
+NR $4C (in text mode the colour NR $14).</p>
+<p><b>Hover over a tile in the map:</b> its column and row, the tile index, the attribute broken down
+into palette, mirroring, rotation and priority relative to ULA, and the addresses of the map entry and
+the definition are printed. The tile is also framed in the definitions below the map and
+<b>highlighted on the emulator screen</b> where it lies after scrolling.</p>
+<p><b>Tile definitions</b> below the map: all defined tiles in a grid of 16 per row; above them the
+<span class="ui">palette offset</span> for the preview (0–15) and 2× – 4× zoom. Hovering shows the tile
+number and the address of its definition.</p>
+
+<h3 id="next-copper">Copper</h3>
+<figure class="shot" id="fig-next-copper">
+  <img src="img/en/next-copper.png" alt="">
+  <figcaption>The Copper tab: the Copper program with decoded instructions; the row with PC is
+  highlighted.</figcaption>
+</figure>
+<p>The whole Copper program (1024 instructions). The status line at the top: <code>PC $xxx</code> (where
+the Copper is now), <i>running</i> / <i>stopped</i>, the mode (NR $62 bits 7:6: <i>stop</i>, <i>start
+from 0 (PC = 0 when enabled)</i>, <i>resume from current PC</i>, <i>start from 0, PC reset every
+frame</i>), the line offset NR $64 and the number of lines per frame. The <span class="ui">Which
+instructions to show</span> drop-down: <i>All</i>, <i>Without trailing NOPs</i>, <i>Up to first
+HALT</i>; <span class="ui">follow PC</span> scrolls the table so the row with PC is visible.</p>
+<table class="compact">
+  <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Index</td><td>position in the program (0–3FF)</td></tr>
+    <tr><td>Word</td><td>the 16-bit instruction in hex</td></tr>
+    <tr><td>Instruction</td><td><code>MOVE</code>, <code>WAIT</code>, <code>NOP</code>, <code>HALT</code></td></tr>
+    <tr><td>Operands</td><td>for MOVE <code>NR $40 Palette Index ← $10</code> (the tooltip breaks down the bits of the value), for WAIT <code>line 100, h 0</code></td></tr>
+    <tr><td>Screen</td><td>for WAIT the screen line (<code>y 132</code> in the 320 × 256 area including the border), <i>off screen</i>, or <i>never</i> when the frame has no such line</td></tr>
+  </tbody>
+</table>
+<p><b>Hover over a WAIT row</b> – the line it waits for is highlighted with a horizontal line on the
+emulator screen. The tooltip of a WAIT explains which line and horizontal position it waits for; HALT is
+a WAIT for line 511, which never happens.</p>
+
+<h3 id="next-nextreg">NEXTREG</h3>
+<figure class="shot" id="fig-next-nextreg">
+  <img src="img/en/next-nextreg.png" alt="">
+  <figcaption>The NEXTREG tab: Next registers with values, bit breakdown and highlighted changes.</figcaption>
+</figure>
+<p>A table of the Next registers with name, group, access, the value in hex, decimal and binary, and a
+<b>bit breakdown</b> into named fields (for example the CPU speed for NR $07, the layer order for
+NR $15). Toolbar:</p>
+<ul>
+  <li><span class="ui">Search (number, name, bit)…</span> – filters by register number, name or bit field
+  name.</li>
+  <li><span class="ui">All groups</span> – limits the table to one group: Machine, Video, Layer 2,
+  Sprites, Tilemap, Copper, Palettes, MMU, Sound, Other.</li>
+  <li><span class="ui">all 256</span> – also shows numbers the Next does not define.</li>
+  <li><span class="ui">changed only</span> – only registers changed since the last refresh.</li>
+</ul>
+<p>Registers that changed since the last refresh have a highlighted row and the changed bits are
+emphasised – just step and watch what changes. The count is on the right (<code>84 shown ·
+3 changed</code>). The Access column: <code>R/W</code> read and write, <code>R</code> read only,
+<code>W</code> write only – for write-only registers the value shown is the last write (or 0 if the
+emulator does not keep it); an asterisk and a tooltip warn when the value read differs from the value
+written.</p>
+
+<!-- ================================================================== 10 -->
+<h2 id="stavy">Saved states</h2>
+
+<p>A saved state is a snapshot of the whole machine – memory, registers, hardware. It is useful when you
+want to return to the same place in a game repeatedly (before the boss fight, before the bug) without
+playing your way there every time.</p>
+
+<h3 id="stavy-ulozit">Saving and restoring</h3>
+<ul>
+  <li><span class="cmd">MB Maniax: Save State…</span> – the floppy disk button on the debug toolbar or the
+  command from the palette. An input box <i>Save Emulator State</i> opens at the top; enter a name and
+  press <kbd>Enter</kbd>. The same name overwrites an older state (the extension asks first).</li>
+  <li><span class="cmd">MB Maniax: Restore State…</span> – the clock button. Pick a state from the list;
+  the machine returns to it and <b>stays stopped</b> (the Call Stack shows the reason <i>state
+  restored</i>). Continue with <kbd>F5</kbd>.</li>
+</ul>
+<figure class="shot half" id="fig-save-state">
+  <img src="img/en/save-state.png" alt="">
+  <figcaption>Saving a state: entering the name.</figcaption>
+</figure>
+<figure class="shot half" id="fig-restore-state">
+  <img src="img/en/restore-state.png" alt="">
+  <figcaption>Restoring a state: choosing from the saved states.</figcaption>
+</figure>
+<p>States belong to the current debug session (until <span class="ui">Stop</span>) – they survive a
+Restart. There can be at most <b>8</b> of them per session. Restoring does not change breakpoints or the
+profiler.</p>
+
+<h3 id="stavy-snimek">States are saved at the end of a frame</h3>
+<p>The emulator can save a state only at a frame boundary. A running program is always at one, so saving
+while running happens immediately. If the machine is stopped in the middle of a frame (breakpoint,
+step), the extension asks: <i>The machine is stopped in the middle of a frame. A state can only be saved
+at the end of a frame. Run to the end of the current frame and save the state there?</i> The
+<span class="ui">Run to End of Frame and Save</span> button runs the program to the end of the frame
+(breakpoints are ignored meanwhile), stops (reason <i>frame boundary</i>) and saves the state.</p>
+
+<h3 id="stavy-export">Export to and import from a file</h3>
+<p><span class="cmd">MB Maniax: Export State to File…</span> saves the current state to a
+<code>.mbxstate</code> file, <span class="cmd">MB Maniax: Import State from File…</span> loads it – also in
+another debug session. Both commands are available only in the Command Palette and only while
+debugging. A file can be loaded <b>only by the same version of the extension</b> and for the same
+machine type; after updating the extension, old files cannot be loaded.</p>
+
+<!-- ================================================================== 11 -->
+<h2 id="profiler">Profiler</h2>
+
+<p>The profiler measures where the program spends its time. It adds up the T-states (CPU clock cycles)
+spent on every instruction and shows the result right in the source: for each line how much it cost,
+and with a colour how expensive it is compared to the others.</p>
+
+<h3 id="profiler-start">Starting</h3>
+<ol class="steps">
+  <li>While debugging, click the <span class="cmd">Start Profiler</span> button (pulse icon) on the debug
+  toolbar, or run <span class="cmd">MB Maniax: Start Profiler</span> from the Command Palette.
+  <b>Profiler</b> appears in the Status Bar at the bottom left.</li>
+  <li>Let the program run through the part you want to measure (for example a few seconds of the
+  game).</li>
+  <li>Stop the program (<kbd>F6</kbd>, a breakpoint). Every time it stops, the result is shown in the open
+  editors and the Status Bar shows the total: <code>Profiler: 3,512,000 T</code>.</li>
+</ol>
+
+<h3 id="profiler-cteni">Reading the results</h3>
+<figure class="shot" id="fig-profiler-editor">
+  <img src="img/en/profiler-editor.png" alt="">
+  <figcaption>Profiler results in the source: T-states and share after the end of lines, background colour
+  by the line's cost, marks in the scroll bar.</figcaption>
+</figure>
+<ul>
+  <li><b>Grey text after the end of a line</b>, e.g. <code>1,234 T · 12.3 %</code>: the line used
+  1,234 T-states, which is 12.3 % of all T-states during the measurement (including time outside your
+  source). Hovering over the line repeats it in a tooltip.</li>
+  <li><b>Line background</b> from light yellow to red: the line's cost relative to the <b>most expensive
+  line</b> (8 levels). The most expensive lines are the reddest – look at them first.</li>
+  <li><b>Marks in the scroll bar</b> on the right (overview ruler): the same colours, so you can find the
+  expensive places even in a long file without scrolling.</li>
+</ul>
+<p>A line executed many times is expensive even if the instruction itself is fast – the profiler shows
+the <b>total</b> time, not the time of one pass. Everything the CPU executes counts: waiting in
+<code>HALT</code> (every repetition) and accepting an interrupt (attributed to the instruction before
+which it came). Time when the CPU is held by DMA and time while paused are not counted. Instructions in a
+macro are attributed to the line the macro is invoked from.</p>
+
+<h3 id="profiler-funkce">Most expensive functions</h3>
+<p><span class="cmd">MB Maniax: Show Profiler Results</span> – from the Command Palette, or by clicking
+<b>Profiler</b> in the Status Bar – opens the list <i>Most expensive functions</i>, sorted from the most
+expensive. A function is the code from one global label to the next global label (local labels with a dot
+belong to their parent). Each shows the total T-states with the share, and the file and line; select one
+to go there. The item <i>Outside the source code (ROM, code without SLD)</i> at the end adds up the time
+spent outside your source.</p>
+<figure class="shot" id="fig-profiler-top">
+  <img src="img/en/profiler-top.png" alt="">
+  <figcaption>The list of the most expensive functions.</figcaption>
+</figure>
+
+<h3 id="profiler-dalsi">Live updates, stopping, clearing</h3>
+<ul>
+  <li><span class="cmd">MB Maniax: Toggle Live Profiler Updates</span> – results are refreshed while
+  running too, every second. Handy when you want to see the numbers change while playing.</li>
+  <li><span class="cmd">MB Maniax: Stop Profiler</span> (button on the debug toolbar) – the measurement
+  ends; the last results stay in the editor (even after debugging ends). A notification shows the measured
+  total with a <b>Show Results</b> button; the total also stays in the status bar, and clicking it opens the
+  list of the most expensive functions again at any time.</li>
+  <li><span class="cmd">MB Maniax: Clear Profiler Data</span> – starts counting from zero and removes the
+  colouring. The profiler keeps running.</li>
+</ul>
+
+<h3 id="profiler-tipy">Tips</h3>
+<ul>
+  <li>Measure only what you are interested in: run the program, get to the place, run
+  <span class="cmd">Clear Profiler Data</span>, let it run and stop.</li>
+  <li>A main loop waiting on <code>HALT</code> shows a large number right at the <code>HALT</code> – that is
+  the free time of the frame, not a bug. The smaller HALT's share, the less headroom you have.</li>
+  <li>Restart and reloading the program reset the counters; the profiler stays on.</li>
+  <li>The profiler counts by physical address (page + offset), so paged code does not get mixed up even
+  when it runs at the same address.</li>
+</ul>
+
+<!-- ================================================================== 12 -->
+<h2 id="rewind">Step Back</h2>
+
+<p><span class="ui">Step Back</span> moves the machine back by one instruction – repeatedly if you like.
+For this the emulator remembers the last <b>10 seconds</b> of execution. It is useful when the program
+stops on a bug and you want to see how it got there.</p>
+
+<h3 id="rewind-zapnuti">Enabling it</h3>
+<p>Step Back is off by default because recording the instruction trace slows emulation down – by about
+a quarter on a Next at 28 MHz. Enable it in launch.json:</p>
+<pre><code>"rewind": true</code></pre>
+<p>and start debugging again. Without it, the Step Back button reports <i>Step Back is turned off – set
+"rewind": true in launch.json (emulation then runs slower)</i>.</p>
+
+<h3 id="rewind-pouziti">Using it</h3>
+<p>While the program is stopped, click <span class="ui">Step Back</span> (an arrow curving backwards) on the
+debug toolbar. Each click goes back one instruction; registers, memory and the picture correspond to the
+state before it. You can then step forward again. The <span class="ui">Reverse</span> button (run
+backwards to a breakpoint) is not available yet – it reports <i>Reverse Continue is not available yet –
+use Step Back</i>.</p>
+<div class="tip"><p>If the slowdown bothers you only sometimes, keep two configurations in launch.json –
+one with <code>"rewind": true</code> and one without – and pick between them in the list next to the green
+button in Run and Debug.</p></div>
+
+<!-- ================================================================== 13 -->
+<h2 id="launch">Settings and launch.json</h2>
+
+<h3 id="launch-atributy">launch.json configuration attributes</h3>
+<p>A configuration of type <code>"mbx-next"</code> in <code>.vscode/launch.json</code>. While typing, VS Code
+suggests attribute names and their descriptions (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</p>
+<table class="ref">
+  <thead><tr><th>Attribute</th><th>Default</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>type</code></td><td>–</td><td>Always <code>"mbx-next"</code>.</td></tr>
+    <tr><td><code>request</code></td><td>–</td><td>Always <code>"launch"</code>.</td></tr>
+    <tr><td><code>name</code></td><td>–</td><td>Configuration name in the Run and Debug list.</td></tr>
+    <tr><td><code>program</code></td><td>(required)</td><td>Program to run (<code>.nex</code>, <code>.sna</code>, <code>.tap</code>, …), e.g. <code>${workspaceFolder}/game.nex</code>.</td></tr>
+    <tr><td><code>sld</code></td><td>–</td><td>Debug information file from sjasmplus (<code>--sld</code>). Without it, debugging is limited to the disassembly and the extension warns about it.</td></tr>
+    <tr><td><code>sourceRoot</code></td><td>SLD folder</td><td>Folder that source paths in the SLD are relative to (when the SLD has no full paths).</td></tr>
+    <tr><td><code>stopOnEntry</code></td><td><code>false</code></td><td>Stop at the program's first instruction.</td></tr>
+    <tr><td><code>machine</code></td><td><code>"next"</code></td><td>Emulated machine: <code>next</code>, <code>48k</code>, <code>128k</code>, <code>plus3</code>, <code>pentagon</code>. Machines other than the Next need an SD card with ROMs (<code>sdImage</code>).</td></tr>
+    <tr><td><code>sdImage</code></td><td>–</td><td>SD card image (<code>.img</code>). Without it, the program sees its own folder through esxDOS.</td></tr>
+    <tr><td><code>esxdosRoot</code></td><td>program folder</td><td>Folder the program sees through esxDOS when there is no SD card.</td></tr>
+    <tr><td><code>rewind</code></td><td><code>false</code></td><td>Step Back – the emulator remembers the last 10 seconds; emulation is slower (<a class="secref" href="#rewind"></a>).</td></tr>
+    <tr><td><code>magicBreakpoint</code></td><td><code>true</code></td><td>Stop on the CSpect BREAK instruction (<code>FD 00</code>, <code>DD 01</code>) and on the ZEsarUX <code>ED FF</code>. When off, <code>DD 01</code> behaves as <code>LD BC,nn</code>.</td></tr>
+    <tr><td><code>wpmem</code></td><td><code>true</code></td><td>Watchpoints from WPMEM comments.</td></tr>
+    <tr><td><code>logpoints</code></td><td><code>true</code></td><td>Logpoints from LOGPOINT comments.</td></tr>
+    <tr><td><code>assertions</code></td><td><code>true</code></td><td>Assertions from ASSERTION comments.</td></tr>
+    <tr><td><code>preLaunchTask</code></td><td>–</td><td>(VS Code attribute) A task from tasks.json run before debugging – typically the build.</td></tr>
+  </tbody>
+</table>
+<p>Paths may contain VS Code variables: <code>${workspaceFolder}</code> (the open folder),
+<code>${fileDirname}</code> (the folder of the open file) and others. A complete example:</p>
+<pre><code>{
+    "type": "mbx-next",
+    "request": "launch",
+    "name": "Debug the game (with Step Back)",
+    "program": "${workspaceFolder}/build/game.nex",
+    "sld": "${workspaceFolder}/build/game.sld",
+    "stopOnEntry": false,
+    "rewind": true,
+    "esxdosRoot": "${workspaceFolder}/data",
+    "preLaunchTask": "sjasmplus"
+}</code></pre>
+
+<h3 id="nastaveni">Extension settings</h3>
+<p>Settings (<kbd>Ctrl</kbd>+<kbd>,</kbd>, search for <code>mbxNext</code>):</p>
+<table class="ref">
+  <thead><tr><th>Setting</th><th>Default</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>mbxNext.language</code></td><td><code>auto</code></td><td>Language of the extension (messages, emulator screen, Next panel), see <a class="secref" href="#jazyk"></a>.</td></tr>
+    <tr><td><code>mbxNext.serverPath</code></td><td>empty</td><td>Path to the <code>mbx-next-server</code> debug server; empty = the server bundled with the extension. Change only for development or when told to by the author.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="prikazy">Command overview</h3>
+<table class="ref">
+  <thead><tr><th>Command</th><th>Where</th></tr></thead>
+  <tbody>
+    <tr><td><span class="cmd">MB Maniax Next: Show Emulator Screen</span></td><td>palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Next Panel (Sprites, Palettes, …)</span></td><td>debug toolbar, palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Save State…</span></td><td>debug toolbar, palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Restore State…</span></td><td>debug toolbar, palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Export State to File…</span></td><td>palette (while debugging)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Import State from File…</span></td><td>palette (while debugging)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Start Profiler</span></td><td>debug toolbar, palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Stop Profiler</span></td><td>debug toolbar, palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Show Profiler Results</span></td><td>palette, Status Bar</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Toggle Live Profiler Updates</span></td><td>palette (while debugging)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Clear Profiler Data</span></td><td>palette (while debugging)</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================== 14 -->
+<h2 id="problemy">Troubleshooting</h2>
+
+<dl>
+<dt>Cannot set a breakpoint – no red dot appears when hovering over the margin</dt>
+<dd>
+<p>VS Code allows breakpoints only in files whose <b>language</b> some debugger supports. This extension
+reports them for the languages <code>z80-asm</code>, <code>asm-collection</code>, <code>z80-macroasm</code>,
+<code>asm</code>, <code>asm-x86-nasm</code>, <code>nasm</code>, <code>masm</code>, <code>c6510</code> and
+<code>plaintext</code> (Plain Text). If you have an extension for another assembler installed that claims
+<code>.asm</code> under a different language, breakpoints will not work.</p>
+<ol class="steps">
+  <li>Look at the bottom right of the Status Bar – it shows the language of the open file (e.g.
+  <span class="ui">Plain Text</span>, <span class="ui">Z80 Assembly</span>, <span class="ui">ARM</span>…).</li>
+  <li>Click it. A language picker opens at the top; choose
+  <span class="ui">Configure File Association for '.asm'…</span> and select a Z80 language (depending on the
+  installed extension e.g. <i>Z80 Assembly</i>, <i>Z80 Macro-Assembler</i>) or
+  <span class="ui">Plain Text</span>.</li>
+</ol>
+<p>VS Code writes this into the <code>files.associations</code> setting. You can also write it by hand
+(<span class="cmd">Preferences: Open User Settings (JSON)</span> from the Command Palette):</p>
+<pre><code>"files.associations": {
+    "*.asm": "z80-macroasm",
+    "*.i.asm": "z80-macroasm"
+}</code></pre>
+<p>The value must be a language identifier from the list above that is available to you
+(<code>plaintext</code> always is).</p>
+</dd>
+
+<dt>The breakpoint is grey and hollow</dt>
+<dd><p>The breakpoint is not verified. Hover over it – the tooltip says why: <i>SLD from sjasmplus is
+missing ("sld" attribute)</i> → add <code>"sld"</code> to launch.json; <i>No instruction on this line or
+below it (according to SLD)</i> → the line is not in the SLD (it is a comment or data, or the file was not
+built with this SLD); a condition error → fix the condition (<a class="secref" href="#vyrazy"></a>).</p></dd>
+
+<dt>The program does not stop at a breakpoint</dt>
+<dd>
+<ul>
+  <li>The SLD is missing or out of date: build with <code>--sld=… --fullpath</code> and check that
+  launch.json points to the same file. When starting without an SLD, the extension warns <i>"sld" is
+  missing in launch.json…</i> or <i>Cannot load SLD…</i>.</li>
+  <li>The paths in the SLD do not match the files in the editor: use <code>--fullpath</code>, or set
+  <code>sourceRoot</code>.</li>
+  <li>You are building a different copy of the file than the one open in the editor (another folder).</li>
+  <li>Paged code: the breakpoint stops only when the page is mapped in (<a class="secref" href="#bp"></a>).
+  Check which page is in the slot under Variables › Machine (MMU, time).</li>
+  <li>The breakpoint is disabled (unticked in the Breakpoints section), or all breakpoints are deactivated
+  (the <span class="ui">Toggle Active Breakpoints</span> button in the section header).</li>
+  <li>The program was not rebuilt after a change – <code>preLaunchTask</code> is missing from launch.json, or
+  the build failed (the <span class="ui">Problems</span> and <span class="ui">Terminal</span> tabs).</li>
+</ul>
+</dd>
+
+<dt>Debugging does not start</dt>
+<dd>
+<ul>
+  <li><i>Program not found: …</i> – the <code>"program"</code> path is wrong, or the program has not been
+  built yet.</li>
+  <li><i>Debug server not found (…)</i> – the extension is damaged or <code>mbxNext.serverPath</code> is set
+  wrong; clear the setting, or reinstall the extension.</li>
+  <li><i>The debug server is not responding</i> / <i>The debug server exited during startup</i> – try
+  starting debugging again; details (server output) are usually in the Debug Console. An antivirus can
+  also block the server from starting.</li>
+  <li>The <code>sjasmplus</code> task cannot be run – sjasmplus is not on the <code>PATH</code>
+  (<a class="secref" href="#prvni-sjasmplus"></a>).</li>
+</ul>
+</dd>
+
+<dt>Choppy sound, slow emulation</dt>
+<dd>
+<ul>
+  <li>Check <i>Running · N frames/s</i> in the screen bar. Below 50 the computer cannot keep up.</li>
+  <li>Turn off Step Back (<code>"rewind": false</code>) – the instruction trace slows things down by about a
+  quarter.</li>
+  <li>Turn off <span class="ui">Live</span> in the Next panel and live profiler updates; close the Next
+  panel when you do not need it.</li>
+  <li>Logpoints printing thousands of times per second slow down the Debug Console – use a hit count
+  (<code>% 50</code>) or a condition.</li>
+  <li>The screen panel redraws only while it is visible; hidden behind another tab it costs nothing.</li>
+</ul>
+</dd>
+
+<dt>The screen panel or the Next panel disappeared</dt>
+<dd><p>The panels are editor tabs: look for them in another tab group, or open them again –
+<span class="cmd">MB Maniax Next: Show Emulator Screen</span> and <span class="cmd">MB Maniax: Next Panel
+(Sprites, Palettes, …)</span>.</p></dd>
+
+<dt>The keyboard does not work in the emulator / shortcuts do not work in VS Code</dt>
+<dd><p>Keys go to the emulator only while the screen has the focus (click into it). Conversely, VS Code
+shortcuts (<kbd>F5</kbd>, <kbd>F10</kbd>) work only when the screen does not have the focus – click into the
+editor.</p></dd>
+
+<dt>No sound</dt>
+<dd><p>Click the screen or the 🔇 button – sound may start only after a click. Check that the program is
+running (it is silent while paused) and that the icon shows 🔊.</p></dd>
+
+<dt>The extension speaks a different language than I want</dt>
+<dd><p>Set <code>mbxNext.language</code> (<a class="secref" href="#jazyk"></a>) and start debugging again.
+Command names and the descriptions in Settings follow the VS Code display language (the
+<span class="cmd">Configure Display Language</span> command), not this setting.</p></dd>
+
+<dt>The old version still runs after an update</dt>
+<dd><p>Stop debugging and reload the window: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> →
+<span class="cmd">Developer: Reload Window</span> (<a class="secref" href="#reload"></a>).</p></dd>
+
+<dt>A saved state file cannot be imported</dt>
+<dd><p>A <code>.mbxstate</code> file can be loaded only by the same version of the extension and for the same
+machine type (<code>machine</code>).</p></dd>
+</dl>
+
+<!-- ================================================================== 15 -->
+<h2 id="zkratky">Keyboard shortcuts</h2>
+<p>Default VS Code keyboard shortcuts on Windows that are useful while debugging. Customise them in
+<span class="ui">File › Preferences › Keyboard Shortcuts</span> (<kbd>Ctrl</kbd>+<kbd>K</kbd>
+<kbd>Ctrl</kbd>+<kbd>S</kbd>).</p>
+<table class="keys">
+  <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td><kbd>F5</kbd></td><td>Start debugging / Continue</td></tr>
+    <tr><td><kbd>F6</kbd></td><td>Pause</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Stop debugging</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Restart</td></tr>
+    <tr><td><kbd>F10</kbd></td><td>Step Over</td></tr>
+    <tr><td><kbd>F11</kbd></td><td>Step Into</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>F11</kbd></td><td>Step Out</td></tr>
+    <tr><td><kbd>F9</kbd></td><td>Toggle breakpoint on the cursor line</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd></td><td>Run and Debug side bar</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd></td><td>Debug Console</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, <kbd>F1</kbd></td><td>Command Palette</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td><td>Run the default build task (sjasmplus)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></td><td>Problems (build errors)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>`</kbd></td><td>Terminal</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>J</kbd></td><td>Show / hide the bottom panel</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd></td><td>Explorer (files)</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>X</kbd></td><td>Extensions</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>,</kbd></td><td>Settings</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Quick open a file by name</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Go to line</td></tr>
+    <tr><td><kbd>F12</kbd></td><td>Go to definition (if your assembler extension provides it)</td></tr>
+  </tbody>
+</table>
+<p>In the emulator screen (when it has the focus): <kbd>Shift</kbd> = CAPS SHIFT, <kbd>Ctrl</kbd> = SYMBOL
+SHIFT, <kbd>Esc</kbd> = BREAK.</p>
+
+</main>
+
+<script src="out/pages.en.js"></script>
+<script src="manual.js"></script>
+</body>
+</html>

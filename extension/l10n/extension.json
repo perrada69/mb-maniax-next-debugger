@@ -1,0 +1,54 @@
+{
+    "en": {
+        "extension.launchName": "Debug on ZX Spectrum Next",
+        "extension.commandNotAllowed": "Command \"{0}\" is not allowed in the Next panel"
+    },
+    "cs": {
+        "extension.launchName": "Ladit na ZX Spectrum Next",
+        "extension.commandNotAllowed": "Příkaz „{0}“ není pro panel Next povolený"
+    },
+    "sk": {
+        "extension.launchName": "Ladiť na ZX Spectrum Next",
+        "extension.commandNotAllowed": "Príkaz „{0}“ nie je pre panel Next povolený"
+    },
+    "es": {
+        "extension.launchName": "Depurar en ZX Spectrum Next",
+        "extension.commandNotAllowed": "El comando \"{0}\" no está permitido en el panel Next"
+    },
+    "de": {
+        "extension.launchName": "Auf ZX Spectrum Next debuggen",
+        "extension.commandNotAllowed": "Der Befehl „{0}“ ist im Next-Panel nicht erlaubt"
+    },
+    "fr": {
+        "extension.launchName": "Déboguer sur ZX Spectrum Next",
+        "extension.commandNotAllowed": "La commande « {0} » n'est pas autorisée dans le panneau Next"
+    },
+    "it": {
+        "extension.launchName": "Esegui il debug su ZX Spectrum Next",
+        "extension.commandNotAllowed": "Il comando \"{0}\" non è consentito nel pannello Next"
+    },
+    "pl": {
+        "extension.launchName": "Debuguj na ZX Spectrum Next",
+        "extension.commandNotAllowed": "Polecenie „{0}” nie jest dozwolone w panelu Next"
+    },
+    "pt-br": {
+        "extension.launchName": "Depurar no ZX Spectrum Next",
+        "extension.commandNotAllowed": "O comando \"{0}\" não é permitido no painel Next"
+    },
+    "ru": {
+        "extension.launchName": "Отладка на ZX Spectrum Next",
+        "extension.commandNotAllowed": "Команда «{0}» не разрешена для панели Next"
+    },
+    "uk": {
+        "extension.launchName": "Налагодження на ZX Spectrum Next",
+        "extension.commandNotAllowed": "Команда «{0}» не дозволена для панелі Next"
+    },
+    "ja": {
+        "extension.launchName": "ZX Spectrum Next でデバッグ",
+        "extension.commandNotAllowed": "コマンド \"{0}\" は Next パネルでは使用できません"
+    },
+    "zh-cn": {
+        "extension.launchName": "在 ZX Spectrum Next 上调试",
+        "extension.commandNotAllowed": "Next 面板不允许使用命令“{0}”"
+    }
+}

@@ -1,0 +1,410 @@
+{
+  "name": "mbx-next-debugger",
+  "displayName": "MB Maniax Next Debugger",
+  "description": "%extension.description%",
+  "version": "0.1.0",
+  "publisher": "MiroslavBursa",
+  "license": "GPL-3.0-or-later",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1f2026",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/perrada69/mb-maniax-next-debugger.git"
+  },
+  "homepage": "https://github.com/perrada69/mb-maniax-next-debugger#readme",
+  "bugs": {
+    "url": "https://github.com/perrada69/mb-maniax-next-debugger/issues"
+  },
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Debuggers"
+  ],
+  "keywords": [
+    "ZX Spectrum Next",
+    "Z80",
+    "sjasmplus",
+    "emulator",
+    "debugger"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onDebugResolve:mbx-next",
+    "onDebugDynamicConfigurations:mbx-next"
+  ],
+  "contributes": {
+    "breakpoints": [
+      {
+        "language": "z80-asm"
+      },
+      {
+        "language": "asm-collection"
+      },
+      {
+        "language": "z80-macroasm"
+      },
+      {
+        "language": "asm"
+      },
+      {
+        "language": "asm-x86-nasm"
+      },
+      {
+        "language": "nasm"
+      },
+      {
+        "language": "masm"
+      },
+      {
+        "language": "c6510"
+      },
+      {
+        "language": "plaintext"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "mbx-next",
+        "label": "MB Maniax Next Debugger",
+        "languages": [
+          "z80-asm",
+          "asm-collection",
+          "z80-macroasm",
+          "asm"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "%launch.program%"
+              },
+              "sld": {
+                "type": "string",
+                "description": "%launch.sld%"
+              },
+              "sourceRoot": {
+                "type": "string",
+                "description": "%launch.sourceRoot%"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "default": false,
+                "description": "%launch.stopOnEntry%"
+              },
+              "machine": {
+                "type": "string",
+                "enum": [
+                  "next",
+                  "48k",
+                  "128k",
+                  "plus3",
+                  "pentagon"
+                ],
+                "default": "next",
+                "description": "%launch.machine%"
+              },
+              "sdImage": {
+                "type": "string",
+                "description": "%launch.sdImage%"
+              },
+              "esxdosRoot": {
+                "type": "string",
+                "description": "%launch.esxdosRoot%"
+              },
+              "rewind": {
+                "type": "boolean",
+                "default": false,
+                "description": "%launch.rewind%"
+              },
+              "magicBreakpoint": {
+                "type": "boolean",
+                "default": true,
+                "description": "%launch.magicBreakpoint%"
+              },
+              "wpmem": {
+                "type": "boolean",
+                "default": true,
+                "description": "%launch.wpmem%"
+              },
+              "logpoints": {
+                "type": "boolean",
+                "default": true,
+                "description": "%launch.logpoints%"
+              },
+              "assertions": {
+                "type": "boolean",
+                "default": true,
+                "description": "%launch.assertions%"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "mbx-next",
+            "request": "launch",
+            "name": "%launch.initialName%",
+            "program": "${workspaceFolder}/program.nex",
+            "sld": "${workspaceFolder}/program.sld",
+            "stopOnEntry": false
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "%snippet.label%",
+            "description": "%snippet.description%",
+            "body": {
+              "type": "mbx-next",
+              "request": "launch",
+              "name": "%launch.initialName%",
+              "program": "^\"\\${workspaceFolder}/${1:program}.nex\"",
+              "sld": "^\"\\${workspaceFolder}/${1:program}.sld\"",
+              "stopOnEntry": false
+            }
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "mbxNext.showScreen",
+        "title": "%command.showScreen%",
+        "category": "MB Maniax"
+      },
+      {
+        "command": "mbxNext.showNextView",
+        "title": "%command.showNextView%",
+        "category": "MB Maniax",
+        "icon": "$(layers)"
+      },
+      {
+        "command": "mbxNext.saveState",
+        "title": "%command.saveState%",
+        "category": "MB Maniax",
+        "icon": "$(save)"
+      },
+      {
+        "command": "mbxNext.restoreState",
+        "title": "%command.restoreState%",
+        "category": "MB Maniax",
+        "icon": "$(history)"
+      },
+      {
+        "command": "mbxNext.exportState",
+        "title": "%command.exportState%",
+        "category": "MB Maniax",
+        "icon": "$(export)"
+      },
+      {
+        "command": "mbxNext.importState",
+        "title": "%command.importState%",
+        "category": "MB Maniax",
+        "icon": "$(desktop-download)"
+      },
+      {
+        "command": "mbxNext.profilerStart",
+        "title": "%command.profilerStart%",
+        "category": "MB Maniax",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "mbxNext.profilerStop",
+        "title": "%command.profilerStop%",
+        "category": "MB Maniax",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "mbxNext.profilerClear",
+        "title": "%command.profilerClear%",
+        "category": "MB Maniax",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "mbxNext.profilerShow",
+        "title": "%command.profilerShow%",
+        "category": "MB Maniax",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "mbxNext.profilerLive",
+        "title": "%command.profilerLive%",
+        "category": "MB Maniax",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "mbxNext.reload",
+        "title": "%command.reload%",
+        "category": "MB Maniax",
+        "icon": "$(debug-rerun)"
+      }
+    ],
+    "menus": {
+      "debug/toolBar": [
+        {
+          "command": "mbxNext.showNextView",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.reload",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.saveState",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.restoreState",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.profilerStart",
+          "when": "debugType == 'mbx-next' && !mbxNext.profilerActive"
+        },
+        {
+          "command": "mbxNext.profilerStop",
+          "when": "debugType == 'mbx-next' && mbxNext.profilerActive"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mbxNext.saveState",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.restoreState",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.exportState",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.importState",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.profilerStart",
+          "when": "debugType == 'mbx-next' && !mbxNext.profilerActive"
+        },
+        {
+          "command": "mbxNext.profilerStop",
+          "when": "debugType == 'mbx-next' && mbxNext.profilerActive"
+        },
+        {
+          "command": "mbxNext.profilerClear",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.profilerLive",
+          "when": "debugType == 'mbx-next'"
+        },
+        {
+          "command": "mbxNext.reload",
+          "when": "debugType == 'mbx-next'"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "mbxNext.reload",
+        "key": "ctrl+alt+f5",
+        "mac": "cmd+alt+f5",
+        "when": "inDebugMode && debugType == 'mbx-next'"
+      }
+    ],
+    "configuration": {
+      "title": "MB Maniax Next Debugger",
+      "properties": {
+        "mbxNext.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.serverPath%"
+        },
+        "mbxNext.language": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "en",
+            "cs",
+            "sk",
+            "es",
+            "de",
+            "fr",
+            "it",
+            "pl",
+            "pt-br",
+            "ru",
+            "uk",
+            "ja",
+            "zh-cn"
+          ],
+          "enumItemLabels": [
+            "%config.language.auto%",
+            "English",
+            "Čeština",
+            "Slovenčina",
+            "Español",
+            "Deutsch",
+            "Français",
+            "Italiano",
+            "Polski",
+            "Português (Brasil)",
+            "Русский",
+            "Українська",
+            "日本語",
+            "简体中文"
+          ],
+          "enumDescriptions": [
+            "%config.language.autoDescription%",
+            "English",
+            "Čeština",
+            "Slovenčina",
+            "Español",
+            "Deutsch",
+            "Français",
+            "Italiano",
+            "Polski",
+            "Português (Brasil)",
+            "Русский",
+            "Українська",
+            "日本語",
+            "简体中文"
+          ],
+          "description": "%config.language%"
+        },
+        "mbxNext.reloadOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.reloadOnSave%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "check": "tsc --noEmit",
+    "test": "node test/build.mjs && node --test \"out-test/*.test.js\"",
+    "package": "node esbuild.mjs --production"
+  },
+  "dependencies": {
+    "@vscode/debugadapter": "1.68.0",
+    "@vscode/debugprotocol": "1.68.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "@types/vscode": "1.100.0",
+    "@vscode/vsce": "4.0.0",
+    "esbuild": "0.25.10",
+    "typescript": "5.9.3"
+  }
+}

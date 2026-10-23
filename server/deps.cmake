@@ -1,0 +1,33 @@
+# MB Maniax Next Debugger – knihovny, které JNEXT hledá přes find_package (zlib, libpng),
+# ze zdroje v .dev/next. Načítá se hned po project(jnext) přes CMAKE_PROJECT_jnext_INCLUDE.
+
+if(NOT TARGET ZLIB::ZLIB)
+    if(NOT JNEXT_ZLIB_SRC OR NOT EXISTS "${JNEXT_ZLIB_SRC}/zlib.h")
+        message(FATAL_ERROR "Chybí zdroj zlib (JNEXT_ZLIB_SRC='${JNEXT_ZLIB_SRC}') – spusť build.ps1")
+    endif()
+    set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(SKIP_INSTALL_ALL ON CACHE BOOL "" FORCE)
+    add_subdirectory("${JNEXT_ZLIB_SRC}" "${CMAKE_BINARY_DIR}/zlib" EXCLUDE_FROM_ALL)
+    # zconf.h vzniká v build složce zlib.
+    target_include_directories(zlibstatic PUBLIC "${JNEXT_ZLIB_SRC}" "${CMAKE_BINARY_DIR}/zlib")
+    add_library(ZLIB::ZLIB ALIAS zlibstatic)
+    set(ZLIB_LIBRARY zlibstatic CACHE STRING "" FORCE)
+    set(ZLIB_INCLUDE_DIR "${JNEXT_ZLIB_SRC};${CMAKE_BINARY_DIR}/zlib" CACHE STRING "" FORCE)
+    set(ZLIB_FOUND TRUE)
+endif()
+
+if(NOT TARGET PNG::PNG)
+    if(NOT JNEXT_LIBPNG_SRC OR NOT EXISTS "${JNEXT_LIBPNG_SRC}/png.h")
+        message(FATAL_ERROR "Chybí zdroj libpng (JNEXT_LIBPNG_SRC='${JNEXT_LIBPNG_SRC}') – spusť build.ps1")
+    endif()
+    set(PNG_SHARED OFF CACHE BOOL "" FORCE)
+    set(PNG_STATIC ON CACHE BOOL "" FORCE)
+    set(PNG_TESTS OFF CACHE BOOL "" FORCE)
+    set(PNG_TOOLS OFF CACHE BOOL "" FORCE)
+    set(PNG_EXECUTABLES OFF CACHE BOOL "" FORCE)
+    set(PNG_HARDWARE_OPTIMIZATIONS OFF CACHE BOOL "" FORCE)
+    add_subdirectory("${JNEXT_LIBPNG_SRC}" "${CMAKE_BINARY_DIR}/libpng" EXCLUDE_FROM_ALL)
+    add_library(PNG::PNG ALIAS png_static)
+    set(PNG_LIBRARY png_static CACHE STRING "" FORCE)
+    set(PNG_PNG_INCLUDE_DIR "${JNEXT_LIBPNG_SRC}" CACHE PATH "" FORCE)
+endif()

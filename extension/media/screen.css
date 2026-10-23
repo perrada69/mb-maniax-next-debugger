@@ -1,0 +1,128 @@
+body {
+    margin: 0;
+    padding: 8px;
+    background: var(--vscode-editor-background);
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+#bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#bar button {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    border-radius: 2px;
+    padding: 2px 8px;
+    cursor: pointer;
+    min-width: 32px;
+}
+
+#bar button:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+#bar button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+#status {
+    color: var(--vscode-descriptionForeground);
+    /* delší překlady („En cours d'exécution · 50 images/s“) v úzkém panelu zkrátit, ne vytlačit tlačítka */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Poloha paprsku po zastavení („Řádek 120, sloupec 64“), zkrátí se dřív než stav. */
+#raster {
+    color: var(--vscode-descriptionForeground);
+    min-width: 0;
+    flex-shrink: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#raster:not(:empty)::before {
+    content: "· ";
+}
+
+#bar #beam {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    opacity: 0.6;
+}
+
+/* zapnutý paprsek: tlačítko jako zapnutá volba ve VS Code */
+#bar #beam.on {
+    opacity: 1;
+    background: var(--vscode-inputOption-activeBackground, var(--vscode-button-secondaryBackground));
+    color: var(--vscode-inputOption-activeForeground, var(--vscode-button-secondaryForeground));
+    box-shadow: inset 0 0 0 1px var(--vscode-inputOption-activeBorder, transparent);
+}
+
+#bar #next {
+    margin-left: auto;
+}
+
+#wrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+/* Obraz Nextu má 640×256 bodů (hi-res), poměr stran jako 320×256 = 5 : 4. */
+#frame {
+    position: relative;
+    width: 100%;
+    max-width: calc((100vh - 80px) * 1.25);
+    aspect-ratio: 5 / 4;
+}
+
+#screen {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    background: #000;
+    outline: none;
+    border: 1px solid transparent;
+}
+
+/* Zvýraznění z panelu Next (sprite, oblast) přes obraz; myš a klávesy jdou dál do obrazu. */
+#overlay {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    pointer-events: none;
+    image-rendering: pixelated;
+}
+
+#screen:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+#hint {
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.9em;
+}

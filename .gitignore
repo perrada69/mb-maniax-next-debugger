@@ -1,0 +1,12 @@
+build/
+build.log
+extension/node_modules/
+extension/dist/
+extension/bin/
+*.vsix
+examples/**/*.nex
+examples/**/*.sld
+examples/**/*.lst
+docs/manual/out/
+extension/out-test/
+release/

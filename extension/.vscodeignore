@@ -1,0 +1,9 @@
+src/**
+node_modules/**
+esbuild.mjs
+tsconfig.json
+**/*.map
+.vscode/**
+test/**
+out-test/**
+images/icon.svg
