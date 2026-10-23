@@ -31,5 +31,6 @@
   "launch.logpoints": "Protokollpunkte aus sjasmplus-Kommentaren LOGPOINT (; LOGPOINT Text ${Ausdruck}). Erfordert SLDOPT COMMENT LOGPOINT im Quellcode.",
   "launch.assertions": "Assertions aus sjasmplus-Kommentaren ASSERTION (; ASSERTION Ausdruck) – hält an, wenn der Ausdruck falsch ist. Erfordert SLDOPT COMMENT ASSERTION im Quellcode.",
   "command.reload": "Neu erstellen und neu laden",
-  "config.reloadOnSave": "Beim Debuggen nach dem Speichern einer Assembler-Quelldatei (.asm, .a80, .z80, .s, .inc) aus dem Arbeitsbereich das Programm neu erstellen (preLaunchTask) und neu laden, ohne die Debugsitzung zu beenden – wie der Befehl „Neu erstellen und neu laden“."
+  "config.reloadOnSave": "Beim Debuggen nach dem Speichern einer Assembler-Quelldatei (.asm, .a80, .z80, .s, .inc) aus dem Arbeitsbereich das Programm neu erstellen (preLaunchTask) und neu laden, ohne die Debugsitzung zu beenden – wie der Befehl „Neu erstellen und neu laden“.",
+  "command.openManual": "Benutzerhandbuch öffnen"
 }

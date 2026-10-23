@@ -2,7 +2,7 @@
   "name": "mbx-next-debugger",
   "displayName": "MB Maniax Next Debugger",
   "description": "%extension.description%",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "MiroslavBursa",
   "license": "GPL-3.0-or-later",
   "icon": "images/icon.png",
@@ -244,6 +244,12 @@
         "title": "%command.reload%",
         "category": "MB Maniax",
         "icon": "$(debug-rerun)"
+      },
+      {
+        "command": "mbxNext.openManual",
+        "title": "%command.openManual%",
+        "category": "MB Maniax",
+        "icon": "$(book)"
       }
     ],
     "menus": {

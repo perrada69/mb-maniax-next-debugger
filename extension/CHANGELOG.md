@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- The user manual (PDF, English and Czech, with screenshots) is now part of the extension:
+  command **MB Maniax: Open User Manual** opens it in your PDF viewer, in the extension's
+  language (Czech also for Slovak, English otherwise).
+
 ## 0.1.0
 
 First public release.

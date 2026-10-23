@@ -31,5 +31,6 @@
   "launch.logpoints": "Pontos de log dos comentários LOGPOINT do sjasmplus (; LOGPOINT texto ${expressão}). Requer SLDOPT COMMENT LOGPOINT no código-fonte.",
   "launch.assertions": "Asserções dos comentários ASSERTION do sjasmplus (; ASSERTION expressão) – para quando a expressão é falsa. Requer SLDOPT COMMENT ASSERTION no código-fonte.",
   "command.reload": "Recompilar e recarregar",
-  "config.reloadOnSave": "Durante a depuração, ao salvar um código-fonte assembly (.asm, .a80, .z80, .s, .inc) do workspace, recompilar o programa (preLaunchTask) e recarregá-lo sem encerrar a sessão de depuração, como o comando Recompilar e recarregar."
+  "config.reloadOnSave": "Durante a depuração, ao salvar um código-fonte assembly (.asm, .a80, .z80, .s, .inc) do workspace, recompilar o programa (preLaunchTask) e recarregá-lo sem encerrar a sessão de depuração, como o comando Recompilar e recarregar.",
+  "command.openManual": "Abrir o manual do usuário"
 }

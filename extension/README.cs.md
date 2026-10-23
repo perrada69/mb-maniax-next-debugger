@@ -1,6 +1,6 @@
 # MB Maniax Next Debugger
 
-*English version: [README.md](https://github.com/perrada69/mb-maniax-next-debugger/blob/main/extension/README.md) · Uživatelská příručka (PDF, česky a anglicky): [Releases](https://github.com/perrada69/mb-maniax-next-debugger/releases).*
+*English version: [README.md](https://github.com/perrada69/mb-maniax-next-debugger/blob/main/extension/README.md) · Uživatelská příručka (PDF, česky a anglicky, se snímky) je součástí rozšíření: **MB Maniax: Otevřít uživatelskou příručku** (Ctrl+Shift+P).*
 
 Emulátor a ladicí nástroj pro **ZX Spectrum Next** přímo ve VS Code. Program ze **sjasmplus** se
 spustí v přesném emulátoru (jádro [JNEXT](https://github.com/jorgegv/jnext)) a ladí se ve

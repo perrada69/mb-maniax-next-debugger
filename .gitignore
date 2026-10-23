@@ -10,3 +10,4 @@ examples/**/*.lst
 docs/manual/out/
 extension/out-test/
 release/
+extension/manual/

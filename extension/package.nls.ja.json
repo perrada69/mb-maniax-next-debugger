@@ -31,5 +31,6 @@
   "launch.logpoints": "sjasmplus の LOGPOINT コメントからのログポイント (; LOGPOINT テキスト ${式})。ソースに SLDOPT COMMENT LOGPOINT が必要です。",
   "launch.assertions": "sjasmplus の ASSERTION コメントからのアサーション (; ASSERTION 式) – 式が偽のときに停止します。ソースに SLDOPT COMMENT ASSERTION が必要です。",
   "command.reload": "再ビルドして再読み込み",
-  "config.reloadOnSave": "デバッグ中にワークスペースのアセンブラー ソース (.asm、.a80、.z80、.s、.inc) を保存すると、デバッグ セッションを終了せずにプログラムを再ビルド (preLaunchTask) して再読み込みします (「再ビルドして再読み込み」コマンドと同じ)。"
+  "config.reloadOnSave": "デバッグ中にワークスペースのアセンブラー ソース (.asm、.a80、.z80、.s、.inc) を保存すると、デバッグ セッションを終了せずにプログラムを再ビルド (preLaunchTask) して再読み込みします (「再ビルドして再読み込み」コマンドと同じ)。",
+  "command.openManual": "ユーザーマニュアルを開く"
 }

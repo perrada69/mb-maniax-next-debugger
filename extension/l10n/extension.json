@@ -1,54 +1,67 @@
 {
     "en": {
         "extension.launchName": "Debug on ZX Spectrum Next",
-        "extension.commandNotAllowed": "Command \"{0}\" is not allowed in the Next panel"
+        "extension.commandNotAllowed": "Command \"{0}\" is not allowed in the Next panel",
+        "extension.manualMissing": "The user manual is not part of this installation."
     },
     "cs": {
         "extension.launchName": "Ladit na ZX Spectrum Next",
-        "extension.commandNotAllowed": "Příkaz „{0}“ není pro panel Next povolený"
+        "extension.commandNotAllowed": "Příkaz „{0}“ není pro panel Next povolený",
+        "extension.manualMissing": "Uživatelská příručka není součástí této instalace."
     },
     "sk": {
         "extension.launchName": "Ladiť na ZX Spectrum Next",
-        "extension.commandNotAllowed": "Príkaz „{0}“ nie je pre panel Next povolený"
+        "extension.commandNotAllowed": "Príkaz „{0}“ nie je pre panel Next povolený",
+        "extension.manualMissing": "Používateľská príručka nie je súčasťou tejto inštalácie."
     },
     "es": {
         "extension.launchName": "Depurar en ZX Spectrum Next",
-        "extension.commandNotAllowed": "El comando \"{0}\" no está permitido en el panel Next"
+        "extension.commandNotAllowed": "El comando \"{0}\" no está permitido en el panel Next",
+        "extension.manualMissing": "El manual de usuario no forma parte de esta instalación."
     },
     "de": {
         "extension.launchName": "Auf ZX Spectrum Next debuggen",
-        "extension.commandNotAllowed": "Der Befehl „{0}“ ist im Next-Panel nicht erlaubt"
+        "extension.commandNotAllowed": "Der Befehl „{0}“ ist im Next-Panel nicht erlaubt",
+        "extension.manualMissing": "Das Benutzerhandbuch ist nicht Teil dieser Installation."
     },
     "fr": {
         "extension.launchName": "Déboguer sur ZX Spectrum Next",
-        "extension.commandNotAllowed": "La commande « {0} » n'est pas autorisée dans le panneau Next"
+        "extension.commandNotAllowed": "La commande « {0} » n'est pas autorisée dans le panneau Next",
+        "extension.manualMissing": "Le manuel d’utilisation ne fait pas partie de cette installation."
     },
     "it": {
         "extension.launchName": "Esegui il debug su ZX Spectrum Next",
-        "extension.commandNotAllowed": "Il comando \"{0}\" non è consentito nel pannello Next"
+        "extension.commandNotAllowed": "Il comando \"{0}\" non è consentito nel pannello Next",
+        "extension.manualMissing": "Il manuale utente non fa parte di questa installazione."
     },
     "pl": {
         "extension.launchName": "Debuguj na ZX Spectrum Next",
-        "extension.commandNotAllowed": "Polecenie „{0}” nie jest dozwolone w panelu Next"
+        "extension.commandNotAllowed": "Polecenie „{0}” nie jest dozwolone w panelu Next",
+        "extension.manualMissing": "Instrukcja obsługi nie jest częścią tej instalacji."
     },
     "pt-br": {
         "extension.launchName": "Depurar no ZX Spectrum Next",
-        "extension.commandNotAllowed": "O comando \"{0}\" não é permitido no painel Next"
+        "extension.commandNotAllowed": "O comando \"{0}\" não é permitido no painel Next",
+        "extension.manualMissing": "O manual do usuário não faz parte desta instalação."
     },
     "ru": {
         "extension.launchName": "Отладка на ZX Spectrum Next",
-        "extension.commandNotAllowed": "Команда «{0}» не разрешена для панели Next"
+        "extension.commandNotAllowed": "Команда «{0}» не разрешена для панели Next",
+        "extension.manualMissing": "Руководство пользователя не входит в эту установку."
     },
     "uk": {
         "extension.launchName": "Налагодження на ZX Spectrum Next",
-        "extension.commandNotAllowed": "Команда «{0}» не дозволена для панелі Next"
+        "extension.commandNotAllowed": "Команда «{0}» не дозволена для панелі Next",
+        "extension.manualMissing": "Посібник користувача не входить до цього встановлення."
     },
     "ja": {
         "extension.launchName": "ZX Spectrum Next でデバッグ",
-        "extension.commandNotAllowed": "コマンド \"{0}\" は Next パネルでは使用できません"
+        "extension.commandNotAllowed": "コマンド \"{0}\" は Next パネルでは使用できません",
+        "extension.manualMissing": "ユーザーマニュアルはこのインストールに含まれていません。"
     },
     "zh-cn": {
         "extension.launchName": "在 ZX Spectrum Next 上调试",
-        "extension.commandNotAllowed": "Next 面板不允许使用命令“{0}”"
+        "extension.commandNotAllowed": "Next 面板不允许使用命令“{0}”",
+        "extension.manualMissing": "此安装中不包含用户手册。"
     }
 }

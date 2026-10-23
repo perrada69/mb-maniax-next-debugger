@@ -31,5 +31,6 @@
   "launch.logpoints": "Logpointy z komentárov LOGPOINT zo sjasmplus (; LOGPOINT text ${výraz}). V zdrojovom kóde je nutné SLDOPT COMMENT LOGPOINT.",
   "launch.assertions": "Asercie z komentárov ASSERTION zo sjasmplus (; ASSERTION výraz) – zastaví, keď výraz neplatí. V zdrojovom kóde je nutné SLDOPT COMMENT ASSERTION.",
   "command.reload": "Preložiť a nahrať znova",
-  "config.reloadOnSave": "Počas ladenia po uložení zdrojového kódu v assembleri (.asm, .a80, .z80, .s, .inc) z pracovného priestoru program preložiť (preLaunchTask) a nahrať znova bez ukončenia ladenia – ako príkaz Preložiť a nahrať znova."
+  "config.reloadOnSave": "Počas ladenia po uložení zdrojového kódu v assembleri (.asm, .a80, .z80, .s, .inc) z pracovného priestoru program preložiť (preLaunchTask) a nahrať znova bez ukončenia ladenia – ako príkaz Preložiť a nahrať znova.",
+  "command.openManual": "Otvoriť používateľskú príručku"
 }

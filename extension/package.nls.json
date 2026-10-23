@@ -31,5 +31,6 @@
   "launch.logpoints": "Logpoints from sjasmplus LOGPOINT comments (; LOGPOINT text ${expression}). Needs SLDOPT COMMENT LOGPOINT in the source.",
   "launch.assertions": "Assertions from sjasmplus ASSERTION comments (; ASSERTION expression) – stops when the expression is false. Needs SLDOPT COMMENT ASSERTION in the source.",
   "command.reload": "Rebuild and Reload",
-  "config.reloadOnSave": "While debugging, after saving an assembler source (.asm, .a80, .z80, .s, .inc) from the workspace, rebuild the program (preLaunchTask) and reload it without ending the debug session – like the Rebuild and Reload command."
+  "config.reloadOnSave": "While debugging, after saving an assembler source (.asm, .a80, .z80, .s, .inc) from the workspace, rebuild the program (preLaunchTask) and reload it without ending the debug session – like the Rebuild and Reload command.",
+  "command.openManual": "Open User Manual"
 }

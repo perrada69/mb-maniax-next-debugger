@@ -31,5 +31,6 @@
   "launch.logpoints": "Punti di registrazione dai commenti LOGPOINT di sjasmplus (; LOGPOINT testo ${espressione}). Richiede SLDOPT COMMENT LOGPOINT nel codice sorgente.",
   "launch.assertions": "Asserzioni dai commenti ASSERTION di sjasmplus (; ASSERTION espressione): si ferma quando l'espressione è falsa. Richiede SLDOPT COMMENT ASSERTION nel codice sorgente.",
   "command.reload": "Ricompila e ricarica",
-  "config.reloadOnSave": "Durante il debug, dopo il salvataggio di un sorgente assembler (.asm, .a80, .z80, .s, .inc) dell'area di lavoro, ricompila il programma (preLaunchTask) e ricaricalo senza terminare la sessione di debug, come il comando Ricompila e ricarica."
+  "config.reloadOnSave": "Durante il debug, dopo il salvataggio di un sorgente assembler (.asm, .a80, .z80, .s, .inc) dell'area di lavoro, ricompila il programma (preLaunchTask) e ricaricalo senza terminare la sessione di debug, come il comando Ricompila e ricarica.",
+  "command.openManual": "Apri il manuale utente"
 }

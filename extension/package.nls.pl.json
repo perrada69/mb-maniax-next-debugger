@@ -31,5 +31,6 @@
   "launch.logpoints": "Punkty rejestrowania z komentarzy LOGPOINT sjasmplus (; LOGPOINT tekst ${wyrażenie}). Wymaga SLDOPT COMMENT LOGPOINT w kodzie źródłowym.",
   "launch.assertions": "Asercje z komentarzy ASSERTION sjasmplus (; ASSERTION wyrażenie) – zatrzymuje, gdy wyrażenie jest fałszywe. Wymaga SLDOPT COMMENT ASSERTION w kodzie źródłowym.",
   "command.reload": "Skompiluj i załaduj ponownie",
-  "config.reloadOnSave": "Podczas debugowania po zapisaniu źródła w asemblerze (.asm, .a80, .z80, .s, .inc) z obszaru roboczego skompiluj program (preLaunchTask) i załaduj go ponownie bez kończenia sesji debugowania – jak polecenie Skompiluj i załaduj ponownie."
+  "config.reloadOnSave": "Podczas debugowania po zapisaniu źródła w asemblerze (.asm, .a80, .z80, .s, .inc) z obszaru roboczego skompiluj program (preLaunchTask) i załaduj go ponownie bez kończenia sesji debugowania – jak polecenie Skompiluj i załaduj ponownie.",
+  "command.openManual": "Otwórz instrukcję obsługi"
 }

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { setLanguage, t } from './i18n';
+import { openManual } from './manual';
 import { NextViewPanel } from './nextview';
 import { ProfilerController } from './profiler';
 import { ReloadController } from './reload';
@@ -68,6 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.commands.registerCommand('mbxNext.showScreen', () => screen.show()),
         vscode.commands.registerCommand('mbxNext.showNextView', () => next.show()),
+        vscode.commands.registerCommand('mbxNext.openManual', () => openManual(context.extensionPath)),
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (!e.affectsConfiguration('mbxNext.language')) return;
             // Nový jazyk: otevřené panely se postaví znovu (po "ready" dostanou zpět stav sezení).

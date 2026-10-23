@@ -9,7 +9,7 @@
 #
 # -Ladici: ladicí překlad (bez optimalizací) – emulace je v něm pomalá, jen na hledání chyb.
 # -Znovu: smaže složku sestavení a nakonfiguruje ji znovu.
-# -Balicek: navíc rozšíření VS Code se serverem (extension\mbx-next-debugger-<verze>.vsix);
+# -Balicek: navíc rozšíření VS Code se serverem a příručkou PDF (extension\mbx-next-debugger-<verze>.vsix);
 #           Node.js bere z .dev\emsdk\node webu, pokud není v PATH.
 # -Vydani: jako -Balicek, navíc všechny testy (npm test), kontrola záznamu verze v CHANGELOG.md
 #          a příručka PDF (cs, en); balíček i příručky do release\<verze>\ – k nahrání na
@@ -75,6 +75,13 @@ if ($Balicek) {
     $bin = Join-Path $ext 'bin\win32-x64'
     New-Item -ItemType Directory -Force $bin | Out-Null
     Copy-Item $exe $bin -Force
+    # Příručka PDF do balíčku (příkaz Otevřít uživatelskou příručku): při vydání vždy čerstvá,
+    # jinak jen když chybí.
+    $manualOut = Join-Path $PSScriptRoot 'docs\manual\out'
+    if ($Vydani -or -not (Test-Path (Join-Path $manualOut '*.pdf'))) { & (Join-Path $PSScriptRoot 'docs\manual\build.ps1') }
+    $manual = Join-Path $ext 'manual'
+    New-Item -ItemType Directory -Force $manual | Out-Null
+    Copy-Item (Join-Path $manualOut '*.pdf') $manual -Force
     if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
         $node = Get-ChildItem (Join-Path $dev 'emsdk\node') -Directory | Sort-Object Name | Select-Object -Last 1
         if (-not $node) { throw 'Chybí Node.js' }
@@ -98,7 +105,6 @@ if ($Balicek) {
         Pop-Location
     }
     if ($Vydani) {
-        & (Join-Path $PSScriptRoot 'docs\manual\build.ps1')
         $out = Join-Path $PSScriptRoot "release\$version"
         New-Item -ItemType Directory -Force $out | Out-Null
         Copy-Item (Join-Path $ext "mbx-next-debugger-win32-x64-$version.vsix") $out -Force

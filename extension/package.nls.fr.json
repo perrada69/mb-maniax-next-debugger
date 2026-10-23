@@ -31,5 +31,6 @@
   "launch.logpoints": "Points de journalisation issus des commentaires LOGPOINT de sjasmplus (; LOGPOINT texte ${expression}). Nécessite SLDOPT COMMENT LOGPOINT dans le code source.",
   "launch.assertions": "Assertions issues des commentaires ASSERTION de sjasmplus (; ASSERTION expression) – s'arrête quand l'expression est fausse. Nécessite SLDOPT COMMENT ASSERTION dans le code source.",
   "command.reload": "Recompiler et recharger",
-  "config.reloadOnSave": "Pendant le débogage, après l'enregistrement d'un source assembleur (.asm, .a80, .z80, .s, .inc) de l'espace de travail, recompiler le programme (preLaunchTask) et le recharger sans arrêter la session de débogage, comme la commande Recompiler et recharger."
+  "config.reloadOnSave": "Pendant le débogage, après l'enregistrement d'un source assembleur (.asm, .a80, .z80, .s, .inc) de l'espace de travail, recompiler le programme (preLaunchTask) et le recharger sans arrêter la session de débogage, comme la commande Recompiler et recharger.",
+  "command.openManual": "Ouvrir le manuel d’utilisation"
 }

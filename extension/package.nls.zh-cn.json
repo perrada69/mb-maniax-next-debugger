@@ -31,5 +31,6 @@
   "launch.logpoints": "来自 sjasmplus LOGPOINT 注释的日志点 (; LOGPOINT 文本 ${表达式})。源代码中需要 SLDOPT COMMENT LOGPOINT。",
   "launch.assertions": "来自 sjasmplus ASSERTION 注释的断言 (; ASSERTION 表达式) – 表达式为假时停止。源代码中需要 SLDOPT COMMENT ASSERTION。",
   "command.reload": "重新生成并重新加载",
-  "config.reloadOnSave": "调试期间保存工作区中的汇编源文件 (.asm、.a80、.z80、.s、.inc) 后，重新生成程序 (preLaunchTask) 并重新加载，而不结束调试会话（与“重新生成并重新加载”命令相同）。"
+  "config.reloadOnSave": "调试期间保存工作区中的汇编源文件 (.asm、.a80、.z80、.s、.inc) 后，重新生成程序 (preLaunchTask) 并重新加载，而不结束调试会话（与“重新生成并重新加载”命令相同）。",
+  "command.openManual": "打开用户手册"
 }
