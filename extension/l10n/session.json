@@ -62,7 +62,10 @@
         "session.reloadBusy": "A reload is already in progress",
         "session.reloadInProgress": "The program is being reloaded",
         "session.reloaded": "Program reloaded: {0}",
-        "session.serverEsxdosWritable": "esxDOS works in the folder {0} with write access: the program's writes change files on disk immediately and Step Back cannot undo them."
+        "session.serverEsxdosWritable": "esxDOS works in the folder {0} with write access: the program's writes change files on disk immediately and Step Back cannot undo them.",
+        "session.waitingForNextZXOS": "NextZXOS is starting from the SD card; the debugger stops when it starts {0} (breakpoints apply from then on).",
+        "session.cardSynced": "Copied back from the SD card to {0}: {1}",
+        "session.cardMissing": "No longer on the SD card (left alone in the folder): {0}"
     },
     "cs": {
         "session.filterInterrupt": "Přerušení (IM 1 / IM 2)",
@@ -127,7 +130,10 @@
         "session.reloadBusy": "Nové nahrání už probíhá",
         "session.reloadInProgress": "Program se nahrává znovu",
         "session.reloaded": "Program nahrán znovu: {0}",
-        "session.serverEsxdosWritable": "esxDOS pracuje ve složce {0} s právem zápisu: zápisy programu mění soubory na disku hned a Step Back je nevrátí."
+        "session.serverEsxdosWritable": "esxDOS pracuje ve složce {0} s právem zápisu: zápisy programu mění soubory na disku hned a Step Back je nevrátí.",
+        "session.waitingForNextZXOS": "NextZXOS startuje z SD karty; debugger zastaví, až spustí {0} (breakpointy platí od té chvíle).",
+        "session.cardSynced": "Zkopírováno zpět z SD karty do {0}: {1}",
+        "session.cardMissing": "Na SD kartě už nejsou (ve složce zůstaly): {0}"
     },
     "sk": {
         "session.filterInterrupt": "Prerušenie (IM 1 / IM 2)",
@@ -192,7 +198,10 @@
         "session.reloadBusy": "Nové nahratie už prebieha",
         "session.reloadInProgress": "Program sa nahráva znova",
         "session.reloaded": "Program nahraný znova: {0}",
-        "session.serverEsxdosWritable": "esxDOS pracuje v priečinku {0} s právom zápisu: zápisy programu menia súbory na disku hneď a Step Back ich nevráti."
+        "session.serverEsxdosWritable": "esxDOS pracuje v priečinku {0} s právom zápisu: zápisy programu menia súbory na disku hneď a Step Back ich nevráti.",
+        "session.waitingForNextZXOS": "NextZXOS štartuje z SD karty; debugger zastaví, keď spustí {0} (breakpointy platia od tej chvíle).",
+        "session.cardSynced": "Skopírované späť z SD karty do {0}: {1}",
+        "session.cardMissing": "Na SD karte už nie sú (v priečinku zostali): {0}"
     },
     "es": {
         "session.filterInterrupt": "Interrupción (IM 1 / IM 2)",
@@ -257,7 +266,10 @@
         "session.reloadBusy": "Ya hay una recarga en curso",
         "session.reloadInProgress": "El programa se está recargando",
         "session.reloaded": "Programa recargado: {0}",
-        "session.serverEsxdosWritable": "esxDOS trabaja en la carpeta {0} con acceso de escritura: las escrituras del programa modifican los archivos del disco de inmediato y Step Back no puede deshacerlas."
+        "session.serverEsxdosWritable": "esxDOS trabaja en la carpeta {0} con acceso de escritura: las escrituras del programa modifican los archivos del disco de inmediato y Step Back no puede deshacerlas.",
+        "session.waitingForNextZXOS": "NextZXOS está arrancando desde la tarjeta SD; el depurador se detiene cuando inicie {0} (los puntos de interrupción valen desde entonces).",
+        "session.cardSynced": "Copiado de vuelta de la tarjeta SD a {0}: {1}",
+        "session.cardMissing": "Ya no están en la tarjeta SD (se dejan en la carpeta): {0}"
     },
     "de": {
         "session.filterInterrupt": "Interrupt (IM 1 / IM 2)",
@@ -322,7 +334,10 @@
         "session.reloadBusy": "Ein Neuladen läuft bereits",
         "session.reloadInProgress": "Das Programm wird neu geladen",
         "session.reloaded": "Programm neu geladen: {0}",
-        "session.serverEsxdosWritable": "esxDOS arbeitet im Ordner {0} mit Schreibzugriff: Schreibvorgänge des Programms ändern Dateien auf dem Datenträger sofort, und Step Back kann sie nicht rückgängig machen."
+        "session.serverEsxdosWritable": "esxDOS arbeitet im Ordner {0} mit Schreibzugriff: Schreibvorgänge des Programms ändern Dateien auf dem Datenträger sofort, und Step Back kann sie nicht rückgängig machen.",
+        "session.waitingForNextZXOS": "NextZXOS startet von der SD-Karte; der Debugger hält an, wenn es {0} startet (Haltepunkte gelten ab dann).",
+        "session.cardSynced": "Von der SD-Karte zurück nach {0} kopiert: {1}",
+        "session.cardMissing": "Nicht mehr auf der SD-Karte (im Ordner belassen): {0}"
     },
     "fr": {
         "session.filterInterrupt": "Interruption (IM 1 / IM 2)",
@@ -387,7 +402,10 @@
         "session.reloadBusy": "Un rechargement est déjà en cours",
         "session.reloadInProgress": "Le programme est en cours de rechargement",
         "session.reloaded": "Programme rechargé : {0}",
-        "session.serverEsxdosWritable": "esxDOS travaille dans le dossier {0} avec accès en écriture : les écritures du programme modifient immédiatement les fichiers sur le disque et Step Back ne peut pas les annuler."
+        "session.serverEsxdosWritable": "esxDOS travaille dans le dossier {0} avec accès en écriture : les écritures du programme modifient immédiatement les fichiers sur le disque et Step Back ne peut pas les annuler.",
+        "session.waitingForNextZXOS": "NextZXOS démarre depuis la carte SD ; le débogueur s'arrête quand il lance {0} (les points d'arrêt s'appliquent à partir de là).",
+        "session.cardSynced": "Recopié de la carte SD vers {0} : {1}",
+        "session.cardMissing": "Ne sont plus sur la carte SD (laissés dans le dossier) : {0}"
     },
     "it": {
         "session.filterInterrupt": "Interrupt (IM 1 / IM 2)",
@@ -452,7 +470,10 @@
         "session.reloadBusy": "È già in corso un ricaricamento",
         "session.reloadInProgress": "Il programma è in fase di ricaricamento",
         "session.reloaded": "Programma ricaricato: {0}",
-        "session.serverEsxdosWritable": "esxDOS lavora nella cartella {0} con accesso in scrittura: le scritture del programma modificano subito i file su disco e Step Back non può annullarle."
+        "session.serverEsxdosWritable": "esxDOS lavora nella cartella {0} con accesso in scrittura: le scritture del programma modificano subito i file su disco e Step Back non può annullarle.",
+        "session.waitingForNextZXOS": "NextZXOS si avvia dalla scheda SD; il debugger si ferma quando avvia {0} (i breakpoint valgono da quel momento).",
+        "session.cardSynced": "Ricopiato dalla scheda SD in {0}: {1}",
+        "session.cardMissing": "Non sono più sulla scheda SD (lasciati nella cartella): {0}"
     },
     "pl": {
         "session.filterInterrupt": "Przerwanie (IM 1 / IM 2)",
@@ -517,7 +538,10 @@
         "session.reloadBusy": "Ponowne ładowanie już trwa",
         "session.reloadInProgress": "Program jest ponownie ładowany",
         "session.reloaded": "Program załadowany ponownie: {0}",
-        "session.serverEsxdosWritable": "esxDOS działa w folderze {0} z prawem zapisu: zapisy programu od razu zmieniają pliki na dysku, a Step Back nie może ich cofnąć."
+        "session.serverEsxdosWritable": "esxDOS działa w folderze {0} z prawem zapisu: zapisy programu od razu zmieniają pliki na dysku, a Step Back nie może ich cofnąć.",
+        "session.waitingForNextZXOS": "NextZXOS startuje z karty SD; debugger zatrzyma się, gdy uruchomi {0} (punkty przerwania działają od tej chwili).",
+        "session.cardSynced": "Skopiowano z powrotem z karty SD do {0}: {1}",
+        "session.cardMissing": "Nie ma ich już na karcie SD (zostały w folderze): {0}"
     },
     "pt-br": {
         "session.filterInterrupt": "Interrupção (IM 1 / IM 2)",
@@ -582,7 +606,10 @@
         "session.reloadBusy": "Já há um recarregamento em andamento",
         "session.reloadInProgress": "O programa está sendo recarregado",
         "session.reloaded": "Programa recarregado: {0}",
-        "session.serverEsxdosWritable": "O esxDOS trabalha na pasta {0} com acesso de gravação: as gravações do programa alteram os arquivos no disco imediatamente e o Step Back não pode desfazê-las."
+        "session.serverEsxdosWritable": "O esxDOS trabalha na pasta {0} com acesso de gravação: as gravações do programa alteram os arquivos no disco imediatamente e o Step Back não pode desfazê-las.",
+        "session.waitingForNextZXOS": "O NextZXOS está iniciando pelo cartão SD; o depurador para quando ele iniciar {0} (os pontos de interrupção valem a partir daí).",
+        "session.cardSynced": "Copiado de volta do cartão SD para {0}: {1}",
+        "session.cardMissing": "Não estão mais no cartão SD (mantidos na pasta): {0}"
     },
     "ru": {
         "session.filterInterrupt": "Прерывание (IM 1 / IM 2)",
@@ -647,7 +674,10 @@
         "session.reloadBusy": "Перезагрузка уже выполняется",
         "session.reloadInProgress": "Программа перезагружается",
         "session.reloaded": "Программа перезагружена: {0}",
-        "session.serverEsxdosWritable": "esxDOS работает в папке {0} с правом записи: запись программы сразу изменяет файлы на диске, и Step Back не может её отменить."
+        "session.serverEsxdosWritable": "esxDOS работает в папке {0} с правом записи: запись программы сразу изменяет файлы на диске, и Step Back не может её отменить.",
+        "session.waitingForNextZXOS": "NextZXOS загружается с SD-карты; отладчик остановится, когда он запустит {0} (точки останова действуют с этого момента).",
+        "session.cardSynced": "Скопировано обратно с SD-карты в {0}: {1}",
+        "session.cardMissing": "Больше нет на SD-карте (в папке оставлены): {0}"
     },
     "uk": {
         "session.filterInterrupt": "Переривання (IM 1 / IM 2)",
@@ -712,7 +742,10 @@
         "session.reloadBusy": "Перезавантаження вже триває",
         "session.reloadInProgress": "Програма перезавантажується",
         "session.reloaded": "Програму перезавантажено: {0}",
-        "session.serverEsxdosWritable": "esxDOS працює в папці {0} з правом запису: записи програми одразу змінюють файли на диску, і Step Back не може їх скасувати."
+        "session.serverEsxdosWritable": "esxDOS працює в папці {0} з правом запису: записи програми одразу змінюють файли на диску, і Step Back не може їх скасувати.",
+        "session.waitingForNextZXOS": "NextZXOS завантажується з SD-картки; налагоджувач зупиниться, коли він запустить {0} (точки зупинки діють з цього моменту).",
+        "session.cardSynced": "Скопійовано назад з SD-картки до {0}: {1}",
+        "session.cardMissing": "Більше немає на SD-картці (у теці залишено): {0}"
     },
     "ja": {
         "session.filterInterrupt": "割り込み (IM 1 / IM 2)",
@@ -777,7 +810,10 @@
         "session.reloadBusy": "再読み込みは既に実行中です",
         "session.reloadInProgress": "プログラムを再読み込みしています",
         "session.reloaded": "プログラムを再読み込みしました: {0}",
-        "session.serverEsxdosWritable": "esxDOS はフォルダー {0} を書き込み可能で使用しています: プログラムによる書き込みはディスク上のファイルを直ちに変更し、Step Back では元に戻せません。"
+        "session.serverEsxdosWritable": "esxDOS はフォルダー {0} を書き込み可能で使用しています: プログラムによる書き込みはディスク上のファイルを直ちに変更し、Step Back では元に戻せません。",
+        "session.waitingForNextZXOS": "SD カードから NextZXOS を起動中です。{0} が起動されるとデバッガーが停止します (ブレークポイントはそれ以降有効)。",
+        "session.cardSynced": "SD カードから {0} にコピーし戻しました: {1}",
+        "session.cardMissing": "SD カードにはもうありません (フォルダーには残しています): {0}"
     },
     "zh-cn": {
         "session.filterInterrupt": "中断 (IM 1 / IM 2)",
@@ -842,6 +878,9 @@
         "session.reloadBusy": "已在重新加载",
         "session.reloadInProgress": "正在重新加载程序",
         "session.reloaded": "已重新加载程序：{0}",
-        "session.serverEsxdosWritable": "esxDOS 以可写方式使用文件夹 {0}：程序的写入会立即修改磁盘上的文件，Step Back 无法撤销。"
+        "session.serverEsxdosWritable": "esxDOS 以可写方式使用文件夹 {0}：程序的写入会立即修改磁盘上的文件，Step Back 无法撤销。",
+        "session.waitingForNextZXOS": "NextZXOS 正从 SD 卡启动；它启动 {0} 时调试器会停下（断点从那时起生效）。",
+        "session.cardSynced": "已从 SD 卡复制回 {0}：{1}",
+        "session.cardMissing": "SD 卡上已不存在（文件夹中保留）：{0}"
     }
 }

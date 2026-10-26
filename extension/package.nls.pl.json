@@ -32,5 +32,21 @@
   "launch.assertions": "Asercje z komentarzy ASSERTION sjasmplus (; ASSERTION wyrażenie) – zatrzymuje, gdy wyrażenie jest fałszywe. Wymaga SLDOPT COMMENT ASSERTION w kodzie źródłowym.",
   "command.reload": "Skompiluj i załaduj ponownie",
   "config.reloadOnSave": "Podczas debugowania po zapisaniu źródła w asemblerze (.asm, .a80, .z80, .s, .inc) z obszaru roboczego skompiluj program (preLaunchTask) i załaduj go ponownie bez kończenia sesji debugowania – jak polecenie Skompiluj i załaduj ponownie.",
-  "command.openManual": "Otwórz instrukcję obsługi"
+  "command.openManual": "Otwórz instrukcję obsługi",
+  "launch.boot": "\"nextzxos\": uruchomić NextZXOS z karty SD i pozwolić mu uruchomić program (najpierw program i jego folder są kopiowane na kartę). Bez sdImage używana jest robocza karta NextZXOS; NextZXOS nie jest częścią debuggera i jest pobierany ze specnext.com.",
+  "launch.cardFolder": "Przy boot \"nextzxos\": folder programu na karcie SD (domyślnie /MBX/<nazwa programu>).",
+  "launch.autorun": "Przy boot \"nextzxos\": NextZXOS sam uruchamia program; false otwiera Browser w folderze programu.",
+  "launch.syncBack": "Przy boot \"nextzxos\": po sesji skopiować z powrotem do jego folderu (esxdosRoot) pliki, które program utworzył lub zmienił na karcie. Pliki usunięte na karcie są tylko wypisywane.",
+  "command.downloadNextZXOS": "Pobierz NextZXOS",
+  "command.resetNextZXOSCard": "Przywróć roboczą kartę NextZXOS",
+  "command.cleanNextZXOSCard": "Wyczyść roboczą kartę NextZXOS (/MBX)",
+  "config.nextzxos.url": "Oficjalna dystrybucja NextZXOS dla emulatorów (zip), którą pobiera polecenie Pobierz NextZXOS. NextZXOS nie jest częścią debuggera.",
+  "config.nextzxos.sha256": "SHA-256 tego zipa; pobrany plik, który się nie zgadza, jest odrzucany.",
+  "config.nextzxos.size": "Rozmiar tego zipa w bajtach; pobrany plik, który się nie zgadza, jest odrzucany.",
+  "config.nextzxos.cardReset": "Kiedy robocza karta NextZXOS (wspólna dla wszystkich projektów) wraca do stanu po pobraniu.",
+  "config.nextzxos.cardReset.never": "Tylko poleceniem Przywróć roboczą kartę NextZXOS.",
+  "config.nextzxos.cardReset.afterSession": "Po każdej sesji debugowania, która z niej startowała.",
+  "snippet.nextzxosLabel": "MB Maniax: Start do NextZXOS",
+  "snippet.nextzxosDescription": "Uruchomić NextZXOS z karty SD i debugować program, który uruchomi",
+  "snippet.nextzxosName": "Debuguj przez NextZXOS"
 }

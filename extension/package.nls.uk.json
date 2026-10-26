@@ -32,5 +32,21 @@
   "launch.assertions": "Твердження з коментарів ASSERTION sjasmplus (; ASSERTION вираз) – зупинка, коли вираз хибний. У вихідному коді потрібно SLDOPT COMMENT ASSERTION.",
   "command.reload": "Перезібрати й перезавантажити",
   "config.reloadOnSave": "Під час налагодження після збереження вихідного файлу на асемблері (.asm, .a80, .z80, .s, .inc) з робочої області перезібрати програму (preLaunchTask) і завантажити її знову, не завершуючи сеанс налагодження, – як команда «Перезібрати й перезавантажити».",
-  "command.openManual": "Відкрити посібник користувача"
+  "command.openManual": "Відкрити посібник користувача",
+  "launch.boot": "\"nextzxos\": завантажити NextZXOS з SD-картки й дати йому запустити програму (спершу програма та її тека копіюються на картку). Без sdImage використовується робоча картка NextZXOS; NextZXOS не входить до налагоджувача й завантажується з specnext.com.",
+  "launch.cardFolder": "За boot \"nextzxos\": тека програми на SD-картці (типово /MBX/<назва програми>).",
+  "launch.autorun": "За boot \"nextzxos\": NextZXOS сам запускає програму; false відкриває Browser у теці програми.",
+  "launch.syncBack": "За boot \"nextzxos\": після сеансу скопіювати назад до теки (esxdosRoot) файли, які програма створила або змінила на картці. Видалені на картці файли лише перелічуються.",
+  "command.downloadNextZXOS": "Завантажити NextZXOS",
+  "command.resetNextZXOSCard": "Скинути робочу картку NextZXOS",
+  "command.cleanNextZXOSCard": "Очистити робочу картку NextZXOS (/MBX)",
+  "config.nextzxos.url": "Офіційний дистрибутив NextZXOS для емуляторів (zip), який завантажує команда «Завантажити NextZXOS». NextZXOS не входить до налагоджувача.",
+  "config.nextzxos.sha256": "SHA-256 цього zip; завантаження, що не збігається, відхиляється.",
+  "config.nextzxos.size": "Розмір цього zip у байтах; завантаження, що не збігається, відхиляється.",
+  "config.nextzxos.cardReset": "Коли робоча картка NextZXOS (спільна для всіх проєктів) повертається до стану після завантаження.",
+  "config.nextzxos.cardReset.never": "Лише командою «Скинути робочу картку NextZXOS».",
+  "config.nextzxos.cardReset.afterSession": "Після кожного сеансу налагодження, що з неї завантажувався.",
+  "snippet.nextzxosLabel": "MB Maniax: Запуск у NextZXOS",
+  "snippet.nextzxosDescription": "Завантажити NextZXOS з SD-картки й налагоджувати програму, яку він запустить",
+  "snippet.nextzxosName": "Налагодження через NextZXOS"
 }

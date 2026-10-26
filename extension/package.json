@@ -2,7 +2,7 @@
   "name": "mbx-next-debugger",
   "displayName": "MB Maniax Next Debugger",
   "description": "%extension.description%",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "MiroslavBursa",
   "license": "GPL-3.0-or-later",
   "icon": "images/icon.png",
@@ -119,6 +119,27 @@
                 "type": "string",
                 "description": "%launch.esxdosRoot%"
               },
+              "boot": {
+                "type": "string",
+                "enum": [
+                  "nextzxos"
+                ],
+                "description": "%launch.boot%"
+              },
+              "cardFolder": {
+                "type": "string",
+                "description": "%launch.cardFolder%"
+              },
+              "autorun": {
+                "type": "boolean",
+                "default": true,
+                "description": "%launch.autorun%"
+              },
+              "syncBack": {
+                "type": "boolean",
+                "default": false,
+                "description": "%launch.syncBack%"
+              },
               "rewind": {
                 "type": "boolean",
                 "default": false,
@@ -168,6 +189,18 @@
               "program": "^\"\\${workspaceFolder}/${1:program}.nex\"",
               "sld": "^\"\\${workspaceFolder}/${1:program}.sld\"",
               "stopOnEntry": false
+            }
+          },
+          {
+            "label": "%snippet.nextzxosLabel%",
+            "description": "%snippet.nextzxosDescription%",
+            "body": {
+              "type": "mbx-next",
+              "request": "launch",
+              "name": "%snippet.nextzxosName%",
+              "program": "^\"\\${workspaceFolder}/${1:program}.nex\"",
+              "sld": "^\"\\${workspaceFolder}/${1:program}.sld\"",
+              "boot": "nextzxos"
             }
           }
         ]
@@ -250,6 +283,21 @@
         "title": "%command.openManual%",
         "category": "MB Maniax",
         "icon": "$(book)"
+      },
+      {
+        "command": "mbxNext.downloadNextZXOS",
+        "title": "%command.downloadNextZXOS%",
+        "category": "MB Maniax"
+      },
+      {
+        "command": "mbxNext.resetNextZXOSCard",
+        "title": "%command.resetNextZXOSCard%",
+        "category": "MB Maniax"
+      },
+      {
+        "command": "mbxNext.cleanNextZXOSCard",
+        "title": "%command.cleanNextZXOSCard%",
+        "category": "MB Maniax"
       }
     ],
     "menus": {
@@ -391,6 +439,34 @@
           "type": "boolean",
           "default": false,
           "description": "%config.reloadOnSave%"
+        },
+        "mbxNext.nextzxos.url": {
+          "type": "string",
+          "default": "https://www.specnext.com/distro/24.11/sn-emulator-24.11.zip",
+          "description": "%config.nextzxos.url%"
+        },
+        "mbxNext.nextzxos.sha256": {
+          "type": "string",
+          "default": "b2b0cbfb421acba2dcd00b081e647d7ead7bd0bc35952f0fdcafe1581321b516",
+          "description": "%config.nextzxos.sha256%"
+        },
+        "mbxNext.nextzxos.size": {
+          "type": "number",
+          "default": 51829771,
+          "description": "%config.nextzxos.size%"
+        },
+        "mbxNext.nextzxos.cardReset": {
+          "type": "string",
+          "default": "never",
+          "enum": [
+            "never",
+            "afterSession"
+          ],
+          "enumDescriptions": [
+            "%config.nextzxos.cardReset.never%",
+            "%config.nextzxos.cardReset.afterSession%"
+          ],
+          "description": "%config.nextzxos.cardReset%"
         }
       }
     }

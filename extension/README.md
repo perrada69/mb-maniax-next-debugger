@@ -25,6 +25,8 @@ a panel next to your code.
   MMU pages, disassembly, memory viewer and editor, expressions in the Watch view and on hover.
 - **Emulator screen** in a VS Code panel, with sound and keyboard.
 - **Next panel** with views of the Next hardware (sprites, palettes, tilemap, Copper, …).
+- **Start into NextZXOS** – boot the real NextZXOS and debug the program it starts (NextZXOS is
+  downloaded from specnext.com on request, it is not part of the debugger).
 
 ## Next panel
 
@@ -57,6 +59,41 @@ selected sprite or area can be highlighted right on the emulator screen.
    same name are used.)
 3. Press F5. Without an SD card, the program sees its own folder through esxDOS (data, saved
    games).
+
+## Start into NextZXOS
+
+With `"boot": "nextzxos"` in launch.json the emulator boots the real NextZXOS from an SD card and
+NextZXOS starts your program, as on a real Next – with the Browser, the NextZXOS esxDOS and
+everything else NextZXOS offers:
+
+```json
+{
+  "type": "mbx-next",
+  "request": "launch",
+  "name": "Debug via NextZXOS",
+  "program": "${workspaceFolder}/game.nex",
+  "sld": "${workspaceFolder}/game.sld",
+  "boot": "nextzxos"
+}
+```
+
+- Before booting, the program and its folder (`esxdosRoot`, default: the program's folder) are
+  copied to `/MBX/<program name>` on the card (`cardFolder` changes it) and the card's
+  autoexec.bas starts the program there. The debugger stops on the program's first instruction;
+  breakpoints apply from then on. With `"autorun": false` NextZXOS opens the Browser in that
+  folder and the debugger stops when you start the program yourself.
+- With `"syncBack": true` the files the program created or changed on the card are copied back to
+  its folder when the session ends (files deleted on the card are only listed).
+- **NextZXOS is not part of the debugger.** Without `sdImage` the debugger uses a working card made
+  from the official distribution for emulators, which it downloads from
+  [specnext.com](https://www.specnext.com/latestdistro/) only when you ask (command
+  **MB Maniax: Download NextZXOS**, or the question on the first start into NextZXOS) and after you
+  agree to its license. It is kept only in the extension's data (about 2 GB) and checked by size
+  and SHA-256.
+- The working card is shared by all projects. **MB Maniax: Clean NextZXOS Working Card (/MBX)**
+  deletes the programs' folders on it, **MB Maniax: Reset NextZXOS Working Card** returns the whole
+  card to its downloaded state, and the setting `mbxNext.nextzxos.cardReset` set to
+  `afterSession` does that after every session.
 
 ## Condition language
 
@@ -156,5 +193,7 @@ language.
 ## License
 
 GNU GPL 3 or later. JNEXT emulator core © Jorge González Villalonga (GPL 3).
-ZX Spectrum 48K ROM © Amstrad, who allow it to be distributed with emulators. Made by
+ZX Spectrum 48K ROM © Amstrad, who allow it to be distributed with emulators. NextZXOS and the
+System/Next distribution are not part of the debugger: they belong to their authors (NextZXOS
+© Garry Lancaster) and are downloaded from specnext.com under their own license. Made by
 [MB Maniax](https://mb-maniax.cz).

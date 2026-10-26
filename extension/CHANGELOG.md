@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.3.0
+
+- **Start into NextZXOS**: with `"boot": "nextzxos"` in launch.json the emulator boots the real
+  NextZXOS from an SD card and NextZXOS starts the program (the program and its folder are copied
+  to the card first). The debugger stops on the program's first instruction and sets breakpoints
+  from then on. `"autorun": false` opens the Browser instead; `"syncBack": true` copies the files
+  the program created or changed on the card back to its folder after the session.
+- NextZXOS is not part of the debugger: command **MB Maniax: Download NextZXOS** (or the question on
+  the first start into NextZXOS) downloads the official distribution for emulators from
+  specnext.com after you agree to its license, checks its size and SHA-256 and keeps it only in the
+  extension's data. One working card serves all projects; **Reset NextZXOS Working Card** and
+  **Clean NextZXOS Working Card (/MBX)** keep it tidy, and `mbxNext.nextzxos.cardReset` can reset it
+  after every session.
+
+## 0.2.3
+
+- esxDOS in the program's folder: a program can now delete files (also by wildcard, such as
+  `*.TMP`), rename and move them, truncate them, create and remove folders and set the
+  read-only attribute (F_UNLINK, F_RENAME, F_TRUNCATE, F_FTRUNCATE, F_MKDIR, F_RMDIR, F_CHMOD),
+  and M_GETERR returns NextZXOS's error texts. Answers and error codes were measured on
+  NextZXOS. Before, these calls failed with "Not implemented" and, for example, temporary files
+  were left behind. As with writing, the changes go to disk at once and Step Back does not undo
+  them.
+- A short name such as `LONGNA~1.TXT` now always reaches the file shown under that name in the
+  folder listing (on Windows it could reach another file through NTFS's own short name).
+
+## 0.2.2
+
+- A program that triggers a hard reset itself (NEXTREG $02) is loaded again, as on the Android
+  app; before, the machine stayed stuck in the ROM without the program.
+
+## 0.2.1
+
+- User manual: the VS Code overview screenshot (figure 2) now shows the numbers 1–7 that its
+  legend refers to.
+
 ## 0.2.0
 
 - The user manual (PDF, English and Czech, with screenshots) is now part of the extension:

@@ -32,5 +32,21 @@
   "launch.assertions": "Aserciones desde los comentarios ASSERTION de sjasmplus (; ASSERTION expresión): se detiene cuando la expresión es falsa. Requiere SLDOPT COMMENT ASSERTION en el código fuente.",
   "command.reload": "Recompilar y recargar",
   "config.reloadOnSave": "Durante la depuración, al guardar un código fuente en ensamblador (.asm, .a80, .z80, .s, .inc) del área de trabajo, recompilar el programa (preLaunchTask) y volver a cargarlo sin finalizar la sesión de depuración, como el comando Recompilar y recargar.",
-  "command.openManual": "Abrir el manual de usuario"
+  "command.openManual": "Abrir el manual de usuario",
+  "launch.boot": "\"nextzxos\": arrancar NextZXOS desde la tarjeta SD y dejar que inicie el programa (antes se copian a la tarjeta el programa y su carpeta). Sin sdImage se usa la tarjeta de trabajo de NextZXOS; NextZXOS no forma parte del depurador y se descarga de specnext.com.",
+  "launch.cardFolder": "Con boot \"nextzxos\": carpeta del programa en la tarjeta SD (por defecto /MBX/<nombre del programa>).",
+  "launch.autorun": "Con boot \"nextzxos\": NextZXOS inicia el programa por sí solo; false abre el Browser en la carpeta del programa.",
+  "launch.syncBack": "Con boot \"nextzxos\": tras la sesión, copiar de vuelta a su carpeta (esxdosRoot) los archivos que el programa creó o cambió en la tarjeta. Los archivos borrados en la tarjeta solo se listan.",
+  "command.downloadNextZXOS": "Descargar NextZXOS",
+  "command.resetNextZXOSCard": "Restablecer la tarjeta de trabajo de NextZXOS",
+  "command.cleanNextZXOSCard": "Limpiar la tarjeta de trabajo de NextZXOS (/MBX)",
+  "config.nextzxos.url": "Distribución oficial de NextZXOS para emuladores (zip) que descarga Descargar NextZXOS. NextZXOS no forma parte del depurador.",
+  "config.nextzxos.sha256": "SHA-256 de ese zip; una descarga que no coincida se rechaza.",
+  "config.nextzxos.size": "Tamaño de ese zip en bytes; una descarga que no coincida se rechaza.",
+  "config.nextzxos.cardReset": "Cuándo vuelve a su estado descargado la tarjeta de trabajo de NextZXOS (común a todos los proyectos).",
+  "config.nextzxos.cardReset.never": "Solo con el comando Restablecer la tarjeta de trabajo de NextZXOS.",
+  "config.nextzxos.cardReset.afterSession": "Tras cada sesión de depuración que arrancó desde ella.",
+  "snippet.nextzxosLabel": "MB Maniax: Arrancar en NextZXOS",
+  "snippet.nextzxosDescription": "Arrancar NextZXOS desde la tarjeta SD y depurar el programa que inicia",
+  "snippet.nextzxosName": "Depurar a través de NextZXOS"
 }

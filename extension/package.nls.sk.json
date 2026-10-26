@@ -32,5 +32,21 @@
   "launch.assertions": "Asercie z komentárov ASSERTION zo sjasmplus (; ASSERTION výraz) – zastaví, keď výraz neplatí. V zdrojovom kóde je nutné SLDOPT COMMENT ASSERTION.",
   "command.reload": "Preložiť a nahrať znova",
   "config.reloadOnSave": "Počas ladenia po uložení zdrojového kódu v assembleri (.asm, .a80, .z80, .s, .inc) z pracovného priestoru program preložiť (preLaunchTask) a nahrať znova bez ukončenia ladenia – ako príkaz Preložiť a nahrať znova.",
-  "command.openManual": "Otvoriť používateľskú príručku"
+  "command.openManual": "Otvoriť používateľskú príručku",
+  "launch.boot": "\"nextzxos\": nabootovať NextZXOS z SD karty a nechať ho spustiť program (program a jeho priečinok sa najprv nahrajú na kartu). Bez sdImage sa použije pracovná karta NextZXOS; NextZXOS nie je súčasťou debuggera, sťahuje sa zo specnext.com.",
+  "launch.cardFolder": "Pri boot \"nextzxos\": priečinok programu na SD karte (predvolene /MBX/<meno programu>).",
+  "launch.autorun": "Pri boot \"nextzxos\": NextZXOS spustí program sám; false otvorí Browser v priečinku programu.",
+  "launch.syncBack": "Pri boot \"nextzxos\": po relácii skopírovať súbory, ktoré program na karte vytvoril alebo zmenil, späť do jeho priečinka (esxdosRoot). Súbory zmazané na karte sa len vypíšu.",
+  "command.downloadNextZXOS": "Stiahnuť NextZXOS",
+  "command.resetNextZXOSCard": "Obnoviť pracovnú kartu NextZXOS",
+  "command.cleanNextZXOSCard": "Vyčistiť pracovnú kartu NextZXOS (/MBX)",
+  "config.nextzxos.url": "Oficiálna distribúcia NextZXOS pre emulátory (zip), ktorú stiahne príkaz Stiahnuť NextZXOS. NextZXOS nie je súčasťou debuggera.",
+  "config.nextzxos.sha256": "SHA-256 toho zipu; stiahnutý súbor, ktorý nesúhlasí, sa odmietne.",
+  "config.nextzxos.size": "Veľkosť toho zipu v bajtoch; stiahnutý súbor, ktorý nesúhlasí, sa odmietne.",
+  "config.nextzxos.cardReset": "Kedy sa pracovná karta NextZXOS (spoločná pre všetky projekty) vráti do stavu po stiahnutí.",
+  "config.nextzxos.cardReset.never": "Len príkazom Obnoviť pracovnú kartu NextZXOS.",
+  "config.nextzxos.cardReset.afterSession": "Po každej ladiacej relácii, ktorá z nej bootovala.",
+  "snippet.nextzxosLabel": "MB Maniax: Štart do NextZXOS",
+  "snippet.nextzxosDescription": "Nabootovať NextZXOS z SD karty a ladiť program, ktorý spustí",
+  "snippet.nextzxosName": "Ladiť cez NextZXOS"
 }

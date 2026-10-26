@@ -67,6 +67,8 @@ neinstalujete ani nespouštíte – emulátor je součástí rozšíření.</p>
   a příznaky (dají se měnit), stránky MMU, disassembler, prohlížení a úprava paměti, výrazy
   v panelu Watch a při najetí myší.</li>
   <li><b>Krok zpět</b> (Step Back) – emulátor si pamatuje posledních 10 sekund.</li>
+  <li><b>Start do NextZXOS</b> – emulátor nabootuje opravdový NextZXOS a ladí se program, který
+  NextZXOS spustí (NextZXOS se na požádání stáhne ze specnext.com).</li>
   <li><b>Obrazovka emulátoru</b> v panelu VS Code se zvukem a klávesnicí.</li>
   <li><b>Panel Next</b> s pohledy na hardware: sprity, Pattern RAM, palety, vrstvy, Layer 2,
   tilemapa, program Copperu a všechny registry NEXTREG.</li>
@@ -488,7 +490,11 @@ zeptá, jaký ladicí nástroj použít (<span class="ui">Select debugger</span>
 
 <div class="note"><p><b>Data programu a esxDOS.</b> Bez obrazu SD karty program přes esxDOS vidí
 složku, ve které leží (načítání dat, uložené pozice). Jinou složku nebo obraz SD karty nastavíte
-v launch.json atributy <code>esxdosRoot</code> a <code>sdImage</code>.</p></div>
+v launch.json atributy <code>esxdosRoot</code> a <code>sdImage</code>.</p>
+<p>Program ve složce může soubory číst a zapisovat, mazat (i podle masky, např. <code>*.TMP</code>),
+přejmenovávat a zkracovat, zakládat a mazat podsložky a nastavovat atribut „jen pro čtení“.
+Odpovědi a chybové kódy odpovídají NextZXOS. Změny se zapíší na disk hned a krok zpět
+(<a class="secref" href="#rewind"></a>) je nevrátí.</p></div>
 
 <!-- ================================================================== 5 -->
 <h2 id="ladeni">Ladění</h2>
@@ -1355,6 +1361,102 @@ k breakpointu) zatím není – ohlásí <i>Zpětný běh zatím není – použ
 s <code>"rewind": true</code> a jednu bez – a vybírejte mezi nimi v seznamu vedle zeleného tlačítka
 v Run and Debug.</p></div>
 
+<!-- ================================================================== NextZXOS -->
+<h2 id="nextzxos">Start do NextZXOS</h2>
+
+<p>Normálně se program nahraje přímo do paměti emulátoru, bez operačního systému. Se startem do
+NextZXOS emulátor nabootuje <b>opravdový NextZXOS</b> z SD karty a program spustí NextZXOS – stejně
+jako na skutečném Nextu. Program pak má k dispozici všechno, co mu NextZXOS dává: jeho esxDOS,
+Browser, BASIC, ovladače. Hodí se to pro programy, které NextZXOS potřebují, a pro vyzkoušení,
+jak se program chová po spuštění z Browseru.</p>
+
+<div class="note"><p><b>NextZXOS není součástí debuggeru.</b> Distribuce System/Next (NextZXOS
+© Garry Lancaster, firmware, ROM) patří svým autorům a šíří se pod vlastní licencí („The Next
+License“). Debugger ji proto nepřibaluje: stáhne oficiální distribuci pro emulátory ze
+<a href="https://www.specnext.com/latestdistro/">specnext.com</a> až na váš pokyn a po vašem
+souhlasu s licencí a uloží ji jen do dat rozšíření na vašem počítači.</p></div>
+
+<h3 id="nextzxos-stazeni">Stažení NextZXOS</h3>
+<p>Spusťte příkaz <span class="cmd">MB Maniax: Download NextZXOS</span> (česky
+<span class="ui">Stáhnout NextZXOS</span>) z palety (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>).
+Stejnou nabídku dostanete při prvním startu do NextZXOS, pokud ještě stažený není.</p>
+<ol>
+  <li>Otevře se text licence distribuce, načtený z oficiálního repozitáře distribuce. Přečtěte ho
+  a klikněte na <span class="ui">Souhlasím – stáhnout</span>. Souhlas se pamatuje; zeptá se znovu,
+  jen když se text licence změní.</li>
+  <li>Stáhne se zip s distribucí (asi 50 MB). Debugger zkontroluje jeho velikost a otisk SHA-256;
+  soubor, který nesouhlasí, smaže.</li>
+  <li>Ze zipu připraví obraz SD karty (asi 1 GB) a z něj <b>pracovní kartu</b>. Uvítací program
+  NextZXOS, který čeká na klávesu, na ní vypne (totéž jako jeho volba <kbd>D</kbd>).</li>
+</ol>
+<p>Všechno leží v datech rozšíření (globalStorage, složka <code>nextzxos</code>), dohromady asi 2 GB.
+Výchozí je System/Next 24.11 (NextZXOS 2.09). Novější distribuci nastavíte v nastavení
+<code>mbxNext.nextzxos.url</code>, <code>mbxNext.nextzxos.sha256</code> a
+<code>mbxNext.nextzxos.size</code> (viz <a class="secref" href="#nastaveni"></a>).</p>
+
+<h3 id="nextzxos-launch">Konfigurace v launch.json</h3>
+<p>Ke konfiguraci přidejte <code>"boot": "nextzxos"</code> (nebo vložte předpřipravenou konfiguraci
+<span class="ui">MB Maniax: Start do NextZXOS</span> tlačítkem <span class="ui">Add Configuration…</span>):</p>
+<pre><code>{
+    "type": "mbx-next",
+    "request": "launch",
+    "name": "Ladit přes NextZXOS",
+    "program": "${workspaceFolder}/build/game.nex",
+    "sld": "${workspaceFolder}/build/game.sld",
+    "esxdosRoot": "${workspaceFolder}/data",
+    "boot": "nextzxos"
+}</code></pre>
+<p>Po <kbd>F5</kbd>:</p>
+<ol>
+  <li>Program a obsah složky <code>esxdosRoot</code> (bez ní složka, ve které program leží) se nahrají
+  na kartu do <code>/MBX/&lt;jméno programu&gt;</code> – tady <code>/MBX/game</code>. Skryté soubory
+  a složky (<code>.git</code> …) se vynechají; jména musí být v ASCII.</li>
+  <li>Do <code>c:/nextzxos/autoexec.bas</code> se zapíše krátký program, který přejde do té složky
+  a program spustí. Váš vlastní autoexec.bas na kartě se odloží a po sezení vrátí.</li>
+  <li>Emulátor nabootuje NextZXOS (na obrazovce emulátoru uvidíte celý start, trvá asi 8 sekund)
+  a NextZXOS program spustí. V Debug Console je <i>NextZXOS startuje z SD karty …</i>.</li>
+  <li>Debugger zastaví na <b>první instrukci programu</b> a teprve pak nastaví breakpointy – dřív
+  by se mohly trefit do kódu NextZXOS na stejných adresách. Dál se ladí jako obvykle.</li>
+</ol>
+<p>Program má aktuální složku nastavenou na svou složku na kartě, takže svá data najde relativní
+cestou jako po spuštění z Browseru.</p>
+
+<table class="ref">
+  <thead><tr><th>Atribut</th><th>Výchozí</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>boot</code></td><td>–</td><td><code>"nextzxos"</code> – start do NextZXOS.</td></tr>
+    <tr><td><code>sdImage</code></td><td>pracovní karta</td><td>Vlastní obraz karty místo pracovní karty (musí to být karta s NextZXOS ve FAT32, kterou JNEXT umí připojit).</td></tr>
+    <tr><td><code>esxdosRoot</code></td><td>složka programu</td><td>Složka, jejíž obsah se nahraje na kartu vedle programu.</td></tr>
+    <tr><td><code>cardFolder</code></td><td><code>/MBX/&lt;jméno&gt;</code></td><td>Složka programu na kartě.</td></tr>
+    <tr><td><code>autorun</code></td><td><code>true</code></td><td><code>false</code> – NextZXOS program nespustí, otevře Browser v jeho složce; debugger zastaví, až program spustíte sami.</td></tr>
+    <tr><td><code>syncBack</code></td><td><code>false</code></td><td>Po sezení zkopírovat soubory, které program na kartě vytvořil nebo změnil, zpět do <code>esxdosRoot</code>.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="nextzxos-sync">Soubory, které program změní</h3>
+<p>Program zapisuje na kartu, ne do složky na disku. S <code>"syncBack": true</code> debugger po
+skončení sezení porovná složku programu na kartě se složkou <code>esxdosRoot</code> a nové nebo
+změněné soubory zkopíruje zpět; v Debug Console vypíše, které to byly. Soubory, které program na
+kartě smazal, jen vypíše – ve složce na disku zůstanou. Ve výchozím stavu je to vypnuté a na disku
+se nic nemění.</p>
+<p>Zápisy na kartu se krokem zpět nevracejí – stejně jako zápisy na disk při ladění bez karty.</p>
+
+<h3 id="nextzxos-karta">Pracovní karta</h3>
+<p>Pracovní karta je jedna pro všechny projekty; každý program má na ní svou složku v
+<code>/MBX</code>. Aby se nezanesla, máte tři možnosti:</p>
+<table class="ref">
+  <thead><tr><th>Příkaz / nastavení</th><th>Co udělá</th></tr></thead>
+  <tbody>
+    <tr><td><span class="cmd">MB Maniax: Clean NextZXOS Working Card (/MBX)</span></td><td>Smaže z karty složku <code>/MBX</code> se všemi programy. Zbytek karty (nastavení NextZXOS, co jste na ni uložili jinam) zůstane.</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Reset NextZXOS Working Card</span></td><td>Vrátí celou kartu do stavu po stažení.</td></tr>
+    <tr><td><code>mbxNext.nextzxos.cardReset</code> = <code>afterSession</code></td><td>Vrátí celou kartu do stavu po stažení po každém ladicím sezení, které z ní bootovalo – každé ladění pak začíná s čistou kartou.</td></tr>
+  </tbody>
+</table>
+<p>Kartu nejde obnovit ani vyčistit, dokud z ní běží ladicí sezení.</p>
+<div class="tip"><p>Breakpoint, který by se trefil do kódu NextZXOS, se během bootu neprojeví – breakpointy
+se nastaví až po spuštění programu. Pokud program NextZXOS nespustí (třeba chybí soubor), uvidíte
+na obrazovce emulátoru chybu NextZXOS a ladění čeká; ukončete ho tlačítkem Stop.</p></div>
+
 <!-- ================================================================== 13 -->
 <h2 id="launch">Nastavení a launch.json</h2>
 
@@ -1373,7 +1475,9 @@ názvy atributů a jejich popis (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</p>
     <tr><td><code>stopOnEntry</code></td><td><code>false</code></td><td>Zastavit hned na první instrukci programu.</td></tr>
     <tr><td><code>machine</code></td><td><code>"next"</code></td><td>Emulovaný stroj: <code>next</code>, <code>48k</code>, <code>128k</code>, <code>plus3</code>, <code>pentagon</code>. Jiné než Next potřebují SD kartu s ROM (<code>sdImage</code>).</td></tr>
     <tr><td><code>sdImage</code></td><td>–</td><td>Obraz SD karty (<code>.img</code>). Bez něj program přes esxDOS vidí složku, ve které leží.</td></tr>
-    <tr><td><code>esxdosRoot</code></td><td>složka programu</td><td>Složka, kterou program bez SD karty vidí přes esxDOS.</td></tr>
+    <tr><td><code>esxdosRoot</code></td><td>složka programu</td><td>Složka, kterou program bez SD karty vidí přes esxDOS (při startu do NextZXOS: co se nahraje na kartu).</td></tr>
+    <tr><td><code>boot</code></td><td>–</td><td><code>"nextzxos"</code> – nabootovat NextZXOS a ladit program, který spustí (<a class="secref" href="#nextzxos"></a>).</td></tr>
+    <tr><td><code>cardFolder</code>, <code>autorun</code>, <code>syncBack</code></td><td>viz <a class="secref" href="#nextzxos-launch"></a></td><td>Složka programu na kartě, spuštění programu NextZXOS, vrácení změněných souborů.</td></tr>
     <tr><td><code>rewind</code></td><td><code>false</code></td><td>Krok zpět – emulátor si pamatuje posledních 10 sekund; emulace je pomalejší (<a class="secref" href="#rewind"></a>).</td></tr>
     <tr><td><code>magicBreakpoint</code></td><td><code>true</code></td><td>Zastavit na instrukci BREAK z CSpectu (<code>FD 00</code>, <code>DD 01</code>) a na <code>ED FF</code> ze ZEsarUX. Vypnuté: <code>DD 01</code> se chová jako <code>LD BC,nn</code>.</td></tr>
     <tr><td><code>wpmem</code></td><td><code>true</code></td><td>Watchpointy z komentářů WPMEM.</td></tr>
@@ -1403,6 +1507,8 @@ názvy atributů a jejich popis (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</p>
   <tbody>
     <tr><td><code>mbxNext.language</code></td><td><code>auto</code></td><td>Jazyk rozšíření (hlášení, obrazovka emulátoru, panel Next), viz <a class="secref" href="#jazyk"></a>.</td></tr>
     <tr><td><code>mbxNext.serverPath</code></td><td>prázdné</td><td>Cesta k ladicímu serveru <code>mbx-next-server</code>; prázdné = server přibalený k rozšíření. Měnit jen při vývoji nebo podle pokynů autora.</td></tr>
+    <tr><td><code>mbxNext.nextzxos.cardReset</code></td><td><code>never</code></td><td><code>afterSession</code> – po každém sezení se startem do NextZXOS vrátit pracovní kartu do stavu po stažení (<a class="secref" href="#nextzxos-karta"></a>).</td></tr>
+    <tr><td><code>mbxNext.nextzxos.url</code>, <code>.sha256</code>, <code>.size</code></td><td>System/Next 24.11</td><td>Distribuce NextZXOS, kterou stáhne příkaz Stáhnout NextZXOS, a její otisk a velikost (stažený soubor, který nesouhlasí, se odmítne).</td></tr>
   </tbody>
 </table>
 
@@ -1421,6 +1527,9 @@ názvy atributů a jejich popis (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</p>
     <tr><td><span class="cmd">MB Maniax: Show Profiler Results</span></td><td>Zobrazit výsledky profileru</td><td>paleta, stavový řádek</td></tr>
     <tr><td><span class="cmd">MB Maniax: Toggle Live Profiler Updates</span></td><td>Přepnout živé obnovování profileru</td><td>paleta (při ladění)</td></tr>
     <tr><td><span class="cmd">MB Maniax: Clear Profiler Data</span></td><td>Vynulovat profiler</td><td>paleta (při ladění)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Download NextZXOS</span></td><td>Stáhnout NextZXOS</td><td>paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Reset NextZXOS Working Card</span></td><td>Obnovit pracovní kartu NextZXOS</td><td>paleta</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Clean NextZXOS Working Card (/MBX)</span></td><td>Vyčistit pracovní kartu NextZXOS (/MBX)</td><td>paleta</td></tr>
   </tbody>
 </table>
 

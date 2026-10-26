@@ -21,7 +21,10 @@ serveru (JNEXT) jdou na stderr.
 | příkaz | argumenty | odpověď |
 | --- | --- | --- |
 | `hello` | | `version` |
-| `launch` | `program`, `machine`, `sdImage`, `esxdosRoot`, `rom`, `stopOnEntry`, `rewind`, `magicBreakpoint` (výchozí true) | |
+| `launch` | `program`, `machine`, `sdImage`, `esxdosRoot`, `rom`, `stopOnEntry`, `rewind`, `magicBreakpoint` (výchozí true); start do NextZXOS: `boot` ("nextzxos"), `cardFolder`, `autorun` (výchozí true), `syncBack` (výchozí false) – viz níže | při `boot` "nextzxos": `waitsForNextZXOS` (vstup programu se hlídá) |
+| `endSession` | | start do NextZXOS: `copied`, `missing` (cesty relativně ke složce), `folder` – viz níže |
+| `prepareSd` | `zip`, `sdImage` | pracovní karta ze zipu distribuce – viz níže |
+| `cleanCard` | `sdImage`, `folder` (výchozí /MBX) | |
 | `pause`, `continue`, `stepIn`, `stepOver`, `stepOut`, `runToEndOfFrame` | | |
 | `stepBack` | `count` | |
 | `runTo` | `addr` | |
@@ -140,6 +143,45 @@ u ostatních strojů zvláštní obraz). Vyřízení: server 1–2 ms (224 × 8 
 obsahu), celé kolo s odpovědí v pauze kolem 5 ms, za běhu do 20 ms (čeká na konec snímku);
 Best Time i hello.
 
+### Start do NextZXOS
+
+`launch` s `"boot": "nextzxos"` program nenahraje přímo: stroj nabootuje opravdový NextZXOS
+z obrazu `sdImage` (nextboot.rom → TBBLUE.FW → NextZXOS) a program spustí NextZXOS.
+
+- **Před bootem** server nahraje na kartu obsah složky `esxdosRoot` (výchozí: složka programu; bez
+  skrytých položek a odkazů, jen jména ASCII) a program do `cardFolder` (výchozí
+  `/MBX/<jméno programu>`; co tam je, přepíše) a zapíše `c:/nextzxos/autoexec.bas`: `.cd` do složky
+  a `.nexload` programu, s `autorun` false `.browse` (Browser ve složce programu). Vlastní
+  autoexec.bas karty odloží do `AUTOEXEC.MBX` a `endSession` (nebo `quit`, nebo příští `launch`)
+  ho vrátí. Cesty v autoexecu jsou bez písmene jednotky: dvojtečka v řádku BASICu odděluje
+  příkazy, takže `.cd c:/MBX` by dostal jen `c` (změřeno).
+- **Vstup programu**: breakpoint na PC z hlavičky NEX s podmínkou na prvních 8 bajtů kódu (ze
+  souboru) a stránku v $C000. Bajty jsou v paměti až po nahrání, takže kód NextZXOS na téže adrese
+  podmínku nesplní; podmínku vyhodnocuje jádro a boot se nezpomalí. Zastavení přijde jako
+  `stopped` s `reason` entry – rozšíření teprve pak pošle breakpointy, dřív by zastavovaly
+  v NextZXOS. Bez autorunu přijde vstup, až program spustí uživatel v Browseru.
+- esxDOS obsluhuje NextZXOS sám (`esxdosRoot` se nepřipojuje jako složka na disku).
+- **`endSession`**: vrátí autoexec a se `syncBack` zkopíruje ze složky na kartě do `esxdosRoot`
+  soubory, které jsou nové nebo se liší (`copied`); soubory, které na kartě chybějí, jen vypíše
+  (`missing`), nic se nemaže. Program sám se nevrací, pokud neleží v `esxdosRoot`.
+- **`prepareSd`**: z oficiálního zipu distribuce pro emulátory (sn-emulator-*.zip) vybalí
+  `cspect-next-1gb.img`, upraví ho jako JNEXT (FAT32 s clustery 8 KB, config.ini) a vypne uvítací
+  program (`AUTOEXEC.1ST` → `welcome.bas`, totéž dělá jeho volba „D“). Výsledek uloží do `sdImage`.
+- **`cleanCard`**: smaže strom `folder` na kartě.
+- Zápisy na kartu se při Step Back nevracejí (jako zápisy na disk přes esxDOS).
+
+**NextZXOS není součástí debuggeru.** Distribuce System/Next (NextZXOS, firmware, ROM) patří svým
+autorům a šíří se pod „The Next License“ (`LICENSE.md` v distribuci,
+<https://gitlab.com/thesmog358/tbblue/-/raw/master/LICENSE.md>): smí se používat a předávat jen
+celá a beze změny a nesmí se prodávat. Rozšíření ji proto nikdy nepřibaluje: stáhne ji až na pokyn
+uživatele (příkaz **Stáhnout NextZXOS** nebo dotaz při prvním startu do NextZXOS) z
+<https://www.specnext.com/distro/24.11/sn-emulator-24.11.zip> (System/Next 24.11, NextZXOS 2.09;
+51 829 771 B, SHA-256 `b2b0cbfb421acba2dcd00b081e647d7ead7bd0bc35952f0fdcafe1581321b516` – otisk jsme
+spočítali sami, specnext.com žádný nezveřejňuje), po souhlasu s licencí, a uloží ji jen do dat
+rozšíření (globalStorage/nextzxos: zip, `base.img` po `prepareSd`, pracovní `card.img`). Upravuje se
+jen uživatelova vlastní kopie, nic z ní se nikam nepředává. Nastavení `mbxNext.nextzxos.url`,
+`sha256` a `size` jdou změnit (novější distribuce); stažený soubor, který nesouhlasí, se odmítne.
+
 ### Magic breakpoint
 
 Instrukce `BREAK` z CSpectu (`DD 01`; sjasmplus ji s `--zxnext=cspect` zná jako `BREAK`, jinak
@@ -216,6 +258,10 @@ v `eventKind`; popisek důvodu (přeložený název filtru z panelu Breakpoints)
 | `rewindFailed` | výsledek `resize_rewind_buffer`, `set_rewind_enabled` | `Cannot enable Step Back: … / …` |
 | `conditionError` | text podmínky, chyba za běhu | `Condition "…": …` |
 | `esxdosWritable` | složka esxDOS | `esxDOS works in the folder … with write access: the program's writes change files on disk immediately and Step Back cannot undo them.` |
+| `cardStaged` | počet souborů, složka na kartě | `… file(s) copied to C:/MBX/… on the SD card; NextZXOS starts the program.` |
+| `entryUnknown` | cesta k programu (a chyba) | `Cannot read … as a NEX file: …` – debugger vstup nepozná |
+| `entryNone` | cesta k programu | `The NEX file has no start address (PC=0): …` |
+| `cardFinishFailed` | chyba | `SD card: …` – autoexec karty se nepodařilo vrátit |
 
 `esxdosWritable` je informace, ne chyba: přijde jednou za `launch`, když server bez SD karty
 zpřístupní programu jeho složku přes esxDOS se zápisem (nahrazuje varování JNEXT

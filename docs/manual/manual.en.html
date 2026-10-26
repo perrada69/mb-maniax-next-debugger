@@ -65,6 +65,8 @@ there is nothing else to install or start – the emulator is part of the extens
   (editable), MMU pages, disassembly, memory viewer and editor, expressions in the Watch view and
   on hover.</li>
   <li><b>Step Back</b> – the emulator remembers the last 10 seconds.</li>
+  <li><b>Start into NextZXOS</b> – the emulator boots the real NextZXOS and you debug the program
+  NextZXOS starts (NextZXOS is downloaded from specnext.com on request).</li>
   <li><b>Emulator screen</b> in a VS Code panel, with sound and keyboard.</li>
   <li><b>Next panel</b> with views of the hardware: sprites, Pattern RAM, palettes, layers,
   Layer 2, tilemap, the Copper program and all NEXTREG registers.</li>
@@ -492,7 +494,11 @@ If VS Code asks which debugger to use (<span class="ui">Select debugger</span>),
 
 <div class="note"><p><b>Program data and esxDOS.</b> Without an SD card image, the program sees its own
 folder through esxDOS (loading data, saved games). A different folder or an SD card image is set in
-launch.json with the <code>esxdosRoot</code> and <code>sdImage</code> attributes.</p></div>
+launch.json with the <code>esxdosRoot</code> and <code>sdImage</code> attributes.</p>
+<p>In that folder the program can read and write files, delete them (also by wildcard, such as
+<code>*.TMP</code>), rename and truncate them, create and remove subfolders and set the read-only
+attribute. The answers and error codes are those of NextZXOS. Changes go to disk at once, and
+Step Back (<a class="secref" href="#rewind"></a>) does not undo them.</p></div>
 
 <!-- ================================================================== 5 -->
 <h2 id="ladeni">Debugging</h2>
@@ -1381,6 +1387,109 @@ use Step Back</i>.</p>
 one with <code>"rewind": true</code> and one without – and pick between them in the list next to the green
 button in Run and Debug.</p></div>
 
+<!-- ================================================================== NextZXOS -->
+<h2 id="nextzxos">Start into NextZXOS</h2>
+
+<p>Normally the program is loaded straight into the emulator's memory, without an operating system.
+With a start into NextZXOS the emulator boots the <b>real NextZXOS</b> from an SD card and NextZXOS
+starts the program – just like on a real Next. The program then has everything NextZXOS gives it:
+its esxDOS, the Browser, BASIC, drivers. This is useful for programs that need NextZXOS, and to see
+how a program behaves when started from the Browser.</p>
+
+<div class="note"><p><b>NextZXOS is not part of the debugger.</b> The System/Next distribution
+(NextZXOS © Garry Lancaster, firmware, ROMs) belongs to its authors and comes under its own license
+("The Next License"). The debugger therefore does not bundle it: it downloads the official
+distribution for emulators from <a href="https://www.specnext.com/latestdistro/">specnext.com</a>
+only when you ask and after you agree to the license, and keeps it only in the extension's data on
+your computer.</p></div>
+
+<h3 id="nextzxos-stazeni">Downloading NextZXOS</h3>
+<p>Run the command <span class="cmd">MB Maniax: Download NextZXOS</span> from the palette
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>). You get the same offer on the first start into
+NextZXOS if it is not downloaded yet.</p>
+<ol>
+  <li>The distribution's license opens, loaded from the distribution's official repository. Read it
+  and click <span class="ui">I agree – download</span>. The consent is remembered; you are asked
+  again only when the license text changes.</li>
+  <li>The distribution zip (about 50 MB) is downloaded. The debugger checks its size and SHA-256
+  fingerprint and deletes a file that does not match.</li>
+  <li>An SD card image (about 1 GB) is prepared from the zip, and from it the <b>working card</b>.
+  The NextZXOS welcome program, which waits for a key, is turned off on it (the same as its
+  <kbd>D</kbd> option).</li>
+</ol>
+<p>Everything lives in the extension's data (globalStorage, folder <code>nextzxos</code>), about 2 GB
+in total. The default is System/Next 24.11 (NextZXOS 2.09). A newer distribution is set with
+<code>mbxNext.nextzxos.url</code>, <code>mbxNext.nextzxos.sha256</code> and
+<code>mbxNext.nextzxos.size</code> (see <a class="secref" href="#nastaveni"></a>).</p>
+
+<h3 id="nextzxos-launch">Configuration in launch.json</h3>
+<p>Add <code>"boot": "nextzxos"</code> to the configuration (or insert the ready-made configuration
+<span class="ui">MB Maniax: Start into NextZXOS</span> with <span class="ui">Add Configuration…</span>):</p>
+<pre><code>{
+    "type": "mbx-next",
+    "request": "launch",
+    "name": "Debug via NextZXOS",
+    "program": "${workspaceFolder}/build/game.nex",
+    "sld": "${workspaceFolder}/build/game.sld",
+    "esxdosRoot": "${workspaceFolder}/data",
+    "boot": "nextzxos"
+}</code></pre>
+<p>After <kbd>F5</kbd>:</p>
+<ol>
+  <li>The program and the contents of <code>esxdosRoot</code> (without it, the folder the program is
+  in) are copied to the card into <code>/MBX/&lt;program name&gt;</code> – here <code>/MBX/game</code>.
+  Hidden files and folders (<code>.git</code> …) are left out; names must be ASCII.</li>
+  <li>A short program is written to <code>c:/nextzxos/autoexec.bas</code> that goes to that folder
+  and starts the program. Your own autoexec.bas on the card is set aside and restored after the
+  session.</li>
+  <li>The emulator boots NextZXOS (you see the whole start on the emulator screen; it takes about
+  8 seconds) and NextZXOS starts the program. The Debug Console says <i>NextZXOS is starting from the
+  SD card …</i>.</li>
+  <li>The debugger stops on the <b>program's first instruction</b> and only then sets the
+  breakpoints – earlier they could hit NextZXOS code at the same addresses. From there you debug as
+  usual.</li>
+</ol>
+<p>The program's current folder is its folder on the card, so it finds its data by relative paths, as
+when started from the Browser.</p>
+
+<table class="ref">
+  <thead><tr><th>Attribute</th><th>Default</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>boot</code></td><td>–</td><td><code>"nextzxos"</code> – start into NextZXOS.</td></tr>
+    <tr><td><code>sdImage</code></td><td>working card</td><td>Your own card image instead of the working card (a NextZXOS card in FAT32 that JNEXT can mount).</td></tr>
+    <tr><td><code>esxdosRoot</code></td><td>program folder</td><td>Folder whose contents are copied to the card next to the program.</td></tr>
+    <tr><td><code>cardFolder</code></td><td><code>/MBX/&lt;name&gt;</code></td><td>The program's folder on the card.</td></tr>
+    <tr><td><code>autorun</code></td><td><code>true</code></td><td><code>false</code> – NextZXOS does not start the program but opens the Browser in its folder; the debugger stops when you start the program yourself.</td></tr>
+    <tr><td><code>syncBack</code></td><td><code>false</code></td><td>After the session, copy the files the program created or changed on the card back to <code>esxdosRoot</code>.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="nextzxos-sync">Files the program changes</h3>
+<p>The program writes to the card, not to the folder on disk. With <code>"syncBack": true</code> the
+debugger compares the program's folder on the card with <code>esxdosRoot</code> when the session
+ends and copies new or changed files back; the Debug Console lists them. Files the program deleted
+on the card are only listed – they stay in the folder on disk. It is off by default, and then
+nothing changes on disk.</p>
+<p>Step Back does not undo writes to the card – just like writes to disk when debugging without a
+card.</p>
+
+<h3 id="nextzxos-karta">The working card</h3>
+<p>There is one working card for all projects; each program has its own folder in <code>/MBX</code>
+on it. To keep it from filling up with leftovers you have three options:</p>
+<table class="ref">
+  <thead><tr><th>Command / setting</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><span class="cmd">MB Maniax: Clean NextZXOS Working Card (/MBX)</span></td><td>Deletes the <code>/MBX</code> folder with all programs from the card. The rest of the card (NextZXOS settings, whatever you saved elsewhere) stays.</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Reset NextZXOS Working Card</span></td><td>Returns the whole card to its downloaded state.</td></tr>
+    <tr><td><code>mbxNext.nextzxos.cardReset</code> = <code>afterSession</code></td><td>Returns the whole card to its downloaded state after every debug session that booted from it – every session then starts with a clean card.</td></tr>
+  </tbody>
+</table>
+<p>The card cannot be reset or cleaned while a debug session runs from it.</p>
+<div class="tip"><p>A breakpoint that would hit NextZXOS code does nothing during the boot – breakpoints are set
+only once the program has started. If NextZXOS does not start the program (a file is missing, say),
+you see the NextZXOS error on the emulator screen and the debugger keeps waiting; end it with
+Stop.</p></div>
+
 <!-- ================================================================== 13 -->
 <h2 id="launch">Settings and launch.json</h2>
 
@@ -1399,7 +1508,9 @@ suggests attribute names and their descriptions (<kbd>Ctrl</kbd>+<kbd>Space</kbd
     <tr><td><code>stopOnEntry</code></td><td><code>false</code></td><td>Stop at the program's first instruction.</td></tr>
     <tr><td><code>machine</code></td><td><code>"next"</code></td><td>Emulated machine: <code>next</code>, <code>48k</code>, <code>128k</code>, <code>plus3</code>, <code>pentagon</code>. Machines other than the Next need an SD card with ROMs (<code>sdImage</code>).</td></tr>
     <tr><td><code>sdImage</code></td><td>–</td><td>SD card image (<code>.img</code>). Without it, the program sees its own folder through esxDOS.</td></tr>
-    <tr><td><code>esxdosRoot</code></td><td>program folder</td><td>Folder the program sees through esxDOS when there is no SD card.</td></tr>
+    <tr><td><code>esxdosRoot</code></td><td>program folder</td><td>Folder the program sees through esxDOS when there is no SD card (with a start into NextZXOS: what is copied to the card).</td></tr>
+    <tr><td><code>boot</code></td><td>–</td><td><code>"nextzxos"</code> – boot NextZXOS and debug the program it starts (<a class="secref" href="#nextzxos"></a>).</td></tr>
+    <tr><td><code>cardFolder</code>, <code>autorun</code>, <code>syncBack</code></td><td>see <a class="secref" href="#nextzxos-launch"></a></td><td>The program's folder on the card, starting the program from NextZXOS, copying changed files back.</td></tr>
     <tr><td><code>rewind</code></td><td><code>false</code></td><td>Step Back – the emulator remembers the last 10 seconds; emulation is slower (<a class="secref" href="#rewind"></a>).</td></tr>
     <tr><td><code>magicBreakpoint</code></td><td><code>true</code></td><td>Stop on the CSpect BREAK instruction (<code>FD 00</code>, <code>DD 01</code>) and on the ZEsarUX <code>ED FF</code>. When off, <code>DD 01</code> behaves as <code>LD BC,nn</code>.</td></tr>
     <tr><td><code>wpmem</code></td><td><code>true</code></td><td>Watchpoints from WPMEM comments.</td></tr>
@@ -1429,6 +1540,8 @@ suggests attribute names and their descriptions (<kbd>Ctrl</kbd>+<kbd>Space</kbd
   <tbody>
     <tr><td><code>mbxNext.language</code></td><td><code>auto</code></td><td>Language of the extension (messages, emulator screen, Next panel), see <a class="secref" href="#jazyk"></a>.</td></tr>
     <tr><td><code>mbxNext.serverPath</code></td><td>empty</td><td>Path to the <code>mbx-next-server</code> debug server; empty = the server bundled with the extension. Change only for development or when told to by the author.</td></tr>
+    <tr><td><code>mbxNext.nextzxos.cardReset</code></td><td><code>never</code></td><td><code>afterSession</code> – after every session with a start into NextZXOS, return the working card to its downloaded state (<a class="secref" href="#nextzxos-karta"></a>).</td></tr>
+    <tr><td><code>mbxNext.nextzxos.url</code>, <code>.sha256</code>, <code>.size</code></td><td>System/Next 24.11</td><td>The NextZXOS distribution the Download NextZXOS command fetches, with its fingerprint and size (a download that does not match is refused).</td></tr>
   </tbody>
 </table>
 
@@ -1447,6 +1560,9 @@ suggests attribute names and their descriptions (<kbd>Ctrl</kbd>+<kbd>Space</kbd
     <tr><td><span class="cmd">MB Maniax: Show Profiler Results</span></td><td>palette, Status Bar</td></tr>
     <tr><td><span class="cmd">MB Maniax: Toggle Live Profiler Updates</span></td><td>palette (while debugging)</td></tr>
     <tr><td><span class="cmd">MB Maniax: Clear Profiler Data</span></td><td>palette (while debugging)</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Download NextZXOS</span></td><td>palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Reset NextZXOS Working Card</span></td><td>palette</td></tr>
+    <tr><td><span class="cmd">MB Maniax: Clean NextZXOS Working Card (/MBX)</span></td><td>palette</td></tr>
   </tbody>
 </table>
 

@@ -58,6 +58,14 @@ export interface LaunchArgs extends DebugProtocol.LaunchRequestArguments {
     logpoints?: boolean;
     /** Komentáře ASSERTION ze SLD: zastavit, když podmínka neplatí (výchozí true). */
     assertions?: boolean;
+    /** "nextzxos": stroj nabootuje NextZXOS z karty a program spustí NextZXOS (docs/protocol.md). */
+    boot?: string;
+    /** Složka programu na kartě (výchozí /MBX/<jméno programu>). */
+    cardFolder?: string;
+    /** NextZXOS program spustí sám (výchozí true); jinak se otevře Browser ve složce programu. */
+    autorun?: boolean;
+    /** Po sezení zkopírovat soubory, které program na kartě vytvořil nebo změnil, zpět (výchozí false). */
+    syncBack?: boolean;
 }
 
 const THREAD = 1;
@@ -419,7 +427,12 @@ export class NextDebugSession extends LoggingDebugSession {
             ...(fs.existsSync(this.rom) ? { rom: this.rom } : {}),
             ...(a.sdImage ? { sdImage: a.sdImage } : {}),
             ...(a.esxdosRoot ? { esxdosRoot: a.esxdosRoot } : {}),
+            ...(a.boot === 'nextzxos'
+                ? { boot: 'nextzxos', autorun: a.autorun !== false, syncBack: a.syncBack === true, ...(a.cardFolder ? { cardFolder: a.cardFolder } : {}) }
+                : {}),
         });
+        const viaNextZxos = a.boot === 'nextzxos';
+        if (viaNextZxos) this.out(t('session.waitingForNextZXOS', path.basename(a.program)) + '\n');
         if (this.swallowEntry) {
             // Stroj stál už před nahráním (restart, reload v pauze): server nahrává program až
             // po pár snímcích běhu a nový server se proto po launch rozběhne sám; pojistka pro
@@ -429,7 +442,9 @@ export class NextDebugSession extends LoggingDebugSession {
         }
         let timer: NodeJS.Timeout | undefined;
         try {
-            await Promise.race([entry, new Promise((_, rej) => (timer = setTimeout(() => rej(new Error(t('session.programNotStarted'))), 15000)))]);
+            // Z NextZXOS přijde vstup až po bootu, bez autorunu až když ho uživatel spustí v Browseru.
+            if (viaNextZxos) await entry;
+            else await Promise.race([entry, new Promise((_, rej) => (timer = setTimeout(() => rej(new Error(t('session.programNotStarted'))), 15000)))]);
         } finally {
             clearTimeout(timer);
         }
@@ -698,15 +713,35 @@ export class NextDebugSession extends LoggingDebugSession {
         }
     }
 
-    protected disconnectRequest(response: DebugProtocol.DisconnectResponse): void {
+    protected async disconnectRequest(response: DebugProtocol.DisconnectResponse): Promise<void> {
+        await this.endCardSession();
         this.closeServer();
         this.sendResponse(response);
         this.shutdown();
     }
 
-    protected terminateRequest(response: DebugProtocol.TerminateResponse): void {
+    protected async terminateRequest(response: DebugProtocol.TerminateResponse): Promise<void> {
+        await this.endCardSession();
         this.closeServer();
         this.sendResponse(response);
+    }
+
+    /** Start do NextZXOS: autoexec karty zpět, změněné soubory zpět do složky (syncBack) a jejich výpis. */
+    private async endCardSession(): Promise<void> {
+        if (this.args?.boot !== 'nextzxos' || !this.server) return;
+        let timer: NodeJS.Timeout | undefined;
+        try {
+            const r = await Promise.race([
+                this.server.request('endSession'),
+                new Promise<undefined>((resolve) => (timer = setTimeout(() => resolve(undefined), 30000))),
+            ]);
+            if (r?.copied?.length) this.out(t('session.cardSynced', r.folder, r.copied.join(', ')) + '\n');
+            if (r?.missing?.length) this.out(t('session.cardMissing', r.missing.join(', ')) + '\n');
+        } catch (e: any) {
+            this.warn(e?.message ?? String(e));
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     private closeServer(): void {

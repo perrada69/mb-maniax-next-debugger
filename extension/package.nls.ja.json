@@ -32,5 +32,21 @@
   "launch.assertions": "sjasmplus の ASSERTION コメントからのアサーション (; ASSERTION 式) – 式が偽のときに停止します。ソースに SLDOPT COMMENT ASSERTION が必要です。",
   "command.reload": "再ビルドして再読み込み",
   "config.reloadOnSave": "デバッグ中にワークスペースのアセンブラー ソース (.asm、.a80、.z80、.s、.inc) を保存すると、デバッグ セッションを終了せずにプログラムを再ビルド (preLaunchTask) して再読み込みします (「再ビルドして再読み込み」コマンドと同じ)。",
-  "command.openManual": "ユーザーマニュアルを開く"
+  "command.openManual": "ユーザーマニュアルを開く",
+  "launch.boot": "\"nextzxos\": SD カードから NextZXOS を起動し、NextZXOS にプログラムを起動させます (先にプログラムとそのフォルダーをカードにコピーします)。sdImage がなければ NextZXOS の作業用カードを使います。NextZXOS はデバッガーに含まれず、specnext.com からダウンロードします。",
+  "launch.cardFolder": "boot \"nextzxos\" のとき: SD カード上のプログラムのフォルダー (既定は /MBX/<プログラム名>)。",
+  "launch.autorun": "boot \"nextzxos\" のとき: NextZXOS がプログラムを自動で起動します。false ではプログラムのフォルダーで Browser を開きます。",
+  "launch.syncBack": "boot \"nextzxos\" のとき: セッション後、プログラムがカード上で作成・変更したファイルをそのフォルダー (esxdosRoot) にコピーし戻します。カード上で削除されたファイルは一覧表示のみです。",
+  "command.downloadNextZXOS": "NextZXOS をダウンロード",
+  "command.resetNextZXOSCard": "NextZXOS 作業用カードを初期状態に戻す",
+  "command.cleanNextZXOSCard": "NextZXOS 作業用カードを整理 (/MBX)",
+  "config.nextzxos.url": "「NextZXOS をダウンロード」が取得する、エミュレーター用の公式 NextZXOS 配布物 (zip)。NextZXOS はデバッガーに含まれません。",
+  "config.nextzxos.sha256": "その zip の SHA-256。一致しないダウンロードは拒否されます。",
+  "config.nextzxos.size": "その zip のサイズ (バイト)。一致しないダウンロードは拒否されます。",
+  "config.nextzxos.cardReset": "NextZXOS 作業用カード (全プロジェクト共通) をダウンロード直後の状態に戻すタイミング。",
+  "config.nextzxos.cardReset.never": "「NextZXOS 作業用カードを初期状態に戻す」コマンドのときだけ。",
+  "config.nextzxos.cardReset.afterSession": "そのカードから起動したデバッグセッションが終わるたび。",
+  "snippet.nextzxosLabel": "MB Maniax: NextZXOS で起動",
+  "snippet.nextzxosDescription": "SD カードから NextZXOS を起動し、起動されたプログラムをデバッグ",
+  "snippet.nextzxosName": "NextZXOS 経由でデバッグ"
 }

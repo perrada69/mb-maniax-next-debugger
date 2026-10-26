@@ -32,5 +32,21 @@
   "launch.assertions": "Assertions aus sjasmplus-Kommentaren ASSERTION (; ASSERTION Ausdruck) – hält an, wenn der Ausdruck falsch ist. Erfordert SLDOPT COMMENT ASSERTION im Quellcode.",
   "command.reload": "Neu erstellen und neu laden",
   "config.reloadOnSave": "Beim Debuggen nach dem Speichern einer Assembler-Quelldatei (.asm, .a80, .z80, .s, .inc) aus dem Arbeitsbereich das Programm neu erstellen (preLaunchTask) und neu laden, ohne die Debugsitzung zu beenden – wie der Befehl „Neu erstellen und neu laden“.",
-  "command.openManual": "Benutzerhandbuch öffnen"
+  "command.openManual": "Benutzerhandbuch öffnen",
+  "launch.boot": "\"nextzxos\": NextZXOS von der SD-Karte booten und das Programm von NextZXOS starten lassen (Programm und Ordner werden vorher auf die Karte kopiert). Ohne sdImage wird die NextZXOS-Arbeitskarte verwendet; NextZXOS ist nicht Teil des Debuggers und wird von specnext.com geladen.",
+  "launch.cardFolder": "Mit boot \"nextzxos\": Ordner des Programms auf der SD-Karte (Standard /MBX/<Programmname>).",
+  "launch.autorun": "Mit boot \"nextzxos\": NextZXOS startet das Programm selbst; false öffnet den Browser im Ordner des Programms.",
+  "launch.syncBack": "Mit boot \"nextzxos\": nach der Sitzung die Dateien, die das Programm auf der Karte erstellt oder geändert hat, in seinen Ordner (esxdosRoot) zurückkopieren. Auf der Karte gelöschte Dateien werden nur aufgelistet.",
+  "command.downloadNextZXOS": "NextZXOS herunterladen",
+  "command.resetNextZXOSCard": "NextZXOS-Arbeitskarte zurücksetzen",
+  "command.cleanNextZXOSCard": "NextZXOS-Arbeitskarte bereinigen (/MBX)",
+  "config.nextzxos.url": "Offizielle NextZXOS-Distribution für Emulatoren (zip), die NextZXOS herunterladen lädt. NextZXOS ist nicht Teil des Debuggers.",
+  "config.nextzxos.sha256": "SHA-256 dieses Zip; ein abweichender Download wird abgelehnt.",
+  "config.nextzxos.size": "Größe dieses Zip in Bytes; ein abweichender Download wird abgelehnt.",
+  "config.nextzxos.cardReset": "Wann die NextZXOS-Arbeitskarte (für alle Projekte gemeinsam) in den heruntergeladenen Zustand zurückkehrt.",
+  "config.nextzxos.cardReset.never": "Nur mit dem Befehl NextZXOS-Arbeitskarte zurücksetzen.",
+  "config.nextzxos.cardReset.afterSession": "Nach jeder Debug-Sitzung, die von ihr gebootet hat.",
+  "snippet.nextzxosLabel": "MB Maniax: Start in NextZXOS",
+  "snippet.nextzxosDescription": "NextZXOS von der SD-Karte booten und das gestartete Programm debuggen",
+  "snippet.nextzxosName": "Über NextZXOS debuggen"
 }

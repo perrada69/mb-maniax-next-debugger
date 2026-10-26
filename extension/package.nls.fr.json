@@ -32,5 +32,21 @@
   "launch.assertions": "Assertions issues des commentaires ASSERTION de sjasmplus (; ASSERTION expression) – s'arrête quand l'expression est fausse. Nécessite SLDOPT COMMENT ASSERTION dans le code source.",
   "command.reload": "Recompiler et recharger",
   "config.reloadOnSave": "Pendant le débogage, après l'enregistrement d'un source assembleur (.asm, .a80, .z80, .s, .inc) de l'espace de travail, recompiler le programme (preLaunchTask) et le recharger sans arrêter la session de débogage, comme la commande Recompiler et recharger.",
-  "command.openManual": "Ouvrir le manuel d’utilisation"
+  "command.openManual": "Ouvrir le manuel d’utilisation",
+  "launch.boot": "\"nextzxos\" : démarrer NextZXOS depuis la carte SD et le laisser lancer le programme (le programme et son dossier sont d'abord copiés sur la carte). Sans sdImage, la carte de travail NextZXOS est utilisée ; NextZXOS ne fait pas partie du débogueur et se télécharge depuis specnext.com.",
+  "launch.cardFolder": "Avec boot \"nextzxos\" : dossier du programme sur la carte SD (par défaut /MBX/<nom du programme>).",
+  "launch.autorun": "Avec boot \"nextzxos\" : NextZXOS lance le programme tout seul ; false ouvre le Browser dans le dossier du programme.",
+  "launch.syncBack": "Avec boot \"nextzxos\" : après la session, recopier dans son dossier (esxdosRoot) les fichiers que le programme a créés ou modifiés sur la carte. Les fichiers supprimés sur la carte sont seulement listés.",
+  "command.downloadNextZXOS": "Télécharger NextZXOS",
+  "command.resetNextZXOSCard": "Réinitialiser la carte de travail NextZXOS",
+  "command.cleanNextZXOSCard": "Nettoyer la carte de travail NextZXOS (/MBX)",
+  "config.nextzxos.url": "Distribution officielle de NextZXOS pour émulateurs (zip) que télécharge Télécharger NextZXOS. NextZXOS ne fait pas partie du débogueur.",
+  "config.nextzxos.sha256": "SHA-256 de ce zip ; un téléchargement qui ne correspond pas est refusé.",
+  "config.nextzxos.size": "Taille de ce zip en octets ; un téléchargement qui ne correspond pas est refusé.",
+  "config.nextzxos.cardReset": "Quand la carte de travail NextZXOS (commune à tous les projets) revient à son état téléchargé.",
+  "config.nextzxos.cardReset.never": "Seulement avec la commande Réinitialiser la carte de travail NextZXOS.",
+  "config.nextzxos.cardReset.afterSession": "Après chaque session de débogage qui a démarré dessus.",
+  "snippet.nextzxosLabel": "MB Maniax : Démarrer dans NextZXOS",
+  "snippet.nextzxosDescription": "Démarrer NextZXOS depuis la carte SD et déboguer le programme qu'il lance",
+  "snippet.nextzxosName": "Déboguer via NextZXOS"
 }

@@ -23,6 +23,8 @@ zdrojáku: krokování, breakpointy, registry, paměť – a obrazovka emulátor
   stránky MMU, disassembler, prohlížeč a úprava paměti, výrazy v panelu Watch a při najetí myší.
 - **Obrazovka emulátoru** v panelu VS Code se zvukem a klávesnicí.
 - **Panel Next** s pohledy na hardware Nextu (sprity, palety, tilemapa, Copper, …).
+- **Start do NextZXOS** – nabootovat opravdový NextZXOS a ladit program, který spustí (NextZXOS se
+  na požádání stáhne ze specnext.com, není součástí debuggeru).
 
 ## Panel Next
 
@@ -53,6 +55,39 @@ oblast se může zvýraznit přímo v obrazovce emulátoru.
    ```
    (Bez launch.json stačí F5 nad otevřeným `.asm` – vezme se `.nex` a `.sld` stejného jména.)
 3. F5. Program bez SD karty vidí přes esxDOS svou složku (data, uložené pozice).
+
+## Start do NextZXOS
+
+S `"boot": "nextzxos"` v launch.json emulátor nabootuje opravdový NextZXOS z SD karty a program
+spustí NextZXOS, jako na skutečném Nextu – s Browserem, esxDOS NextZXOS a vším ostatním, co
+NextZXOS nabízí:
+
+```json
+{
+  "type": "mbx-next",
+  "request": "launch",
+  "name": "Ladit přes NextZXOS",
+  "program": "${workspaceFolder}/hra.nex",
+  "sld": "${workspaceFolder}/hra.sld",
+  "boot": "nextzxos"
+}
+```
+
+- Před bootem se program a jeho složka (`esxdosRoot`, výchozí je složka programu) nahrají na kartu
+  do `/MBX/<jméno programu>` (jinam: `cardFolder`) a autoexec.bas karty ho tam spustí. Debugger
+  zastaví na první instrukci programu, breakpointy platí od té chvíle. S `"autorun": false`
+  NextZXOS otevře v té složce Browser a debugger zastaví, až program spustíte sami.
+- S `"syncBack": true` se po skončení sezení zkopírují soubory, které program na kartě vytvořil
+  nebo změnil, zpět do jeho složky (soubory smazané na kartě se jen vypíšou).
+- **NextZXOS není součástí debuggeru.** Bez `sdImage` použije debugger pracovní kartu z oficiální
+  distribuce pro emulátory, kterou stáhne ze [specnext.com](https://www.specnext.com/latestdistro/)
+  až na váš pokyn (příkaz **MB Maniax: Stáhnout NextZXOS** nebo dotaz při prvním startu do
+  NextZXOS) a po vašem souhlasu s její licencí. Zůstane jen v datech rozšíření (asi 2 GB)
+  a kontroluje se podle velikosti a SHA-256.
+- Pracovní karta je společná všem projektům. **MB Maniax: Vyčistit pracovní kartu NextZXOS (/MBX)**
+  smaže složky programů, **MB Maniax: Obnovit pracovní kartu NextZXOS** vrátí celou kartu do stavu
+  po stažení a nastavení `mbxNext.nextzxos.cardReset` s hodnotou `afterSession` to udělá po
+  každém sezení.
 
 ## Jazyk podmínek
 
@@ -150,5 +185,7 @@ příkazů a popisy v nastavení a v launch.json se řídí jazykem VS Code.
 ## Licence
 
 GNU GPL 3 nebo novější. Jádro emulátoru JNEXT © Jorge González Villalonga (GPL 3).
-ROM ZX Spectra 48K © Amstrad, která jejich šíření s emulátory povoluje. Vytváří
+ROM ZX Spectra 48K © Amstrad, která jejich šíření s emulátory povoluje. NextZXOS a distribuce
+System/Next nejsou součástí debuggeru: patří svým autorům (NextZXOS © Garry Lancaster) a stahují
+se ze specnext.com pod jejich vlastní licencí. Vytváří
 [MB Maniax](https://mb-maniax.cz).

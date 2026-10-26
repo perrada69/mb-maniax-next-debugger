@@ -32,5 +32,21 @@
   "launch.assertions": "Assertions from sjasmplus ASSERTION comments (; ASSERTION expression) – stops when the expression is false. Needs SLDOPT COMMENT ASSERTION in the source.",
   "command.reload": "Rebuild and Reload",
   "config.reloadOnSave": "While debugging, after saving an assembler source (.asm, .a80, .z80, .s, .inc) from the workspace, rebuild the program (preLaunchTask) and reload it without ending the debug session – like the Rebuild and Reload command.",
-  "command.openManual": "Open User Manual"
+  "command.openManual": "Open User Manual",
+  "launch.boot": "\"nextzxos\": boot NextZXOS from the SD card and let it start the program (the program and its folder are copied to the card first). Without sdImage the NextZXOS working card is used; NextZXOS is not part of the debugger and is downloaded from specnext.com.",
+  "launch.cardFolder": "With boot \"nextzxos\": the program's folder on the SD card (default /MBX/<program name>).",
+  "launch.autorun": "With boot \"nextzxos\": NextZXOS starts the program by itself; false opens the Browser in the program's folder.",
+  "launch.syncBack": "With boot \"nextzxos\": after the session, copy the files the program created or changed on the card back to its folder (esxdosRoot). Files deleted on the card are only listed.",
+  "command.downloadNextZXOS": "Download NextZXOS",
+  "command.resetNextZXOSCard": "Reset NextZXOS Working Card",
+  "command.cleanNextZXOSCard": "Clean NextZXOS Working Card (/MBX)",
+  "config.nextzxos.url": "Official NextZXOS distribution for emulators (zip) that Download NextZXOS fetches. NextZXOS is not part of the debugger.",
+  "config.nextzxos.sha256": "SHA-256 of that zip; a download that does not match is refused.",
+  "config.nextzxos.size": "Size of that zip in bytes; a download that does not match is refused.",
+  "config.nextzxos.cardReset": "When the NextZXOS working card (shared by all projects) returns to its downloaded state.",
+  "config.nextzxos.cardReset.never": "Only with the command Reset NextZXOS Working Card.",
+  "config.nextzxos.cardReset.afterSession": "After every debug session that booted from it.",
+  "snippet.nextzxosLabel": "MB Maniax: Start into NextZXOS",
+  "snippet.nextzxosDescription": "Boot NextZXOS from the SD card and debug the program it starts",
+  "snippet.nextzxosName": "Debug via NextZXOS"
 }

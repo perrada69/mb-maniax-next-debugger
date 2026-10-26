@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import { setLanguage, t } from './i18n';
 import { openManual } from './manual';
 import { NextViewPanel } from './nextview';
+import { NextZxos } from './nextzxos';
 import { ProfilerController } from './profiler';
 import { ReloadController } from './reload';
 import { ScreenPanel } from './screen';
@@ -39,6 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const states = new StatesController();
     const profiler = new ProfilerController();
     const reload = new ReloadController();
+    const nextzxos = new NextZxos(context, () => serverPath(context));
 
     context.subscriptions.push(
         ...states.register(),
@@ -50,6 +52,14 @@ export function activate(context: vscode.ExtensionContext): void {
             },
         }),
         vscode.debug.registerDebugConfigurationProvider(TYPE, {
+            // Start do NextZXOS bez vlastního sdImage: pracovní karta (chybí-li distribuce, nabídne stažení).
+            async resolveDebugConfigurationWithSubstitutedVariables(folder, config) {
+                if (config.boot !== 'nextzxos' || config.sdImage) return config;
+                const card = await nextzxos.ensureCard();
+                if (!card) return undefined;
+                config.sdImage = card;
+                return config;
+            },
             resolveDebugConfiguration(folder, config) {
                 // F5 bez launch.json: program podle otevřeného .asm (stejné jméno, .nex a .sld).
                 if (!config.type && !config.request && !config.name) {
@@ -70,6 +80,18 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.commands.registerCommand('mbxNext.showScreen', () => screen.show()),
         vscode.commands.registerCommand('mbxNext.showNextView', () => next.show()),
         vscode.commands.registerCommand('mbxNext.openManual', () => openManual(context.extensionPath)),
+        vscode.commands.registerCommand('mbxNext.downloadNextZXOS', () => nextzxos.download()),
+        vscode.commands.registerCommand('mbxNext.resetNextZXOSCard', () => nextzxos.resetCard()),
+        vscode.commands.registerCommand('mbxNext.cleanNextZXOSCard', () => nextzxos.cleanCard()),
+        vscode.debug.onDidStartDebugSession((s) => {
+            if (s.type === TYPE && s.configuration.boot === 'nextzxos' && s.configuration.sdImage === nextzxos.card) nextzxos.busy.add(s.id);
+        }),
+        vscode.debug.onDidTerminateDebugSession((s) => {
+            if (!nextzxos.busy.delete(s.id)) return;
+            // Po sezení celá karta zpět do stavu po stažení (nastavení mbxNext.nextzxos.cardReset).
+            if (vscode.workspace.getConfiguration('mbxNext.nextzxos').get<string>('cardReset', 'never') === 'afterSession')
+                nextzxos.resetCard(true).catch((e) => vscode.window.showErrorMessage(e?.message ?? String(e)));
+        }),
         vscode.workspace.onDidChangeConfiguration((e) => {
             if (!e.affectsConfiguration('mbxNext.language')) return;
             // Nový jazyk: otevřené panely se postaví znovu (po "ready" dostanou zpět stav sezení).

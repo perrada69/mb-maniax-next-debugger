@@ -32,5 +32,21 @@
   "launch.assertions": "Aserce z komentářů ASSERTION ze sjasmplus (; ASSERTION výraz) – zastaví, když výraz neplatí. Ve zdrojáku je nutné SLDOPT COMMENT ASSERTION.",
   "command.reload": "Přeložit a nahrát znovu",
   "config.reloadOnSave": "Během ladění po uložení zdrojáku v assembleru (.asm, .a80, .z80, .s, .inc) z pracovního prostoru program přeložit (preLaunchTask) a nahrát znovu bez ukončení ladění – jako příkaz Přeložit a nahrát znovu.",
-  "command.openManual": "Otevřít uživatelskou příručku"
+  "command.openManual": "Otevřít uživatelskou příručku",
+  "launch.boot": "\"nextzxos\": nabootovat NextZXOS z SD karty a nechat ho program spustit (program a jeho složka se nejdřív nahrají na kartu). Bez sdImage se použije pracovní karta NextZXOS; NextZXOS není součástí debuggeru, stahuje se ze specnext.com.",
+  "launch.cardFolder": "Při boot \"nextzxos\": složka programu na SD kartě (výchozí /MBX/<jméno programu>).",
+  "launch.autorun": "Při boot \"nextzxos\": NextZXOS program spustí sám; false otevře Browser ve složce programu.",
+  "launch.syncBack": "Při boot \"nextzxos\": po sezení zkopírovat soubory, které program na kartě vytvořil nebo změnil, zpět do jeho složky (esxdosRoot). Soubory smazané na kartě se jen vypíšou.",
+  "command.downloadNextZXOS": "Stáhnout NextZXOS",
+  "command.resetNextZXOSCard": "Obnovit pracovní kartu NextZXOS",
+  "command.cleanNextZXOSCard": "Vyčistit pracovní kartu NextZXOS (/MBX)",
+  "config.nextzxos.url": "Oficiální distribuce NextZXOS pro emulátory (zip), kterou stáhne příkaz Stáhnout NextZXOS. NextZXOS není součástí debuggeru.",
+  "config.nextzxos.sha256": "SHA-256 toho zipu; stažený soubor, který nesouhlasí, se odmítne.",
+  "config.nextzxos.size": "Velikost toho zipu v bajtech; stažený soubor, který nesouhlasí, se odmítne.",
+  "config.nextzxos.cardReset": "Kdy se pracovní karta NextZXOS (společná všem projektům) vrátí do stavu po stažení.",
+  "config.nextzxos.cardReset.never": "Jen příkazem Obnovit pracovní kartu NextZXOS.",
+  "config.nextzxos.cardReset.afterSession": "Po každém ladicím sezení, které z ní bootovalo.",
+  "snippet.nextzxosLabel": "MB Maniax: Start do NextZXOS",
+  "snippet.nextzxosDescription": "Nabootovat NextZXOS z SD karty a ladit program, který spustí",
+  "snippet.nextzxosName": "Ladit přes NextZXOS"
 }

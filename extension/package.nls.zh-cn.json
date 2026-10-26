@@ -32,5 +32,21 @@
   "launch.assertions": "来自 sjasmplus ASSERTION 注释的断言 (; ASSERTION 表达式) – 表达式为假时停止。源代码中需要 SLDOPT COMMENT ASSERTION。",
   "command.reload": "重新生成并重新加载",
   "config.reloadOnSave": "调试期间保存工作区中的汇编源文件 (.asm、.a80、.z80、.s、.inc) 后，重新生成程序 (preLaunchTask) 并重新加载，而不结束调试会话（与“重新生成并重新加载”命令相同）。",
-  "command.openManual": "打开用户手册"
+  "command.openManual": "打开用户手册",
+  "launch.boot": "\"nextzxos\"：从 SD 卡启动 NextZXOS，由它启动程序（先把程序及其文件夹复制到卡上）。未指定 sdImage 时使用 NextZXOS 工作卡；NextZXOS 不包含在调试器中，需从 specnext.com 下载。",
+  "launch.cardFolder": "boot 为 \"nextzxos\" 时：程序在 SD 卡上的文件夹（默认 /MBX/<程序名>）。",
+  "launch.autorun": "boot 为 \"nextzxos\" 时：NextZXOS 自动启动程序；false 则在程序文件夹中打开 Browser。",
+  "launch.syncBack": "boot 为 \"nextzxos\" 时：会话结束后，把程序在卡上新建或修改的文件复制回其文件夹（esxdosRoot）。卡上被删除的文件只会列出。",
+  "command.downloadNextZXOS": "下载 NextZXOS",
+  "command.resetNextZXOSCard": "重置 NextZXOS 工作卡",
+  "command.cleanNextZXOSCard": "清理 NextZXOS 工作卡（/MBX）",
+  "config.nextzxos.url": "\"下载 NextZXOS\" 获取的官方模拟器用 NextZXOS 发行包（zip）。NextZXOS 不包含在调试器中。",
+  "config.nextzxos.sha256": "该 zip 的 SHA-256；不匹配的下载会被拒绝。",
+  "config.nextzxos.size": "该 zip 的大小（字节）；不匹配的下载会被拒绝。",
+  "config.nextzxos.cardReset": "NextZXOS 工作卡（所有项目共用）何时恢复到下载时的状态。",
+  "config.nextzxos.cardReset.never": "仅通过\"重置 NextZXOS 工作卡\"命令。",
+  "config.nextzxos.cardReset.afterSession": "每次从该卡启动的调试会话结束后。",
+  "snippet.nextzxosLabel": "MB Maniax：启动到 NextZXOS",
+  "snippet.nextzxosDescription": "从 SD 卡启动 NextZXOS，并调试它启动的程序",
+  "snippet.nextzxosName": "通过 NextZXOS 调试"
 }

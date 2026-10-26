@@ -8,11 +8,15 @@ obrazovka emulátoru je v panelu VS Code. Popis pro uživatele: [extension/READM
 - `server/` – **ladicí server** `mbx-next-server`: jádro [JNEXT](https://github.com/jorgegv/jnext)
   bez okna. Ladění obstarává backend JNEXT (`jnext::dbg::Debugger` – breakpointy, podmínky,
   události, rewind, call stack); server je jeho klient a s rozšířením mluví přes stdin/stdout
-  ([docs/protocol.md](docs/protocol.md)).
+  ([docs/protocol.md](docs/protocol.md)). `card.cpp` je start do NextZXOS: pracovní karta ze zipu
+  distribuce, nahrání programu a autoexec, vrácení změněných souborů.
 - `extension/` – **rozšíření VS Code** (TypeScript): ladicí adaptér DAP (`session.ts`, běží přímo
   v rozšíření), čtení SLD ze sjasmplus (`sld.ts`), panel s obrazovkou (`screen.ts`, `media/`).
   `dist/adapter.js` je tentýž adaptér samostatně přes stdin/stdout (testy, jiné editory).
 - `examples/hello/` – malý program pro Next na vyzkoušení.
+- **NextZXOS se nepřibaluje** (licence distribuce): rozšíření ho stáhne ze specnext.com až na pokyn
+  uživatele do svých dat (`extension/src/nextzxos.ts`); test `nextzxos-settings` hlídá, že
+  v repozitáři ani v balíčku žádná část distribuce není.
 - **Překlady** (13 jazyků, výchozí angličtina): slovníky v `extension/l10n/`, texty manifestu
   v `extension/package.nls*.json`, README pro Marketplace anglicky (`extension/README.md`)
   a česky (`extension/README.cs.md`); pravidla v [docs/l10n.md](docs/l10n.md).

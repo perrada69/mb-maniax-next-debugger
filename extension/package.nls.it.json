@@ -32,5 +32,21 @@
   "launch.assertions": "Asserzioni dai commenti ASSERTION di sjasmplus (; ASSERTION espressione): si ferma quando l'espressione è falsa. Richiede SLDOPT COMMENT ASSERTION nel codice sorgente.",
   "command.reload": "Ricompila e ricarica",
   "config.reloadOnSave": "Durante il debug, dopo il salvataggio di un sorgente assembler (.asm, .a80, .z80, .s, .inc) dell'area di lavoro, ricompila il programma (preLaunchTask) e ricaricalo senza terminare la sessione di debug, come il comando Ricompila e ricarica.",
-  "command.openManual": "Apri il manuale utente"
+  "command.openManual": "Apri il manuale utente",
+  "launch.boot": "\"nextzxos\": avviare NextZXOS dalla scheda SD e lasciargli avviare il programma (prima il programma e la sua cartella vengono copiati sulla scheda). Senza sdImage si usa la scheda di lavoro NextZXOS; NextZXOS non fa parte del debugger e si scarica da specnext.com.",
+  "launch.cardFolder": "Con boot \"nextzxos\": cartella del programma sulla scheda SD (predefinita /MBX/<nome del programma>).",
+  "launch.autorun": "Con boot \"nextzxos\": NextZXOS avvia il programma da solo; false apre il Browser nella cartella del programma.",
+  "launch.syncBack": "Con boot \"nextzxos\": dopo la sessione, ricopiare nella sua cartella (esxdosRoot) i file che il programma ha creato o modificato sulla scheda. I file eliminati sulla scheda vengono solo elencati.",
+  "command.downloadNextZXOS": "Scarica NextZXOS",
+  "command.resetNextZXOSCard": "Ripristina la scheda di lavoro NextZXOS",
+  "command.cleanNextZXOSCard": "Pulisci la scheda di lavoro NextZXOS (/MBX)",
+  "config.nextzxos.url": "Distribuzione ufficiale di NextZXOS per emulatori (zip) scaricata da Scarica NextZXOS. NextZXOS non fa parte del debugger.",
+  "config.nextzxos.sha256": "SHA-256 di quello zip; un download che non corrisponde viene rifiutato.",
+  "config.nextzxos.size": "Dimensione di quello zip in byte; un download che non corrisponde viene rifiutato.",
+  "config.nextzxos.cardReset": "Quando la scheda di lavoro NextZXOS (comune a tutti i progetti) torna allo stato scaricato.",
+  "config.nextzxos.cardReset.never": "Solo con il comando Ripristina la scheda di lavoro NextZXOS.",
+  "config.nextzxos.cardReset.afterSession": "Dopo ogni sessione di debug avviata da essa.",
+  "snippet.nextzxosLabel": "MB Maniax: Avvio in NextZXOS",
+  "snippet.nextzxosDescription": "Avviare NextZXOS dalla scheda SD e fare il debug del programma che avvia",
+  "snippet.nextzxosName": "Debug tramite NextZXOS"
 }

@@ -14,10 +14,12 @@
 //
 // Copyright (C) 2026 MB Maniax. Licence GNU GPL 3 nebo novější (stejně jako JNEXT).
 
+#include "card.h"
 #include "audio/mixer.h"
 #include "core/emulator.h"
 #include "core/emulator_config.h"
 #include "core/log.h"
+#include "core/nex_loader.h"
 #include "core/saveable.h"
 #include "debug/debugger.h"
 #include "platform/emulator_boot.h"
@@ -42,6 +44,8 @@
 #include <cstdio>
 #include <cstring>
 #include <deque>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <map>
 #include <memory>
@@ -267,6 +271,7 @@ public:
             if (stop_on_entry_) {
                 stop_reason_ = "entry";
                 dbg_.pause(cid_);
+                stop_on_entry_ = false;   // jen při launch, ne po resetu, který vyvolá program
             }
         } else if (load_countdown_ > 0) {
             --load_countdown_;
@@ -274,8 +279,16 @@ public:
         emu_.joystick().set_joy_left(joy_);
         emu_.run_frame();
         const std::string nex = emu_.take_nex_load_request();
-        if (!nex.empty()) dbg_.load(cid_, nex);
-        if (emu_.take_hard_reset_request()) dbg_.reset(cid_, dbg::ResetKind::Hard);
+        if (!nex.empty()) {
+            program_ = nex;   // tvrdý reset pak nahraje tento program (jako aplikace pro Android)
+            dbg_.load(cid_, nex);
+        }
+        if (emu_.take_hard_reset_request()) {
+            dbg_.reset(cid_, dbg::ResetKind::Hard);
+            // Tvrdý reset vyvolaný programem: bez SD karty by stroj neměl co spustit (není NextZXOS) –
+            // program se nahraje znovu, stejně jako v aplikaci pro Android (jnext_android.cpp).
+            if (!program_.empty() && boot_cfg_.sd_card_image.empty()) load_countdown_ = emulator_load_delay_frames(program_);
+        }
         dbg_.pump(dbg::PumpBudget{});
         send_screen(false);
         pace(send_audio());
@@ -296,6 +309,13 @@ public:
     // ---- dbg::Listener
 
     void on_paused(const dbg::PausedInfo& info) override {
+        if (entry_hit_) {
+            // Program spuštěný z NextZXOS dorazil na svou první instrukci: zastavení „entry“,
+            // rozšíření pak pošle breakpointy (ty by dřív zastavovaly v kódu NextZXOS).
+            entry_hit_ = false;
+            disarm_entry();
+            stop_reason_ = "entry";
+        }
         json ids = json::array();
         for (const auto& h : info.matched) {
             auto it = by_event_.find(h.event_id);
@@ -473,8 +493,13 @@ private:
             else if (name == "launch") launch(cmd, res);
             else if (name == "quit") {
                 stop_profiler();   // jinak by ho destruktor Emulatoru zapsal do profile.dat
+                json ignored;
+                end_card(false, ignored);   // autoexec karty vrátit, i když endSession nepřišel
                 running_ = false;
             }
+            else if (name == "endSession") end_card(true, res);
+            else if (name == "prepareSd") prepare_sd(cmd, res);
+            else if (name == "cleanCard") clean_card(cmd, res);
             else if (name == "pause") check(dbg_.pause(cid_), res);
             else if (name == "continue") check(dbg_.run(cid_), res);
             else if (name == "stepIn") sync_step(dbg_.step_into(cid_), res);
@@ -568,13 +593,21 @@ private:
         program_ = cmd.value("program", "");
         MachineType type = MachineType::ZXN_ISSUE2;
         if (parse_machine_type(cmd.value("machine", "next"), type)) cfg.type = type;
-        if (!program_.empty() && cfg.sd_card_image.empty()) {
-            // Bez karty vidí program přes esxDOS svou složku (data hry, uložené pozice).
-            const auto slash = program_.find_last_of("/\\");
-            cfg.esxdos_stub_root = slash == std::string::npos ? std::string(".") : program_.substr(0, slash);
-            cfg.esxdos_stub_writable = true;
+        json ignored;
+        end_card(false, ignored);   // předchozí start do NextZXOS (restart sezení)
+        if (cmd.value("boot", "") == "nextzxos") {
+            // Start do NextZXOS: program a jeho složka na kartu, NextZXOS je spustí sám. esxDOS
+            // obsluhuje NextZXOS, ne složka na disku.
+            if (!start_card(cmd, cfg, res)) return;
+        } else {
+            if (!program_.empty() && cfg.sd_card_image.empty()) {
+                // Bez karty vidí program přes esxDOS svou složku (data hry, uložené pozice).
+                const auto slash = program_.find_last_of("/\\");
+                cfg.esxdos_stub_root = slash == std::string::npos ? std::string(".") : program_.substr(0, slash);
+                cfg.esxdos_stub_writable = true;
+            }
+            if (cmd.contains("esxdosRoot")) cfg.esxdos_stub_root = cmd["esxdosRoot"].get<std::string>();
         }
-        if (cmd.contains("esxdosRoot")) cfg.esxdos_stub_root = cmd["esxdosRoot"].get<std::string>();
         magic_ = cmd.value("magicBreakpoint", true);
         esxdos_reported_ = false;   // informace o zápisu přes esxDOS jednou za launch
         cfg.magic_breakpoint = magic_;   // studený start (reset, launch) nastaví magic breakpoint z konfigurace
@@ -592,6 +625,14 @@ private:
         dbg_.set_magic_breakpoint(magic_);
         rewind_ = cmd.value("rewind", false);
         enable_rewind();
+        if (!card_image_.empty()) {
+            // Program nahraje NextZXOS: vstup se pozná až ve stroji (arm_entry).
+            load_countdown_ = -1;
+            arm_entry(res);
+            if (dbg_.state().paused) dbg_.run(cid_);
+            frame_due_ = std::chrono::steady_clock::now();
+            return;
+        }
         load_countdown_ = program_.empty() ? -1 : emulator_load_delay_frames(program_);
         // Hard reset nechá pozastavený stroj pozastavený, program se ale nahrává až po pár
         // snímcích běhu: rozběhnout (zastavení na vstupu pak dá stop_on_entry_).
@@ -601,6 +642,144 @@ private:
             dbg_.pause(cid_);
         }
         frame_due_ = std::chrono::steady_clock::now();
+    }
+
+    // ---- start do NextZXOS
+
+    /// Jméno složky na kartě z názvu programu: písmena, číslice, _ a -.
+    static std::string card_name(const std::string& program) {
+        std::string stem = std::filesystem::u8path(program).stem().u8string();
+        std::string out;
+        for (unsigned char c : stem) out.push_back(std::isalnum(c) || c == '_' || c == '-' ? static_cast<char>(c) : '_');
+        return out.empty() ? std::string("program") : out;
+    }
+
+    /// Launch "boot": "nextzxos": program a složku na kartu, autoexec, stroj bootuje z karty.
+    bool start_card(const json& cmd, EmulatorConfig& cfg, json& res) {
+        if (cfg.sd_card_image.empty() || program_.empty()) {
+            res["ok"] = false;
+            res["error"] = "boot \"nextzxos\" needs sdImage and program";
+            return false;
+        }
+        cfg.nextzxos_like_direct_load = false;   // stroj připraví opravdový NextZXOS
+        const std::string root = cmd.contains("esxdosRoot")
+            ? cmd["esxdosRoot"].get<std::string>()
+            : std::filesystem::u8path(program_).parent_path().u8string();
+        const std::string folder = cmd.value("cardFolder", "/MBX/" + card_name(program_));
+        card::Staged st;
+        std::string err;
+        if (!card::stage(cfg.sd_card_image, folder, root, program_, cmd.value("autorun", true), st, err)) {
+            res["ok"] = false;
+            res["error"] = err;
+            return false;
+        }
+        card_image_ = cfg.sd_card_image;
+        card::normalize_folder(folder, card_folder_, err);
+        card_root_ = root;
+        card_program_ = st.program_on_card;
+        card_sync_ = cmd.value("syncBack", false);
+        output("cardStaged", {std::to_string(st.files), "C:" + card_folder_},
+               std::to_string(st.files) + " file(s) copied to C:" + card_folder_ + " on the SD card; NextZXOS starts the program.");
+        return true;
+    }
+
+    /// Zastavení na první instrukci programu, který nahraje NextZXOS (.nexload): breakpoint na PC
+    /// z hlavičky NEX, s podmínkou na stránku v $C000 a prvních 8 bajtů kódu ze souboru – ty
+    /// jsou v paměti až po nahrání, takže kód NextZXOS na téže adrese ji nesplní. Podmínku
+    /// vyhodnocuje jádro, boot se tím nezpomalí.
+    void arm_entry(json& res) {
+        disarm_entry();
+        NexLoader nex;
+        if (!nex.load(program_)) {
+            output("entryUnknown", {program_}, "Cannot read " + program_ + " as a NEX file: the debugger will not stop when NextZXOS starts it.");
+            return;
+        }
+        const NexHeader& h = nex.header();
+        if (h.pc == 0) {
+            output("entryNone", {program_}, "The NEX file has no start address (PC=0): the debugger cannot tell when NextZXOS starts it.");
+            return;
+        }
+        static const int kOrder[] = {5, 2, 0, 1, 3, 4, 6, 7};
+        int bank = h.pc < 0x4000 ? -1 : h.pc < 0x8000 ? 5 : h.pc < 0xC000 ? 2 : h.entry_bank;
+        std::string cond;
+        if (bank >= 0 && bank < 112 && h.banks[bank]) {
+            // Pořadí bank v souboru: 5, 2, 0, 1, 3, 4, 6, 7, pak 8, 9, …
+            uint64_t index = 0;
+            auto before = [&](int b) {
+                for (int i = 0; i < 8; ++i) if (kOrder[i] == b) return i;
+                return b;
+            };
+            for (int b = 0; b < 112; ++b)
+                if (h.banks[b] && before(b) < before(bank)) ++index;
+            std::ifstream f(std::filesystem::u8path(program_), std::ios::binary);
+            f.seekg(static_cast<std::streamoff>(nex.bank_data_offset() + index * 0x4000 + (h.pc & 0x3FFF)));
+            uint8_t code[8] = {};
+            f.read(reinterpret_cast<char*>(code), sizeof code);
+            const int n = static_cast<int>(f.gcount());
+            for (int i = 0; i < n && (h.pc & 0x3FFF) + i < 0x4000; ++i)
+                cond += (cond.empty() ? "" : " and ") + std::string("mem[") + std::to_string(h.pc + i) + "] == " + std::to_string(code[i]);
+        }
+        if (h.pc >= 0xC000) cond += (cond.empty() ? "" : " and ") + std::string("mmu[6] == ") + std::to_string(h.entry_bank * 2);
+        dbg::Subscription sub;
+        sub.kind = dbg::EventKind::Execute;
+        sub.filter.lo = sub.filter.hi = h.pc;
+        sub.action = dbg::Action::Stop;
+        std::string err;
+        sub.condition = compile(json{{"condition", cond}}, dbg::EventKind::Execute, err);
+        sub.handler = [this](const dbg::Event&, dbg::Debugger&) {
+            entry_hit_ = true;
+            return dbg::Action::Stop;
+        };
+        const auto r = dbg_.subscribe(cid_, sub);
+        if (!r || !err.empty()) {
+            output("entryUnknown", {program_}, "Cannot watch for the start of " + program_ + ": " + (err.empty() ? std::string(dbg::result_name(r.status)) : err));
+            return;
+        }
+        entry_ev_ = r.value;
+        res["waitsForNextZXOS"] = true;
+    }
+
+    void disarm_entry() {
+        if (entry_ev_ == dbg::EVENT_NONE) return;
+        dbg_.unsubscribe(cid_, entry_ev_);
+        entry_ev_ = dbg::EVENT_NONE;
+    }
+
+    /// Konec startu do NextZXOS: autoexec karty zpět a (s `report` a syncBack) změněné soubory
+    /// do složky na disku; odpověď nese seznamy (endSession).
+    void end_card(bool report, json& res) {
+        disarm_entry();
+        if (card_image_.empty()) return;
+        const std::string image = card_image_;
+        card_image_.clear();
+        std::string err;
+        if (!card::finish(image, err)) output("cardFinishFailed", {err}, "SD card: " + err);
+        if (!report || !card_sync_) return;
+        card::Synced sy;
+        if (!card::sync_back(image, card_folder_, card_root_, card_program_, sy, err)) {
+            res["ok"] = false;
+            res["error"] = err;
+            return;
+        }
+        res["copied"] = sy.copied;
+        res["missing"] = sy.missing;
+        res["folder"] = card_root_;
+    }
+
+    void prepare_sd(const json& cmd, json& res) {
+        std::string err;
+        if (!card::prepare_from_zip(cmd.at("zip").get<std::string>(), cmd.at("sdImage").get<std::string>(), err)) {
+            res["ok"] = false;
+            res["error"] = err;
+        }
+    }
+
+    void clean_card(const json& cmd, json& res) {
+        std::string err;
+        if (!card::clean(cmd.at("sdImage").get<std::string>(), cmd.value("folder", "/MBX"), err)) {
+            res["ok"] = false;
+            res["error"] = err;
+        }
     }
 
 public:
@@ -1332,6 +1511,15 @@ private:
     std::chrono::steady_clock::time_point frame_due_ = std::chrono::steady_clock::now();
     std::map<int, std::unique_ptr<Bp>> bps_, wps_, evs_;
     std::map<dbg::EventId, int> by_event_;
+
+    // ---- start do NextZXOS (launch "boot": "nextzxos")
+    std::string card_image_;       // pracovní karta; prázdné = program se nahrává přímo
+    std::string card_folder_;      // složka programu na kartě ("/MBX/hra")
+    std::string card_root_;        // složka na disku, která se na kartu nahrála
+    std::string card_program_;     // program na kartě
+    bool card_sync_ = false;       // po sezení vrátit změněné soubory do card_root_
+    dbg::EventId entry_ev_ = dbg::EVENT_NONE;
+    bool entry_hit_ = false;
 };
 
 }  // namespace
