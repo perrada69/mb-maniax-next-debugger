@@ -48,5 +48,9 @@
   "config.nextzxos.cardReset.afterSession": "Après chaque session de débogage qui a démarré dessus.",
   "snippet.nextzxosLabel": "MB Maniax : Démarrer dans NextZXOS",
   "snippet.nextzxosDescription": "Démarrer NextZXOS depuis la carte SD et déboguer le programme qu'il lance",
-  "snippet.nextzxosName": "Déboguer via NextZXOS"
+  "snippet.nextzxosName": "Déboguer via NextZXOS",
+  "launch.esp": "Module WiFi ESP-01 émulé sur l'UART 0 : le programme peut ouvrir des connexions réseau via cet ordinateur (commandes AT, ports $133B/$143B). Désactivé par défaut. La boucle locale (127.0.0.1, localhost) est toujours refusée – un serveur sur cet ordinateur se joint par son adresse sur le réseau local.",
+  "launch.espAllowedHosts": "Avec esp : les seuls hôtes auxquels le programme peut se connecter (noms ou adresses IP exactement tels que le programme les écrit dans AT+CIPSTART). Vide = n'importe quel hôte.",
+  "launch.espListenAddress": "Avec esp : l'adresse sur laquelle écoute AT+CIPSERVER (par défaut 127.0.0.1 = cet ordinateur uniquement ; 0.0.0.0 = tout le réseau). Numérique uniquement.",
+  "launch.espIpAddress": "Avec esp : l'adresse de station que le module annonce au programme (AT+CIFSR, AT+CIPSTA?), par défaut 192.168.1.50. Purement informative – rien n'y écoute."
 }

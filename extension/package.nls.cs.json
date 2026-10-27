@@ -48,5 +48,9 @@
   "config.nextzxos.cardReset.afterSession": "Po každém ladicím sezení, které z ní bootovalo.",
   "snippet.nextzxosLabel": "MB Maniax: Start do NextZXOS",
   "snippet.nextzxosDescription": "Nabootovat NextZXOS z SD karty a ladit program, který spustí",
-  "snippet.nextzxosName": "Ladit přes NextZXOS"
+  "snippet.nextzxosName": "Ladit přes NextZXOS",
+  "launch.esp": "Emulovaný modul WiFi ESP-01 na UART 0: program může přes tento počítač otevírat síťová spojení (příkazy AT, porty $133B/$143B). Výchozí vypnuto. Smyčka (127.0.0.1, localhost) se odmítá vždy – server na tomto počítači je dostupný přes jeho adresu v místní síti.",
+  "launch.espAllowedHosts": "Při esp: jediné hosty, ke kterým se program smí připojit (jména nebo IP adresy přesně tak, jak je program píše v AT+CIPSTART). Prázdné = jakýkoli host.",
+  "launch.espListenAddress": "Při esp: adresa, na které poslouchá AT+CIPSERVER (výchozí 127.0.0.1 = jen tento počítač; 0.0.0.0 = celá síť). Jen číselná.",
+  "launch.espIpAddress": "Při esp: adresa stanice, kterou modul hlásí programu (AT+CIFSR, AT+CIPSTA?), výchozí 192.168.1.50. Jen informativní – nic na ní neposlouchá."
 }

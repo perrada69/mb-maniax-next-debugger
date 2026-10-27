@@ -2,7 +2,7 @@
 # Přidává ho kořenový CMakeLists.txt JNEXT (jnext.patch) přes -DJNEXT_SERVER_DIR=<tato složka>;
 # celé sestavení zařídí build.ps1 v kořeni repozitáře.
 
-add_executable(mbx-next-server main.cpp card.cpp)
+add_executable(mbx-next-server main.cpp card.cpp esp_tap.cpp)
 target_link_libraries(mbx-next-server PRIVATE
     jnext_core jnext_cpu jnext_memory
     jnext_video jnext_audio jnext_port

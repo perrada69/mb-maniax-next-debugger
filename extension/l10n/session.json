@@ -10,6 +10,9 @@
         "session.filterPortCondition": "E.g. (PORT & $FF) == $FE (value written: VALUE)",
         "session.filterDma": "DMA (transfer start)",
         "session.filterReset": "Machine reset",
+        "session.filterEspTx": "ESP: line sent (Z80 → ESP)",
+        "session.filterEspRx": "ESP: line received (ESP → Z80)",
+        "session.filterEspCondition": "Text in the line (e.g. CIPSTART) or /regex/; empty = every line",
         "session.stopEvent": "event: {0}",
         "session.notDebugging": "Debugging is not running",
         "session.serverNotFound": "Debug server not found ({0}). Set mbxNext.serverPath.",
@@ -65,7 +68,9 @@
         "session.serverEsxdosWritable": "esxDOS works in the folder {0} with write access: the program's writes change files on disk immediately and Step Back cannot undo them.",
         "session.waitingForNextZXOS": "NextZXOS is starting from the SD card; the debugger stops when it starts {0} (breakpoints apply from then on).",
         "session.cardSynced": "Copied back from the SD card to {0}: {1}",
-        "session.cardMissing": "No longer on the SD card (left alone in the folder): {0}"
+        "session.cardMissing": "No longer on the SD card (left alone in the folder): {0}",
+        "session.serverEspEnabled": "Emulated ESP-01 WiFi on UART 0: the program can connect to any host. Loopback (127.0.0.1, localhost) is always refused – use this computer's LAN address.",
+        "session.serverEspEnabledHosts": "Emulated ESP-01 WiFi on UART 0: the program can connect only to {0}. Loopback (127.0.0.1, localhost) is always refused – use this computer's LAN address."
     },
     "cs": {
         "session.filterInterrupt": "Přerušení (IM 1 / IM 2)",
@@ -78,6 +83,9 @@
         "session.filterPortCondition": "Např. (PORT & $FF) == $FE (zapisovaná hodnota: VALUE)",
         "session.filterDma": "DMA (začátek přenosu)",
         "session.filterReset": "Reset stroje",
+        "session.filterEspTx": "ESP: odeslaný řádek (Z80 → ESP)",
+        "session.filterEspRx": "ESP: přijatý řádek (ESP → Z80)",
+        "session.filterEspCondition": "Text v řádku (např. CIPSTART) nebo /regex/; prázdné = každý řádek",
         "session.stopEvent": "událost: {0}",
         "session.notDebugging": "Ladění neběží",
         "session.serverNotFound": "Ladicí server nenalezen ({0}). Nastavte mbxNext.serverPath.",
@@ -133,7 +141,9 @@
         "session.serverEsxdosWritable": "esxDOS pracuje ve složce {0} s právem zápisu: zápisy programu mění soubory na disku hned a Step Back je nevrátí.",
         "session.waitingForNextZXOS": "NextZXOS startuje z SD karty; debugger zastaví, až spustí {0} (breakpointy platí od té chvíle).",
         "session.cardSynced": "Zkopírováno zpět z SD karty do {0}: {1}",
-        "session.cardMissing": "Na SD kartě už nejsou (ve složce zůstaly): {0}"
+        "session.cardMissing": "Na SD kartě už nejsou (ve složce zůstaly): {0}",
+        "session.serverEspEnabled": "Emulovaná WiFi ESP-01 na UART 0: program se může připojit k jakémukoli hostu. Smyčka (127.0.0.1, localhost) se odmítá vždy – použijte adresu tohoto počítače v místní síti.",
+        "session.serverEspEnabledHosts": "Emulovaná WiFi ESP-01 na UART 0: program se smí připojit jen k {0}. Smyčka (127.0.0.1, localhost) se odmítá vždy – použijte adresu tohoto počítače v místní síti."
     },
     "sk": {
         "session.filterInterrupt": "Prerušenie (IM 1 / IM 2)",
@@ -146,6 +156,9 @@
         "session.filterPortCondition": "Napr. (PORT & $FF) == $FE (zapisovaná hodnota: VALUE)",
         "session.filterDma": "DMA (začiatok prenosu)",
         "session.filterReset": "Reset stroja",
+        "session.filterEspTx": "ESP: odoslaný riadok (Z80 → ESP)",
+        "session.filterEspRx": "ESP: prijatý riadok (ESP → Z80)",
+        "session.filterEspCondition": "Text v riadku (napr. CIPSTART) alebo /regex/; prázdne = každý riadok",
         "session.stopEvent": "udalosť: {0}",
         "session.notDebugging": "Ladenie nebeží",
         "session.serverNotFound": "Ladiaci server sa nenašiel ({0}). Nastavte mbxNext.serverPath.",
@@ -201,7 +214,9 @@
         "session.serverEsxdosWritable": "esxDOS pracuje v priečinku {0} s právom zápisu: zápisy programu menia súbory na disku hneď a Step Back ich nevráti.",
         "session.waitingForNextZXOS": "NextZXOS štartuje z SD karty; debugger zastaví, keď spustí {0} (breakpointy platia od tej chvíle).",
         "session.cardSynced": "Skopírované späť z SD karty do {0}: {1}",
-        "session.cardMissing": "Na SD karte už nie sú (v priečinku zostali): {0}"
+        "session.cardMissing": "Na SD karte už nie sú (v priečinku zostali): {0}",
+        "session.serverEspEnabled": "Emulovaná WiFi ESP-01 na UART 0: program sa môže pripojiť k akémukoľvek hostu. Slučka (127.0.0.1, localhost) sa odmieta vždy – použite adresu tohto počítača v miestnej sieti.",
+        "session.serverEspEnabledHosts": "Emulovaná WiFi ESP-01 na UART 0: program sa smie pripojiť len k {0}. Slučka (127.0.0.1, localhost) sa odmieta vždy – použite adresu tohto počítača v miestnej sieti."
     },
     "es": {
         "session.filterInterrupt": "Interrupción (IM 1 / IM 2)",
@@ -214,6 +229,9 @@
         "session.filterPortCondition": "P. ej. (PORT & $FF) == $FE (valor escrito: VALUE)",
         "session.filterDma": "DMA (inicio de transferencia)",
         "session.filterReset": "Reinicio de la máquina",
+        "session.filterEspTx": "ESP: línea enviada (Z80 → ESP)",
+        "session.filterEspRx": "ESP: línea recibida (ESP → Z80)",
+        "session.filterEspCondition": "Texto en la línea (p. ej. CIPSTART) o /regex/; vacío = cada línea",
         "session.stopEvent": "evento: {0}",
         "session.notDebugging": "No hay ninguna depuración en curso",
         "session.serverNotFound": "No se encontró el servidor de depuración ({0}). Configure mbxNext.serverPath.",
@@ -269,7 +287,9 @@
         "session.serverEsxdosWritable": "esxDOS trabaja en la carpeta {0} con acceso de escritura: las escrituras del programa modifican los archivos del disco de inmediato y Step Back no puede deshacerlas.",
         "session.waitingForNextZXOS": "NextZXOS está arrancando desde la tarjeta SD; el depurador se detiene cuando inicie {0} (los puntos de interrupción valen desde entonces).",
         "session.cardSynced": "Copiado de vuelta de la tarjeta SD a {0}: {1}",
-        "session.cardMissing": "Ya no están en la tarjeta SD (se dejan en la carpeta): {0}"
+        "session.cardMissing": "Ya no están en la tarjeta SD (se dejan en la carpeta): {0}",
+        "session.serverEspEnabled": "WiFi ESP-01 emulado en UART 0: el programa puede conectarse a cualquier host. El bucle local (127.0.0.1, localhost) siempre se rechaza: use la dirección de este equipo en la red local.",
+        "session.serverEspEnabledHosts": "WiFi ESP-01 emulado en UART 0: el programa solo puede conectarse a {0}. El bucle local (127.0.0.1, localhost) siempre se rechaza: use la dirección de este equipo en la red local."
     },
     "de": {
         "session.filterInterrupt": "Interrupt (IM 1 / IM 2)",
@@ -282,6 +302,9 @@
         "session.filterPortCondition": "Z. B. (PORT & $FF) == $FE (geschriebener Wert: VALUE)",
         "session.filterDma": "DMA (Beginn der Übertragung)",
         "session.filterReset": "Zurücksetzen der Maschine",
+        "session.filterEspTx": "ESP: gesendete Zeile (Z80 → ESP)",
+        "session.filterEspRx": "ESP: empfangene Zeile (ESP → Z80)",
+        "session.filterEspCondition": "Text in der Zeile (z. B. CIPSTART) oder /regex/; leer = jede Zeile",
         "session.stopEvent": "Ereignis: {0}",
         "session.notDebugging": "Es läuft kein Debugging",
         "session.serverNotFound": "Debugserver nicht gefunden ({0}). Legen Sie mbxNext.serverPath fest.",
@@ -337,7 +360,9 @@
         "session.serverEsxdosWritable": "esxDOS arbeitet im Ordner {0} mit Schreibzugriff: Schreibvorgänge des Programms ändern Dateien auf dem Datenträger sofort, und Step Back kann sie nicht rückgängig machen.",
         "session.waitingForNextZXOS": "NextZXOS startet von der SD-Karte; der Debugger hält an, wenn es {0} startet (Haltepunkte gelten ab dann).",
         "session.cardSynced": "Von der SD-Karte zurück nach {0} kopiert: {1}",
-        "session.cardMissing": "Nicht mehr auf der SD-Karte (im Ordner belassen): {0}"
+        "session.cardMissing": "Nicht mehr auf der SD-Karte (im Ordner belassen): {0}",
+        "session.serverEspEnabled": "Emuliertes WLAN ESP-01 an UART 0: Das Programm kann sich mit jedem Host verbinden. Loopback (127.0.0.1, localhost) wird immer abgelehnt – verwenden Sie die LAN-Adresse dieses Computers.",
+        "session.serverEspEnabledHosts": "Emuliertes WLAN ESP-01 an UART 0: Das Programm darf sich nur mit {0} verbinden. Loopback (127.0.0.1, localhost) wird immer abgelehnt – verwenden Sie die LAN-Adresse dieses Computers."
     },
     "fr": {
         "session.filterInterrupt": "Interruption (IM 1 / IM 2)",
@@ -350,6 +375,9 @@
         "session.filterPortCondition": "Par ex. (PORT & $FF) == $FE (valeur écrite : VALUE)",
         "session.filterDma": "DMA (début du transfert)",
         "session.filterReset": "Réinitialisation de la machine",
+        "session.filterEspTx": "ESP : ligne envoyée (Z80 → ESP)",
+        "session.filterEspRx": "ESP : ligne reçue (ESP → Z80)",
+        "session.filterEspCondition": "Texte dans la ligne (par ex. CIPSTART) ou /regex/ ; vide = chaque ligne",
         "session.stopEvent": "événement : {0}",
         "session.notDebugging": "Aucun débogage n'est en cours",
         "session.serverNotFound": "Serveur de débogage introuvable ({0}). Définissez mbxNext.serverPath.",
@@ -405,7 +433,9 @@
         "session.serverEsxdosWritable": "esxDOS travaille dans le dossier {0} avec accès en écriture : les écritures du programme modifient immédiatement les fichiers sur le disque et Step Back ne peut pas les annuler.",
         "session.waitingForNextZXOS": "NextZXOS démarre depuis la carte SD ; le débogueur s'arrête quand il lance {0} (les points d'arrêt s'appliquent à partir de là).",
         "session.cardSynced": "Recopié de la carte SD vers {0} : {1}",
-        "session.cardMissing": "Ne sont plus sur la carte SD (laissés dans le dossier) : {0}"
+        "session.cardMissing": "Ne sont plus sur la carte SD (laissés dans le dossier) : {0}",
+        "session.serverEspEnabled": "WiFi ESP-01 émulé sur l'UART 0 : le programme peut se connecter à n'importe quel hôte. La boucle locale (127.0.0.1, localhost) est toujours refusée – utilisez l'adresse de cet ordinateur sur le réseau local.",
+        "session.serverEspEnabledHosts": "WiFi ESP-01 émulé sur l'UART 0 : le programme ne peut se connecter qu'à {0}. La boucle locale (127.0.0.1, localhost) est toujours refusée – utilisez l'adresse de cet ordinateur sur le réseau local."
     },
     "it": {
         "session.filterInterrupt": "Interrupt (IM 1 / IM 2)",
@@ -418,6 +448,9 @@
         "session.filterPortCondition": "Ad es. (PORT & $FF) == $FE (valore scritto: VALUE)",
         "session.filterDma": "DMA (inizio del trasferimento)",
         "session.filterReset": "Reset della macchina",
+        "session.filterEspTx": "ESP: riga inviata (Z80 → ESP)",
+        "session.filterEspRx": "ESP: riga ricevuta (ESP → Z80)",
+        "session.filterEspCondition": "Testo nella riga (ad es. CIPSTART) o /regex/; vuoto = ogni riga",
         "session.stopEvent": "evento: {0}",
         "session.notDebugging": "Nessun debug in corso",
         "session.serverNotFound": "Server di debug non trovato ({0}). Impostare mbxNext.serverPath.",
@@ -473,7 +506,9 @@
         "session.serverEsxdosWritable": "esxDOS lavora nella cartella {0} con accesso in scrittura: le scritture del programma modificano subito i file su disco e Step Back non può annullarle.",
         "session.waitingForNextZXOS": "NextZXOS si avvia dalla scheda SD; il debugger si ferma quando avvia {0} (i breakpoint valgono da quel momento).",
         "session.cardSynced": "Ricopiato dalla scheda SD in {0}: {1}",
-        "session.cardMissing": "Non sono più sulla scheda SD (lasciati nella cartella): {0}"
+        "session.cardMissing": "Non sono più sulla scheda SD (lasciati nella cartella): {0}",
+        "session.serverEspEnabled": "WiFi ESP-01 emulato sulla UART 0: il programma può connettersi a qualsiasi host. Il loopback (127.0.0.1, localhost) viene sempre rifiutato: usare l'indirizzo di questo computer nella rete locale.",
+        "session.serverEspEnabledHosts": "WiFi ESP-01 emulato sulla UART 0: il programma può connettersi solo a {0}. Il loopback (127.0.0.1, localhost) viene sempre rifiutato: usare l'indirizzo di questo computer nella rete locale."
     },
     "pl": {
         "session.filterInterrupt": "Przerwanie (IM 1 / IM 2)",
@@ -486,6 +521,9 @@
         "session.filterPortCondition": "Np. (PORT & $FF) == $FE (zapisywana wartość: VALUE)",
         "session.filterDma": "DMA (początek transferu)",
         "session.filterReset": "Reset maszyny",
+        "session.filterEspTx": "ESP: wysłany wiersz (Z80 → ESP)",
+        "session.filterEspRx": "ESP: odebrany wiersz (ESP → Z80)",
+        "session.filterEspCondition": "Tekst w wierszu (np. CIPSTART) lub /regex/; puste = każdy wiersz",
         "session.stopEvent": "zdarzenie: {0}",
         "session.notDebugging": "Debugowanie nie jest uruchomione",
         "session.serverNotFound": "Nie znaleziono serwera debugowania ({0}). Ustaw mbxNext.serverPath.",
@@ -541,7 +579,9 @@
         "session.serverEsxdosWritable": "esxDOS działa w folderze {0} z prawem zapisu: zapisy programu od razu zmieniają pliki na dysku, a Step Back nie może ich cofnąć.",
         "session.waitingForNextZXOS": "NextZXOS startuje z karty SD; debugger zatrzyma się, gdy uruchomi {0} (punkty przerwania działają od tej chwili).",
         "session.cardSynced": "Skopiowano z powrotem z karty SD do {0}: {1}",
-        "session.cardMissing": "Nie ma ich już na karcie SD (zostały w folderze): {0}"
+        "session.cardMissing": "Nie ma ich już na karcie SD (zostały w folderze): {0}",
+        "session.serverEspEnabled": "Emulowane WiFi ESP-01 na UART 0: program może połączyć się z dowolnym hostem. Pętla zwrotna (127.0.0.1, localhost) jest zawsze odrzucana – użyj adresu tego komputera w sieci lokalnej.",
+        "session.serverEspEnabledHosts": "Emulowane WiFi ESP-01 na UART 0: program może połączyć się tylko z {0}. Pętla zwrotna (127.0.0.1, localhost) jest zawsze odrzucana – użyj adresu tego komputera w sieci lokalnej."
     },
     "pt-br": {
         "session.filterInterrupt": "Interrupção (IM 1 / IM 2)",
@@ -554,6 +594,9 @@
         "session.filterPortCondition": "Por ex. (PORT & $FF) == $FE (valor gravado: VALUE)",
         "session.filterDma": "DMA (início da transferência)",
         "session.filterReset": "Reinicialização da máquina",
+        "session.filterEspTx": "ESP: linha enviada (Z80 → ESP)",
+        "session.filterEspRx": "ESP: linha recebida (ESP → Z80)",
+        "session.filterEspCondition": "Texto na linha (por ex. CIPSTART) ou /regex/; vazio = cada linha",
         "session.stopEvent": "evento: {0}",
         "session.notDebugging": "Nenhuma depuração em andamento",
         "session.serverNotFound": "Servidor de depuração não encontrado ({0}). Defina mbxNext.serverPath.",
@@ -609,7 +652,9 @@
         "session.serverEsxdosWritable": "O esxDOS trabalha na pasta {0} com acesso de gravação: as gravações do programa alteram os arquivos no disco imediatamente e o Step Back não pode desfazê-las.",
         "session.waitingForNextZXOS": "O NextZXOS está iniciando pelo cartão SD; o depurador para quando ele iniciar {0} (os pontos de interrupção valem a partir daí).",
         "session.cardSynced": "Copiado de volta do cartão SD para {0}: {1}",
-        "session.cardMissing": "Não estão mais no cartão SD (mantidos na pasta): {0}"
+        "session.cardMissing": "Não estão mais no cartão SD (mantidos na pasta): {0}",
+        "session.serverEspEnabled": "WiFi ESP-01 emulado na UART 0: o programa pode se conectar a qualquer host. O loopback (127.0.0.1, localhost) é sempre recusado – use o endereço deste computador na rede local.",
+        "session.serverEspEnabledHosts": "WiFi ESP-01 emulado na UART 0: o programa só pode se conectar a {0}. O loopback (127.0.0.1, localhost) é sempre recusado – use o endereço deste computador na rede local."
     },
     "ru": {
         "session.filterInterrupt": "Прерывание (IM 1 / IM 2)",
@@ -622,6 +667,9 @@
         "session.filterPortCondition": "Например, (PORT & $FF) == $FE (записываемое значение: VALUE)",
         "session.filterDma": "DMA (начало передачи)",
         "session.filterReset": "Сброс машины",
+        "session.filterEspTx": "ESP: отправленная строка (Z80 → ESP)",
+        "session.filterEspRx": "ESP: полученная строка (ESP → Z80)",
+        "session.filterEspCondition": "Текст в строке (например, CIPSTART) или /regex/; пусто = каждая строка",
         "session.stopEvent": "событие: {0}",
         "session.notDebugging": "Отладка не запущена",
         "session.serverNotFound": "Сервер отладки не найден ({0}). Укажите mbxNext.serverPath.",
@@ -677,7 +725,9 @@
         "session.serverEsxdosWritable": "esxDOS работает в папке {0} с правом записи: запись программы сразу изменяет файлы на диске, и Step Back не может её отменить.",
         "session.waitingForNextZXOS": "NextZXOS загружается с SD-карты; отладчик остановится, когда он запустит {0} (точки останова действуют с этого момента).",
         "session.cardSynced": "Скопировано обратно с SD-карты в {0}: {1}",
-        "session.cardMissing": "Больше нет на SD-карте (в папке оставлены): {0}"
+        "session.cardMissing": "Больше нет на SD-карте (в папке оставлены): {0}",
+        "session.serverEspEnabled": "Эмулируемый WiFi ESP-01 на UART 0: программа может подключаться к любому хосту. Петля (127.0.0.1, localhost) всегда отклоняется – используйте адрес этого компьютера в локальной сети.",
+        "session.serverEspEnabledHosts": "Эмулируемый WiFi ESP-01 на UART 0: программа может подключаться только к {0}. Петля (127.0.0.1, localhost) всегда отклоняется – используйте адрес этого компьютера в локальной сети."
     },
     "uk": {
         "session.filterInterrupt": "Переривання (IM 1 / IM 2)",
@@ -690,6 +740,9 @@
         "session.filterPortCondition": "Наприклад, (PORT & $FF) == $FE (записуване значення: VALUE)",
         "session.filterDma": "DMA (початок передавання)",
         "session.filterReset": "Скидання машини",
+        "session.filterEspTx": "ESP: надісланий рядок (Z80 → ESP)",
+        "session.filterEspRx": "ESP: отриманий рядок (ESP → Z80)",
+        "session.filterEspCondition": "Текст у рядку (наприклад, CIPSTART) або /regex/; порожньо = кожен рядок",
         "session.stopEvent": "подія: {0}",
         "session.notDebugging": "Налагодження не запущено",
         "session.serverNotFound": "Сервер налагодження не знайдено ({0}). Укажіть mbxNext.serverPath.",
@@ -745,7 +798,9 @@
         "session.serverEsxdosWritable": "esxDOS працює в папці {0} з правом запису: записи програми одразу змінюють файли на диску, і Step Back не може їх скасувати.",
         "session.waitingForNextZXOS": "NextZXOS завантажується з SD-картки; налагоджувач зупиниться, коли він запустить {0} (точки зупинки діють з цього моменту).",
         "session.cardSynced": "Скопійовано назад з SD-картки до {0}: {1}",
-        "session.cardMissing": "Більше немає на SD-картці (у теці залишено): {0}"
+        "session.cardMissing": "Більше немає на SD-картці (у теці залишено): {0}",
+        "session.serverEspEnabled": "Емульований WiFi ESP-01 на UART 0: програма може підключатися до будь-якого хоста. Петля (127.0.0.1, localhost) завжди відхиляється – використовуйте адресу цього комп'ютера в локальній мережі.",
+        "session.serverEspEnabledHosts": "Емульований WiFi ESP-01 на UART 0: програма може підключатися лише до {0}. Петля (127.0.0.1, localhost) завжди відхиляється – використовуйте адресу цього комп'ютера в локальній мережі."
     },
     "ja": {
         "session.filterInterrupt": "割り込み (IM 1 / IM 2)",
@@ -758,6 +813,9 @@
         "session.filterPortCondition": "例: (PORT & $FF) == $FE (書き込まれる値: VALUE)",
         "session.filterDma": "DMA (転送の開始)",
         "session.filterReset": "マシンのリセット",
+        "session.filterEspTx": "ESP: 送信行 (Z80 → ESP)",
+        "session.filterEspRx": "ESP: 受信行 (ESP → Z80)",
+        "session.filterEspCondition": "行内のテキスト (例: CIPSTART) または /regex/。空 = すべての行",
         "session.stopEvent": "イベント: {0}",
         "session.notDebugging": "デバッグは実行されていません",
         "session.serverNotFound": "デバッグ サーバーが見つかりません ({0})。mbxNext.serverPath を設定してください。",
@@ -813,7 +871,9 @@
         "session.serverEsxdosWritable": "esxDOS はフォルダー {0} を書き込み可能で使用しています: プログラムによる書き込みはディスク上のファイルを直ちに変更し、Step Back では元に戻せません。",
         "session.waitingForNextZXOS": "SD カードから NextZXOS を起動中です。{0} が起動されるとデバッガーが停止します (ブレークポイントはそれ以降有効)。",
         "session.cardSynced": "SD カードから {0} にコピーし戻しました: {1}",
-        "session.cardMissing": "SD カードにはもうありません (フォルダーには残しています): {0}"
+        "session.cardMissing": "SD カードにはもうありません (フォルダーには残しています): {0}",
+        "session.serverEspEnabled": "UART 0 のエミュレートされた WiFi ESP-01: プログラムは任意のホストに接続できます。ループバック (127.0.0.1、localhost) は常に拒否されます – このコンピューターのローカル ネットワーク アドレスを使用してください。",
+        "session.serverEspEnabledHosts": "UART 0 のエミュレートされた WiFi ESP-01: プログラムが接続できるのは {0} のみです。ループバック (127.0.0.1、localhost) は常に拒否されます – このコンピューターのローカル ネットワーク アドレスを使用してください。"
     },
     "zh-cn": {
         "session.filterInterrupt": "中断 (IM 1 / IM 2)",
@@ -826,6 +886,9 @@
         "session.filterPortCondition": "例如 (PORT & $FF) == $FE (写入的值: VALUE)",
         "session.filterDma": "DMA (传输开始)",
         "session.filterReset": "机器复位",
+        "session.filterEspTx": "ESP: 发送的行 (Z80 → ESP)",
+        "session.filterEspRx": "ESP: 接收的行 (ESP → Z80)",
+        "session.filterEspCondition": "行中的文本 (例如 CIPSTART) 或 /regex/; 空 = 每一行",
         "session.stopEvent": "事件: {0}",
         "session.notDebugging": "调试未在运行",
         "session.serverNotFound": "找不到调试服务器 ({0})。请设置 mbxNext.serverPath。",
@@ -881,6 +944,8 @@
         "session.serverEsxdosWritable": "esxDOS 以可写方式使用文件夹 {0}：程序的写入会立即修改磁盘上的文件，Step Back 无法撤销。",
         "session.waitingForNextZXOS": "NextZXOS 正从 SD 卡启动；它启动 {0} 时调试器会停下（断点从那时起生效）。",
         "session.cardSynced": "已从 SD 卡复制回 {0}：{1}",
-        "session.cardMissing": "SD 卡上已不存在（文件夹中保留）：{0}"
+        "session.cardMissing": "SD 卡上已不存在（文件夹中保留）：{0}",
+        "session.serverEspEnabled": "UART 0 上的模拟 WiFi ESP-01：程序可以连接任意主机。环回地址（127.0.0.1、localhost）始终被拒绝——请使用这台计算机的局域网地址。",
+        "session.serverEspEnabledHosts": "UART 0 上的模拟 WiFi ESP-01：程序只能连接 {0}。环回地址（127.0.0.1、localhost）始终被拒绝——请使用这台计算机的局域网地址。"
     }
 }

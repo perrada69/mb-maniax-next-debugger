@@ -48,5 +48,9 @@
   "config.nextzxos.cardReset.afterSession": "每次从该卡启动的调试会话结束后。",
   "snippet.nextzxosLabel": "MB Maniax：启动到 NextZXOS",
   "snippet.nextzxosDescription": "从 SD 卡启动 NextZXOS，并调试它启动的程序",
-  "snippet.nextzxosName": "通过 NextZXOS 调试"
+  "snippet.nextzxosName": "通过 NextZXOS 调试",
+  "launch.esp": "UART 0 上的模拟 WiFi 模块 ESP-01：程序可以通过这台计算机打开网络连接（AT 命令，端口 $133B/$143B）。默认关闭。环回地址（127.0.0.1、localhost）始终被拒绝——请通过这台计算机的局域网地址访问其上的服务器。",
+  "launch.espAllowedHosts": "启用 esp 时：程序唯一可以连接的主机（名称或 IP 地址，须与程序在 AT+CIPSTART 中所写的完全一致）。为空 = 任意主机。",
+  "launch.espListenAddress": "启用 esp 时：AT+CIPSERVER 监听的地址（默认 127.0.0.1 = 仅这台计算机；0.0.0.0 = 整个网络）。仅限数字地址。",
+  "launch.espIpAddress": "启用 esp 时：模块向程序报告的站点地址（AT+CIFSR、AT+CIPSTA?），默认 192.168.1.50。仅供参考——没有任何东西在该地址上监听。"
 }

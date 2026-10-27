@@ -25,6 +25,8 @@ zdrojáku: krokování, breakpointy, registry, paměť – a obrazovka emulátor
 - **Panel Next** s pohledy na hardware Nextu (sprity, palety, tilemapa, Copper, …).
 - **Start do NextZXOS** – nabootovat opravdový NextZXOS a ladit program, který spustí (NextZXOS se
   na požádání stáhne ze specnext.com, není součástí debuggeru).
+- **WiFi** – emulovaný modul ESP-01 na UART 0 otevírá skutečná síťová spojení, takže jde ladit
+  síťové programy (pošta, IRC, HTTP) proti serverům v místní síti i na internetu.
 
 ## Panel Next
 
@@ -88,6 +90,44 @@ NextZXOS nabízí:
   smaže složky programů, **MB Maniax: Obnovit pracovní kartu NextZXOS** vrátí celou kartu do stavu
   po stažení a nastavení `mbxNext.nextzxos.cardReset` s hodnotou `afterSession` to udělá po
   každém sezení.
+
+## WiFi (ESP-01)
+
+S `"esp": true` v launch.json dostane program modul WiFi Nextu: emulovaný ESP-01 na UART 0 (příkazy
+AT přes porty $133B/$143B), který otevírá skutečná spojení TCP/UDP z vašeho počítače. Výchozí je
+vypnutý – bez něj na UART 0 nic neodpovídá.
+
+```json
+{
+  "type": "mbx-next",
+  "request": "launch",
+  "name": "Ladit s WiFi",
+  "program": "${workspaceFolder}/posta.nex",
+  "sld": "${workspaceFolder}/posta.sld",
+  "esp": true,
+  "espAllowedHosts": ["192.168.1.10", "mail.example.org"]
+}
+```
+
+- `espAllowedHosts` – jediné hosty, ke kterým se program smí připojit, přesně tak, jak je píše
+  v `AT+CIPSTART`; bez něj jakýkoli host.
+- **Smyčka (127.0.0.1, `localhost`) se odmítá vždy.** Servery v místní síti povolené jsou, takže
+  testovací server na tomto počítači spusťte na všech rozhraních (např. `php -S 0.0.0.0:8080`)
+  a program ať se připojí na adresu počítače v místní síti (192.168.x.x).
+- Modul je už připojený k síti WiFi (`AT+CWJAP?` odpoví `+CWJAP:"JNextWifiHost",…`), takže
+  obvyklá připojovací sekvence programu projde. `AT+CIPSTART` přes TCP odpoví jen `OK` (bez řádku
+  `CONNECT`) – čekejte na `OK` / `ERROR`.
+- `espListenAddress` (výchozí 127.0.0.1) – kde poslouchá `AT+CIPSERVER`; `espIpAddress` – adresa,
+  kterou modul hlásí programu (`AT+CIFSR`), výchozí 192.168.1.50.
+- Funguje i se startem do NextZXOS. Step Back síťový provoz nevrací.
+
+**Ladění provozu.** Záložka **WiFi (ESP)** v panelu Next ukazuje všechno, co program modulu
+poslal, a všechno, co mu modul odpověděl, po řádcích se snímkem – příkazy AT, `OK` / `ERROR`, data
+`+IPD` – a k tomu stav modulu a poslední spojení (otevřeno, zavřeno, odmítnuto). Na liště je filtr,
+zobrazení hex, Vymazat a Kopírovat; se zapnutým **Živě** se záznam obnovuje za běhu. V sekci
+Breakpoints zastaví **ESP: odeslaný řádek (Z80 → ESP)** a **ESP: přijatý řádek (ESP → Z80)**
+program na instrukci `OUT` / `IN`, která dokončila odpovídající řádek; podmínka je text v řádku
+(`CIPSTART`) nebo `/regex/`, prázdná zastaví na každém řádku.
 
 ## Jazyk podmínek
 

@@ -16,10 +16,10 @@ export interface HighlightRect {
     h: number;
 }
 
-/** Příkazy serveru, které smí pohledy volat (čtou stav stroje; writeMemory pro pohled Paměť). */
+/** Příkazy serveru, které smí pohledy volat (čtou stav stroje; writeMemory pro pohled Paměť, espClear pro WiFi). */
 export const ALLOWED = new Set([
     'sprites', 'patternRam', 'palettes', 'copper', 'renderLayer', 'readMemory', 'nextregs', 'mmu', 'state', 'registers',
-    'raster', 'soundState', 'pageUsage', 'writeMemory',
+    'raster', 'soundState', 'pageUsage', 'writeMemory', 'espLog', 'espState', 'espClear',
 ]);
 
 /** Dotazy, které vyřídí rozšíření samo (bez serveru). */
@@ -157,7 +157,7 @@ export class NextViewPanel implements SessionListener {
         const scripts = ['next.js', ...views.map((v) => 'views/' + v)]
             .map((f) => `<script nonce="${nonce}" src="${uri(...f.split('/'))}"></script>`)
             .join('\n');
-        const l10n = dictionaryScript(nonce, 'next.', 'sprites.', 'patterns.', 'palettes.', 'layers.', 'layer2.', 'tilemap.', 'copper.', 'nextreg.', 'memory.', 'memmap.', 'sound.');
+        const l10n = dictionaryScript(nonce, 'next.', 'sprites.', 'patterns.', 'palettes.', 'layers.', 'layer2.', 'tilemap.', 'copper.', 'nextreg.', 'memory.', 'memmap.', 'sound.', 'esp.');
         // Styly 'unsafe-inline': pohledy si vkládají vlastní <style> a atribut style (api.el).
         return `<!doctype html>
 <html lang="${language()}">

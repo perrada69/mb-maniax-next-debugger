@@ -48,5 +48,9 @@
   "config.nextzxos.cardReset.afterSession": "Tras cada sesión de depuración que arrancó desde ella.",
   "snippet.nextzxosLabel": "MB Maniax: Arrancar en NextZXOS",
   "snippet.nextzxosDescription": "Arrancar NextZXOS desde la tarjeta SD y depurar el programa que inicia",
-  "snippet.nextzxosName": "Depurar a través de NextZXOS"
+  "snippet.nextzxosName": "Depurar a través de NextZXOS",
+  "launch.esp": "Módulo WiFi ESP-01 emulado en UART 0: el programa puede abrir conexiones de red a través de este equipo (comandos AT, puertos $133B/$143B). Desactivado por defecto. El bucle local (127.0.0.1, localhost) siempre se rechaza: a un servidor de este equipo se llega por su dirección de la red local.",
+  "launch.espAllowedHosts": "Con esp: los únicos hosts a los que el programa puede conectarse (nombres o direcciones IP tal como el programa los escribe en AT+CIPSTART). Vacío = cualquier host.",
+  "launch.espListenAddress": "Con esp: la dirección en la que escucha AT+CIPSERVER (por defecto 127.0.0.1 = solo este equipo; 0.0.0.0 = toda la red). Solo numérica.",
+  "launch.espIpAddress": "Con esp: la dirección de estación que el módulo comunica al programa (AT+CIFSR, AT+CIPSTA?), por defecto 192.168.1.50. Solo informativa: nada escucha en ella."
 }

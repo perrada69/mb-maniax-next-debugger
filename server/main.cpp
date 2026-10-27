@@ -15,6 +15,7 @@
 // Copyright (C) 2026 MB Maniax. Licence GNU GPL 3 nebo novější (stejně jako JNEXT).
 
 #include "card.h"
+#include "esp_tap.h"
 #include "audio/mixer.h"
 #include "core/emulator.h"
 #include "core/emulator_config.h"
@@ -22,6 +23,9 @@
 #include "core/nex_loader.h"
 #include "core/saveable.h"
 #include "debug/debugger.h"
+#include "esp01/esp_socket.h"
+#include "peripheral/esp_host_policy.h"
+#include "peripheral/uart.h"
 #include "platform/emulator_boot.h"
 #include "script/expr_compiler.h"
 #include "third_party/nlohmann-json/nlohmann/json.hpp"
@@ -344,6 +348,8 @@ public:
         }
         json msg = {{"event", "stopped"}, {"reason", event_kind.empty() ? reason : std::string("event")}, {"pc", info.pc}, {"ids", ids}, {"text", info.reason.text}};
         if (!event_kind.empty()) msg["eventKind"] = event_kind;
+        if ((event_kind == "espTx" || event_kind == "espRx") && !esp_stop_text_.empty()) msg["text"] = esp_stop_text_;   // řádek, který zastavil
+        esp_stop_text_.clear();
         if (info.reason.kind == dbg::PauseReason::Kind::Watch) msg["addr"] = info.reason.addr;
         send(msg);
         screen_dirty_ = true;
@@ -369,6 +375,13 @@ private:
         std::string hit_condition;
         std::string log_message;
         std::string kind;   // u breakpointů na události: druh (port, nextreg, …)
+    };
+
+    /// Stav breakpointu espTx / espRx: skládaný řádek a vzor.
+    struct EspMatch {
+        bool rx = false;
+        esptap::LineAssembler lines;
+        esptap::Pattern pattern;
     };
 
     void output(const std::string& text) { send({{"event", "output"}, {"text", text}}); }
@@ -547,6 +560,9 @@ private:
             else if (name == "profilerClear") profiler_clear(res);
             else if (name == "profilerState") res["active"] = emu_.profiler().active();
             else if (name == "profilerData") profiler_data(cmd, res);
+            else if (name == "espLog") esp_log(cmd, res);
+            else if (name == "espState") esp_state(res);
+            else if (name == "espClear") tap_.clear();
             else {
                 res["ok"] = false;
                 res["error"] = "unknown command: " + name;
@@ -593,6 +609,7 @@ private:
         program_ = cmd.value("program", "");
         MachineType type = MachineType::ZXN_ISSUE2;
         if (parse_machine_type(cmd.value("machine", "next"), type)) cfg.type = type;
+        if (!esp_config(cmd, cfg, res)) return;
         json ignored;
         end_card(false, ignored);   // předchozí start do NextZXOS (restart sezení)
         if (cmd.value("boot", "") == "nextzxos") {
@@ -608,6 +625,7 @@ private:
             }
             if (cmd.contains("esxdosRoot")) cfg.esxdos_stub_root = cmd["esxdosRoot"].get<std::string>();
         }
+        if (cfg.esp_enabled) report_esp(cfg);
         magic_ = cmd.value("magicBreakpoint", true);
         esxdos_reported_ = false;   // informace o zápisu přes esxDOS jednou za launch
         cfg.magic_breakpoint = magic_;   // studený start (reset, launch) nastaví magic breakpoint z konfigurace
@@ -621,6 +639,7 @@ private:
             }
         }
         stop_on_entry_ = cmd.value("stopOnEntry", false);
+        tap_.clear();   // nové sezení: záznam provozu s ESP od začátku (přes reset zůstává)
         check(dbg_.reset(cid_, dbg::ResetKind::Hard), res);
         dbg_.set_magic_breakpoint(magic_);
         rewind_ = cmd.value("rewind", false);
@@ -642,6 +661,118 @@ private:
             dbg_.pause(cid_);
         }
         frame_due_ = std::chrono::steady_clock::now();
+    }
+
+    // ---- WiFi (emulovaný ESP-01 na UART 0)
+
+    /// Launch `esp`, `espAllowedHosts`, `espListenAddress`, `espIpAddress` → konfigurace JNEXT
+    /// (EmulatorConfig::esp_*). Výchozí je modul vypnutý: program bez něj na síť nevidí. Platí
+    /// pro oba starty (přímé nahrání i boot do NextZXOS) a přežije reset i nahrání programu
+    /// (studený start bere boot_cfg_). Neplatná hodnota → chyba launch, nic se nespustí.
+    static bool esp_config(const json& cmd, EmulatorConfig& cfg, json& res) {
+        auto fail = [&res](const std::string& e) {
+            res["ok"] = false;
+            res["error"] = e;
+            return false;
+        };
+        cfg.esp_enabled = cmd.value("esp", false);
+        if (!cfg.esp_enabled) return true;
+        if (cmd.contains("espAllowedHosts")) {
+            const json& hosts = cmd["espAllowedHosts"];
+            if (!hosts.is_array()) return fail("espAllowedHosts must be an array of host names or addresses");
+            for (const json& h : hosts) {
+                std::string host = h.is_string() ? h.get<std::string>() : std::string();
+                host.erase(0, host.find_first_not_of(" \t"));
+                host.erase(host.find_last_not_of(" \t") + 1);
+                // Prázdná položka by seznam tiše nezúžila (prázdný seznam = jakýkoli host).
+                if (host.empty()) return fail("espAllowedHosts: empty entry");
+                cfg.esp_allowed_hosts.push_back(host);
+            }
+        }
+        esp::IpAddress ip;
+        if (cmd.contains("espListenAddress")) {
+            cfg.esp_listen_address = cmd["espListenAddress"].get<std::string>();
+            if (!esp::parse_ip(cfg.esp_listen_address, ip))
+                return fail("espListenAddress must be a numeric IP address: " + cfg.esp_listen_address);
+        }
+        if (cmd.contains("espIpAddress")) {
+            cfg.esp_ip_address = cmd["espIpAddress"].get<std::string>();
+            if (!esp::parse_ip(cfg.esp_ip_address, ip) || std::all_of(ip.bytes.begin(), ip.bytes.end(), [](uint8_t b) { return b == 0; }))
+                return fail("espIpAddress must be a numeric, non-zero IP address: " + cfg.esp_ip_address);
+        }
+        return true;
+    }
+
+    /// Jednou za launch: WiFi je zapnutá a kam smí. JNEXT to píše jen na úrovni info (server
+    /// propouští warn a výš) a smyčku (127.0.0.1, localhost) odmítá vždy – na počítač se program
+    /// dostane jen přes jeho adresu v místní síti.
+    void report_esp(const EmulatorConfig& cfg) {
+        if (cfg.esp_allowed_hosts.empty()) {
+            output("espEnabled", {},
+                   "Emulated ESP-01 WiFi on UART 0: the program can connect to any host. Loopback (127.0.0.1, localhost) is always refused – use this computer's LAN address.");
+            return;
+        }
+        std::string list;
+        for (const std::string& h : cfg.esp_allowed_hosts) list += (list.empty() ? "" : ", ") + h;
+        output("espEnabledHosts", {list},
+               "Emulated ESP-01 WiFi on UART 0: the program can connect only to " + list + ". Loopback (127.0.0.1, localhost) is always refused – use this computer's LAN address.");
+    }
+
+    /// Záznam provozu program ↔ ESP (esp_tap.h): kusy od `since` (poslední kus může ještě růst,
+    /// pohled se pak ptá od jeho seq), nejvýš `max`.
+    void esp_log(const json& cmd, json& res) {
+        const uint64_t since = cmd.value("since", uint64_t{0});
+        const size_t max = std::clamp<size_t>(cmd.value("max", size_t{2000}), 1, 20000);
+        res["enabled"] = tap_.active();
+        res["first"] = tap_.first_seq();
+        res["next"] = tap_.next_seq();
+        res["epoch"] = tap_.epoch();
+        res["bytesTx"] = tap_.bytes_tx();
+        res["bytesRx"] = tap_.bytes_rx();
+        json entries = json::array();
+        for (const esptap::Chunk& c : tap_.since(since, max))
+            entries.push_back({{"seq", c.seq}, {"dir", c.rx ? "rx" : "tx"}, {"frame", c.frame}, {"t", c.tstates},
+                               {"data", base64(reinterpret_cast<const uint8_t*>(c.data.data()), c.data.size())}});
+        res["entries"] = std::move(entries);
+    }
+
+    /// Stav modulu, který JNEXT hlásí: připojení k síti, adresa, povolené hosty a poslední
+    /// události spojení (EspConnectionLog: otevřeno, odmítnuto, selhalo, zavřeno).
+    void esp_state(json& res) {
+        res["enabled"] = emu_.esp_enabled();
+        if (!emu_.esp_enabled()) return;
+        res["associated"] = emu_.esp_associated();
+        res["stationIp"] = emu_.esp_station_ip();
+        res["allowedHosts"] = emu_.esp_allowed_hosts();
+        res["listenAddress"] = boot_cfg_.esp_listen_address;
+        json events = json::array();
+        if (const EspConnectionLog* log = emu_.esp_events()) {
+            for (const EspEvent& e : log->snapshot())
+                events.push_back({{"kind", esp_event_text(e.kind)}, {"host", e.host}, {"port", e.port}, {"detail", e.detail}});
+            res["eventsTotal"] = log->sequence();
+        }
+        res["events"] = std::move(events);
+    }
+
+    /// Breakpoint na řádek provozu s ESP (event breakpoint espTx / espRx): zápis na port $133B
+    /// (program posílá) / čtení z $143B (program bere odpověď), jen s vybraným UART 0. Zastaví
+    /// instrukce OUT / IN, která řádek dokončila (\n), když řádek odpovídá vzoru z podmínky
+    /// (esptap::Pattern: podřetězec, nebo /regex/). Podmínku tu nepřekládá jazyk výrazů JNEXT.
+    bool esp_breakpoint(bool rx, const json& b, dbg::Subscription& sub, std::string& err) {
+        auto m = std::make_shared<EspMatch>();
+        if (!m->pattern.compile(b.value("condition", ""), err)) return false;
+        m->rx = rx;
+        sub.kind = dbg::EventKind::Port;
+        sub.filter.port_mask = 0xFFFF;
+        sub.filter.port_value = rx ? 0x143B : 0x133B;
+        sub.access = rx ? dbg::Access::Read : dbg::Access::Write;
+        sub.handler = [this, m](const dbg::Event& e, dbg::Debugger&) {
+            if (emu_.uart().selected_channel() != 0) return dbg::Action::Continue;
+            if (!m->lines.push(e.value) || !m->pattern.matches(m->lines.line())) return dbg::Action::Continue;
+            esp_stop_text_ = (m->rx ? "ESP → Z80: " : "Z80 → ESP: ") + esptap::printable(m->lines.line());
+            return dbg::Action::Stop;
+        };
+        return true;
     }
 
     // ---- start do NextZXOS
@@ -787,6 +918,7 @@ public:
     bool cold_boot() {
         const bool profiling = stop_profiler();
         emulator_cold_boot(emu_, boot_cfg_);
+        tap_.install(emu_.uart());   // nový stroj má nový adaptér ESP
         if (profiling) emu_.profiler().init();
         return true;
     }
@@ -794,6 +926,7 @@ public:
     bool load(const std::string& path) {
         const bool profiling = stop_profiler();
         const bool ok = emulator_apply_load_keeping(emu_, path, false, [this](MachineType t) { boot_cfg_.type = t; });
+        tap_.install(emu_.uart());
         if (profiling) emu_.profiler().init();
         if (ok && !emulator_load_routes_to_snapshot(path)) install_rom();
         return ok;
@@ -1325,6 +1458,13 @@ private:
             else if (kind == "copper") sub.kind = dbg::EventKind::Copper;
             else if (kind == "dma") sub.kind = dbg::EventKind::Dma;
             else if (kind == "reset") sub.kind = dbg::EventKind::Reset;
+            else if (kind == "espTx" || kind == "espRx") {
+                // vlastní handler a vzor místo podmínky; add() bez hitCondition/logMessage ho nepřepíše
+                esp_breakpoint(kind == "espRx", b, sub, err);
+                out.push_back(add(evs_, json{{"id", b.value("id", 0)}}, sub, err));
+                if (evs_.count(b.value("id", 0))) evs_[b.value("id", 0)]->kind = kind;
+                continue;
+            }
             else err = "unknown event kind: " + kind;
             if (err.empty()) sub.condition = compile(b, sub.kind, err);
             out.push_back(add(evs_, b, sub, err));
@@ -1511,6 +1651,14 @@ private:
     std::chrono::steady_clock::time_point frame_due_ = std::chrono::steady_clock::now();
     std::map<int, std::unique_ptr<Bp>> bps_, wps_, evs_;
     std::map<dbg::EventId, int> by_event_;
+
+    // ---- WiFi: záznam provozu s ESP a breakpointy na řádky (esp_tap.h)
+    esptap::Tap tap_{[this](uint32_t& frame, uint64_t& tstates) {
+        const dbg::Time t = dbg_.time();
+        frame = t.frame;
+        tstates = t.tstates_total;
+    }};
+    std::string esp_stop_text_;   // řádek, na kterém zastavil breakpoint espTx / espRx
 
     // ---- start do NextZXOS (launch "boot": "nextzxos")
     std::string card_image_;       // pracovní karta; prázdné = program se nahrává přímo

@@ -48,5 +48,9 @@
   "config.nextzxos.cardReset.afterSession": "After every debug session that booted from it.",
   "snippet.nextzxosLabel": "MB Maniax: Start into NextZXOS",
   "snippet.nextzxosDescription": "Boot NextZXOS from the SD card and debug the program it starts",
-  "snippet.nextzxosName": "Debug via NextZXOS"
+  "snippet.nextzxosName": "Debug via NextZXOS",
+  "launch.esp": "Emulated ESP-01 WiFi module on UART 0: the program can open network connections through this computer (AT commands, ports $133B/$143B). Off by default. Loopback (127.0.0.1, localhost) is always refused – reach a server on this computer through its LAN address.",
+  "launch.espAllowedHosts": "With esp: the only hosts the program may connect to (names or IP addresses exactly as the program writes them in AT+CIPSTART). Empty = any host.",
+  "launch.espListenAddress": "With esp: the address AT+CIPSERVER listens on (default 127.0.0.1 = this computer only; 0.0.0.0 = the whole network). Numeric only.",
+  "launch.espIpAddress": "With esp: the station address the module reports to the program (AT+CIFSR, AT+CIPSTA?), default 192.168.1.50. Informative only – nothing listens on it."
 }

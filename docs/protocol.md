@@ -21,7 +21,7 @@ serveru (JNEXT) jdou na stderr.
 | příkaz | argumenty | odpověď |
 | --- | --- | --- |
 | `hello` | | `version` |
-| `launch` | `program`, `machine`, `sdImage`, `esxdosRoot`, `rom`, `stopOnEntry`, `rewind`, `magicBreakpoint` (výchozí true); start do NextZXOS: `boot` ("nextzxos"), `cardFolder`, `autorun` (výchozí true), `syncBack` (výchozí false) – viz níže | při `boot` "nextzxos": `waitsForNextZXOS` (vstup programu se hlídá) |
+| `launch` | `program`, `machine`, `sdImage`, `esxdosRoot`, `rom`, `stopOnEntry`, `rewind`, `magicBreakpoint` (výchozí true); start do NextZXOS: `boot` ("nextzxos"), `cardFolder`, `autorun` (výchozí true), `syncBack` (výchozí false); WiFi: `esp` (výchozí false), `espAllowedHosts`, `espListenAddress`, `espIpAddress` – viz níže | při `boot` "nextzxos": `waitsForNextZXOS` (vstup programu se hlídá) |
 | `endSession` | | start do NextZXOS: `copied`, `missing` (cesty relativně ke složce), `folder` – viz níže |
 | `prepareSd` | `zip`, `sdImage` | pracovní karta ze zipu distribuce – viz níže |
 | `cleanCard` | `sdImage`, `folder` (výchozí /MBX) | |
@@ -50,7 +50,10 @@ serveru (JNEXT) jdou na stderr.
 | `loadSymbols` | `path` (řádky `JMÉNO = $ADRESA`) | `count` |
 | `setBreakpoints` | `breakpoints` [{id, addr, page?, condition?, hitCondition?, logMessage?}] | `breakpoints` [{id, verified, message?}] |
 | `setWatchpoints` | `watchpoints` [{id, addr, length, access: read/write/readWrite, condition?}] | `watchpoints` |
-| `setEventBreakpoints` | `events` [{id, kind, condition?, …}] – kind: interrupt, nmi, nextreg (`regs`), port (`mask`, `value`, `access`), scanline (`line`), frame, copper, dma, reset | `events` |
+| `setEventBreakpoints` | `events` [{id, kind, condition?, …}] – kind: interrupt, nmi, nextreg (`regs`), port (`mask`, `value`, `access`), scanline (`line`), frame, copper, dma, reset, espTx, espRx (`condition` = vzor řádku, viz WiFi) | `events` |
+| `espLog` | `since` (seq, výchozí 0), `max` (výchozí 2000) | `enabled`, `epoch`, `first`, `next`, `bytesTx`, `bytesRx`, `entries` [{seq, dir: tx/rx, frame, t, data (base64)}] – viz WiFi |
+| `espState` | | `enabled`; se zapnutým ESP i `associated`, `stationIp`, `allowedHosts`, `listenAddress`, `events` [{kind, host, port, detail}], `eventsTotal` |
+| `espClear` | | |
 | `key` | `scancode` (SDL), `down` | – |
 | `releaseKeys` | | – |
 | `joy` | `bits` (Kempston: R L D U F1 F2) | – |
@@ -182,6 +185,67 @@ rozšíření (globalStorage/nextzxos: zip, `base.img` po `prepareSd`, pracovní
 jen uživatelova vlastní kopie, nic z ní se nikam nepředává. Nastavení `mbxNext.nextzxos.url`,
 `sha256` a `size` jdou změnit (novější distribuce); stažený soubor, který nesouhlasí, se odmítne.
 
+### WiFi (ESP-01)
+
+`launch` s `"esp": true` připojí na UART 0 emulovaný modul ESP-01 z JNEXT (`src/esp01`, příkazy AT
+v `esp_at.cpp`): program mluví s modulem přes porty $133B (zápis = vysílaný bajt, čtení = stav:
+bit 0 přijatý bajt, bit 1 plný vysílač) a $143B (čtení = přijatý bajt) a modul otevírá skutečná
+spojení TCP/UDP z počítače, na kterém server běží. Výchozí je vypnuto (`EmulatorConfig::esp_enabled`,
+JNEXT ho z bezpečnostních důvodů sám nikdy nezapne) – bez něj na UART 0 nic neodpovídá.
+
+| volba | výchozí | význam (`EmulatorConfig`) |
+| --- | --- | --- |
+| `esp` | false | zapne modul (`esp_enabled`) |
+| `espAllowedHosts` | [] | jediné hosty, kam se program smí připojit (`esp_allowed_hosts`): jména nebo adresy přesně tak, jak je program píše v `AT+CIPSTART` (bez rozlišení velikosti písmen, bez zástupných znaků); prázdné = jakýkoli host. Prázdná položka → chyba launch. Platí i pro `AT+CIPDOMAIN`, `AT+PING` a SNTP. |
+| `espListenAddress` | 127.0.0.1 | kde poslouchá `AT+CIPSERVER` (`esp_listen_address`); jen číselná adresa, jinak chyba launch. `0.0.0.0` zpřístupní emulovaný Next celé síti. |
+| `espIpAddress` | 192.168.1.50 | adresa stanice, kterou modul hlásí (`AT+CIFSR`, `AT+CIPSTA?`; `esp_ip_address`), jen informativní – nic na ní neposlouchá; číselná a nenulová, jinak chyba launch. |
+
+Bez `esp` se ostatní volby ignorují. Nastavení platí pro oba starty (přímé nahrání i `boot`
+"nextzxos") a pro každý studený start v sezení (reset, nahrání programu, tvrdý reset vyvolaný
+programem); nový `launch` bere nové.
+
+- **Smyčka je zakázaná vždy**, i bez `espAllowedHosts` (`esp::AddressPolicy` v JNEXT): 127.0.0.0/8,
+  `localhost`, ::1, link-local (169.254/16), adresy cloudových metadat, 0.0.0.0, multicast.
+  **Soukromé sítě (10/8, 172.16/12, 192.168/16) povolené jsou** – na server na tomtéž počítači
+  (např. `php -S 0.0.0.0:8080`) se program dostane přes adresu počítače v místní síti.
+- Modul je od zapnutí „připojený“ k síti `JNextWifiHost` (`AT+CWJAP?` → `+CWJAP:"JNextWifiHost",…`,
+  `AT+CWJAP="…","…"` přijme cokoli), takže sekvence skutečných programů (NextIRC, NXtel) projdou.
+- Odlišnosti JNEXT od skutečného firmwaru, se kterými musí program počítat: `AT+CIPSTART` přes TCP
+  odpoví jen `OK` (bez řádku `CONNECT`; UDP `CONNECT` posílá) – program má čekat na `OK`/`ERROR`,
+  ne na `CONNECT`; `AT+CIPSEND` odpoví `OK` a `> `.
+- Rychlost UART se řídí děličem (port $143B zápis / $153B); výchozí 115 200 Bd, `AT+UART_CUR`
+  tempo mění podle skutečného děliče.
+- Síť se při Step Back ani obnovení stavu nevrací (spojení běží dál mimo emulátor); v pauze modul
+  data přijímá, program je dostane po rozběhnutí.
+- Odmítnutá a neúspěšná spojení hlásí JNEXT varováním na stderr (`[esp01] [warning] REFUSED …`),
+  rozšíření je ukáže v Debug Console.
+
+#### Ladění provozu s modulem
+
+Server vloží mezi UART 0 a adaptér ESP z JNEXT vlastní zařízení (`server/esp_tap.h`; jádro se
+nemění, po každém studeném startu a nahrání programu se vloží znovu) a zaznamená každý bajt
+oběma směry: **tx** = program → ESP (bajt opustil vysílač UART), **rx** = ESP → program (bajt
+vstoupil do přijímací FIFO). Při přehrávání (Step Back, RZX) se nic nezapisuje – bajty tehdy na
+síť nejdou.
+
+- **`espLog`**: záznam po kusech – kus jsou souvislé bajty jedním směrem, končí `\n`, změnou směru
+  nebo po 1024 bajtech. `seq` roste o 1 po celé sezení bez děr; `since` vrátí kusy se `seq ≥ since`.
+  Poslední kus může ještě růst: klient se příště ptá od jeho `seq` a kus nahradí. `frame` a `t`
+  (T-stavy od startu) patří prvnímu bajtu kusu. Záznam drží nejvýš 4 MB / 50 000 kusů (starší
+  odpadají, `first` = nejstarší držený). `epoch` se mění při `espClear` a novém `launch` a liší se
+  mezi procesy serveru – klient pak zahodí, co má. Reset záznam nemaže. `enabled` false = ESP
+  vypnuté (záznam prázdný).
+- **`espState`**: stav modulu z JNEXT – `associated` (připojený k síti), `stationIp`,
+  `allowedHosts`, `listenAddress` a posledních až 32 událostí spojení (`kind`: opened, closed,
+  refused, failed, transport fault; `host`, `port`, `detail`).
+- **Breakpointy `espTx` / `espRx`** (`setEventBreakpoints`): server skládá řádky z bajtů, které
+  program zapíše na port $133B (espTx), resp. přečte z $143B (espRx), jen s vybraným UART 0, a
+  zastaví **instrukci OUT / IN, která řádek dokončila** (`\n`), když řádek bez `\r\n` odpovídá
+  `condition`: prázdná = každý řádek, `/regex/` nebo `/regex/i` = regulární výraz (ECMAScript),
+  jinak podřetězec bez ohledu na velikost písmen. Neplatný regex → `verified` false a `message`.
+  Podmínka se nepřekládá jako výraz. Zastavení: `reason` event, `eventKind` espTx / espRx, `text`
+  `Z80 → ESP: <řádek>` / `ESP → Z80: <řádek>` (řídicí znaky jako `\r`, `\xNN`).
+
 ### Magic breakpoint
 
 Instrukce `BREAK` z CSpectu (`DD 01`; sjasmplus ji s `--zxnext=cspect` zná jako `BREAK`, jinak
@@ -238,7 +302,7 @@ nic nepřičítá.
 | událost | obsah |
 | --- | --- |
 | `ready` | `version` – server je připravený |
-| `stopped` | `reason` (entry, breakpoint, step, pause, data breakpoint, goto, exception, event, magic, frameBoundary, restore), `eventKind` (jen u `reason` event: druh z `setEventBreakpoints` – interrupt, nmi, nextreg, port, …), `pc`, `ids` (breakpointy, které zastavily), `text` |
+| `stopped` | `reason` (entry, breakpoint, step, pause, data breakpoint, goto, exception, event, magic, frameBoundary, restore), `eventKind` (jen u `reason` event: druh z `setEventBreakpoints` – interrupt, nmi, nextreg, port, …, espTx, espRx), `pc`, `ids` (breakpointy, které zastavily), `text` |
 | `continued` | |
 | `reset` | `hard` |
 | `output` | `text` – logpointy, výpisy backendu; u hlášek serveru navíc `key` a `args` (viz níže) |
@@ -262,6 +326,8 @@ v `eventKind`; popisek důvodu (přeložený název filtru z panelu Breakpoints)
 | `entryUnknown` | cesta k programu (a chyba) | `Cannot read … as a NEX file: …` – debugger vstup nepozná |
 | `entryNone` | cesta k programu | `The NEX file has no start address (PC=0): …` |
 | `cardFinishFailed` | chyba | `SD card: …` – autoexec karty se nepodařilo vrátit |
+| `espEnabled` | | `Emulated ESP-01 WiFi on UART 0: the program can connect to any host. …` – `launch` s `esp` bez `espAllowedHosts` |
+| `espEnabledHosts` | seznam hostů (oddělený „, “) | `Emulated ESP-01 WiFi on UART 0: the program can connect only to …. …` |
 
 `esxdosWritable` je informace, ne chyba: přijde jednou za `launch`, když server bez SD karty
 zpřístupní programu jeho složku přes esxDOS se zápisem (nahrazuje varování JNEXT

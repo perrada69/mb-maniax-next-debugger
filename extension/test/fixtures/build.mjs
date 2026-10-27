@@ -18,6 +18,7 @@ export const PROGRAMS = [
     { name: 'keywords', dir: here, args: ['--zxnext=cspect'] },
     { name: 'hardreset', dir: here, args: [] },
     { name: 'writer', dir: here, args: [] },
+    { name: 'uart', dir: here, args: [] },
     { name: 'hello', dir: path.join(repo, 'examples', 'hello'), args: [] },
     { name: 'features', dir: path.join(repo, 'examples', 'features'), args: ['--zxnext=cspect'] },
 ];

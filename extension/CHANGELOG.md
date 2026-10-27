@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0
+
+- **WiFi**: with `"esp": true` in launch.json the program gets the Next's ESP-01 WiFi module on
+  UART 0 (emulated by the JNEXT core), which opens real TCP/UDP connections from your computer –
+  network programs such as mail or IRC clients can be debugged against real servers.
+  `espAllowedHosts` limits where the program may connect, `espListenAddress` sets where
+  `AT+CIPSERVER` listens and `espIpAddress` the address the module reports. Loopback
+  (127.0.0.1, localhost) is always refused; reach a server on your own computer through its LAN
+  address. Off by default; works with the start into NextZXOS too.
+- **ESP debugging**: the new **WiFi (ESP)** tab of the Next panel logs the traffic between the
+  program and the module line by line (AT commands, replies, `+IPD` data, with frame numbers;
+  filter, hex view, clear, copy) and shows the module's state and latest connections. New event
+  breakpoints **ESP: line sent** / **ESP: line received** stop on the `OUT` / `IN` instruction that
+  completed a line matching a text or `/regex/`.
+
 ## 0.3.0
 
 - **Start into NextZXOS**: with `"boot": "nextzxos"` in launch.json the emulator boots the real

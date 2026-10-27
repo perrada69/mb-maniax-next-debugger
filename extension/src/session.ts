@@ -66,6 +66,14 @@ export interface LaunchArgs extends DebugProtocol.LaunchRequestArguments {
     autorun?: boolean;
     /** Po sezení zkopírovat soubory, které program na kartě vytvořil nebo změnil, zpět (výchozí false). */
     syncBack?: boolean;
+    /** Emulovaný modul WiFi ESP-01 na UART 0 (výchozí false: program na síť nevidí). */
+    esp?: boolean;
+    /** Jediné hosty (jména nebo adresy, přesná shoda), ke kterým se program smí připojit; prázdné = jakýkoli. */
+    espAllowedHosts?: string[];
+    /** Adresa, na které poslouchá AT+CIPSERVER (výchozí 127.0.0.1). */
+    espListenAddress?: string;
+    /** Adresa stanice, kterou modul hlásí programu (AT+CIFSR, AT+CIPSTA?; výchozí 192.168.1.50). */
+    espIpAddress?: string;
 }
 
 const THREAD = 1;
@@ -103,8 +111,14 @@ function eventFilters(): DebugProtocol.ExceptionBreakpointsFilter[] {
         { filter: 'copper', label: 'Copper (MOVE)', supportsCondition: true },
         { filter: 'dma', label: t('session.filterDma'), supportsCondition: true },
         { filter: 'reset', label: t('session.filterReset') },
+        // WiFi: řádek provozu s ESP (podmínka je vzor řádku, ne výraz – server ji nepřekládá)
+        { filter: 'espTx', label: t('session.filterEspTx'), supportsCondition: true, conditionDescription: t('session.filterEspCondition') },
+        { filter: 'espRx', label: t('session.filterEspRx'), supportsCondition: true, conditionDescription: t('session.filterEspCondition') },
     ];
 }
+
+/** Breakpointy na řádek provozu s ESP: podmínka je vzor (text nebo /regex/), ne výraz. */
+const PATTERN_FILTERS = new Set(['espTx', 'espRx']);
 
 /**
  * Texty serveru pro uživatele: server posílá anglický `text` a k němu `key` + `args`
@@ -117,6 +131,17 @@ const SERVER_TEXTS: Record<string, string> = {
     conditionError: 'session.serverConditionError',
     esxdosWritable: 'session.serverEsxdosWritable',
 };
+
+/** Volby WiFi z launch.json pro příkaz launch serveru (docs/protocol.md); bez `esp` nic. */
+export function espArgs(a: LaunchArgs): Record<string, unknown> {
+    if (a.esp !== true) return {};
+    return {
+        esp: true,
+        ...(Array.isArray(a.espAllowedHosts) && a.espAllowedHosts.length ? { espAllowedHosts: a.espAllowedHosts.map(String) } : {}),
+        ...(a.espListenAddress ? { espListenAddress: a.espListenAddress } : {}),
+        ...(a.espIpAddress ? { espIpAddress: a.espIpAddress } : {}),
+    };
+}
 
 /** Klíč překladu pro `key` serveru (bez kontroly, zda překlad existuje). */
 export function serverTextKey(key: string): string {
@@ -430,6 +455,7 @@ export class NextDebugSession extends LoggingDebugSession {
             ...(a.boot === 'nextzxos'
                 ? { boot: 'nextzxos', autorun: a.autorun !== false, syncBack: a.syncBack === true, ...(a.cardFolder ? { cardFolder: a.cardFolder } : {}) }
                 : {}),
+            ...espArgs(a),
         });
         const viaNextZxos = a.boot === 'nextzxos';
         if (viaNextZxos) this.out(t('session.waitingForNextZXOS', path.basename(a.program)) + '\n');
@@ -1002,7 +1028,8 @@ export class NextDebugSession extends LoggingDebugSession {
         for (const o of args.filterOptions || []) opts.set(o.filterId, o.condition);
         const events: any[] = [];
         let id = 1;
-        for (const [kind, condition] of opts) events.push({ id: id++, kind, ...(condition ? { condition: this.translate(condition) } : {}) });
+        for (const [kind, condition] of opts)
+            events.push({ id: id++, kind, ...(condition ? { condition: PATTERN_FILTERS.has(kind) ? condition : this.translate(condition) } : {}) });
         const result: DebugProtocol.Breakpoint[] = [];
         try {
             const r = await this.server?.request('setEventBreakpoints', { events });

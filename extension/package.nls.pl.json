@@ -48,5 +48,9 @@
   "config.nextzxos.cardReset.afterSession": "Po każdej sesji debugowania, która z niej startowała.",
   "snippet.nextzxosLabel": "MB Maniax: Start do NextZXOS",
   "snippet.nextzxosDescription": "Uruchomić NextZXOS z karty SD i debugować program, który uruchomi",
-  "snippet.nextzxosName": "Debuguj przez NextZXOS"
+  "snippet.nextzxosName": "Debuguj przez NextZXOS",
+  "launch.esp": "Emulowany moduł WiFi ESP-01 na UART 0: program może otwierać połączenia sieciowe przez ten komputer (polecenia AT, porty $133B/$143B). Domyślnie wyłączony. Pętla zwrotna (127.0.0.1, localhost) jest zawsze odrzucana – serwer na tym komputerze jest dostępny przez jego adres w sieci lokalnej.",
+  "launch.espAllowedHosts": "Z esp: jedyne hosty, z którymi program może się połączyć (nazwy lub adresy IP dokładnie tak, jak program zapisuje je w AT+CIPSTART). Puste = dowolny host.",
+  "launch.espListenAddress": "Z esp: adres, na którym nasłuchuje AT+CIPSERVER (domyślnie 127.0.0.1 = tylko ten komputer; 0.0.0.0 = cała sieć). Tylko liczbowy.",
+  "launch.espIpAddress": "Z esp: adres stacji, który moduł zgłasza programowi (AT+CIFSR, AT+CIPSTA?), domyślnie 192.168.1.50. Tylko informacyjny – nic na nim nie nasłuchuje."
 }

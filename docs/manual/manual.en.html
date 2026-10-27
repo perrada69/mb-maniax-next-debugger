@@ -67,6 +67,8 @@ there is nothing else to install or start – the emulator is part of the extens
   <li><b>Step Back</b> – the emulator remembers the last 10 seconds.</li>
   <li><b>Start into NextZXOS</b> – the emulator boots the real NextZXOS and you debug the program
   NextZXOS starts (NextZXOS is downloaded from specnext.com on request).</li>
+  <li><b>WiFi</b> – the emulated ESP-01 module opens real network connections; network programs
+  can be debugged against servers on your LAN or on the internet.</li>
   <li><b>Emulator screen</b> in a VS Code panel, with sound and keyboard.</li>
   <li><b>Next panel</b> with views of the hardware: sprites, Pattern RAM, palettes, layers,
   Layer 2, tilemap, the Copper program and all NEXTREG registers.</li>
@@ -629,6 +631,8 @@ without a condition every event of that kind stops.</p>
     <tr><td><span class="ui">Copper (MOVE)</span></td><td>when the Copper executes a MOVE</td><td><code>CPC</code> address in the Copper program (0–1023), <code>CVC</code> line, <code>HC_ULA</code> horizontal position</td></tr>
     <tr><td><span class="ui">DMA (transfer start)</span></td><td>at the start of a DMA transfer</td><td><code>SRC</code> source address, <code>DST</code> destination address</td></tr>
     <tr><td><span class="ui">Machine reset</span></td><td>on reset</td><td>(no condition)</td></tr>
+    <tr><td><span class="ui">ESP: line sent (Z80 → ESP)</span></td><td>on the <code>OUT</code> that sent a line end to the WiFi module</td><td>the condition is text in the line or a <code>/regex/</code>, see <a class="secref" href="#wifi-ladeni"></a></td></tr>
+    <tr><td><span class="ui">ESP: line received (ESP → Z80)</span></td><td>on the <code>IN</code> that read a line end from the module</td><td>the same</td></tr>
   </tbody>
 </table>
 <p>All event conditions can also use registers, memory and the other names from chapter
@@ -1490,6 +1494,95 @@ only once the program has started. If NextZXOS does not start the program (a fil
 you see the NextZXOS error on the emulator screen and the debugger keeps waiting; end it with
 Stop.</p></div>
 
+<!-- ================================================================== WiFi -->
+<h2 id="wifi">WiFi (ESP-01)</h2>
+<p>The Next has an ESP-01 WiFi module on UART 0 that programs talk to with AT commands. The
+debugger can emulate it: with <code>"esp": true</code> in launch.json the program gets a module that
+opens <b>real TCP/UDP connections from your computer</b>. That way you can debug network programs –
+mail, IRC, HTTP – against a server on your LAN or on the internet. The module is off by default: a
+program does not reach the network unless you allow it, and nothing answers it on UART 0.</p>
+
+<h3 id="wifi-launch">Turning it on in launch.json</h3>
+<pre><code>{
+    "type": "mbx-next",
+    "request": "launch",
+    "name": "Debug mail with WiFi",
+    "program": "${workspaceFolder}/build/mail.nex",
+    "sld": "${workspaceFolder}/build/mail.sld",
+    "esp": true,
+    "espAllowedHosts": ["192.168.1.10"]
+}</code></pre>
+<p>When debugging starts, the Debug Console says that WiFi is on and where the program may connect.</p>
+<table class="ref">
+  <thead><tr><th>Attribute</th><th>Default</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>esp</code></td><td><code>false</code></td><td>Turns on the emulated ESP-01 module on UART 0.</td></tr>
+    <tr><td><code>espAllowedHosts</code></td><td>any host</td><td>The only hosts the program may connect to – names or IP addresses exactly as it writes them in <code>AT+CIPSTART</code> (case does not matter, no wildcards).</td></tr>
+    <tr><td><code>espListenAddress</code></td><td><code>127.0.0.1</code></td><td>The address <code>AT+CIPSERVER</code> listens on (the program as a server). <code>0.0.0.0</code> opens it to the whole network.</td></tr>
+    <tr><td><code>espIpAddress</code></td><td><code>192.168.1.50</code></td><td>The address the module reports to the program (<code>AT+CIFSR</code>, <code>AT+CIPSTA?</code>). Informative only – nothing listens on it.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="wifi-server">A server on your own computer</h3>
+<p><b>The module always refuses loopback</b>: the program cannot connect to <code>127.0.0.1</code>
+or <code>localhost</code> (<code>AT+CIPSTART</code> answers <code>ERROR</code> and the Debug Console
+shows a <i>REFUSED …</i> warning). LAN addresses (10.x, 172.16–31.x, 192.168.x) are allowed. So
+start a test server on all interfaces and point the program at the computer's LAN address (the
+<code>ipconfig</code> command shows it):</p>
+<pre><code>php -S 0.0.0.0:8080            → program: AT+CIPSTART="TCP","192.168.1.128",8080</code></pre>
+
+<h3 id="wifi-at">How the module answers</h3>
+<ul>
+  <li>The module is joined to the network <code>JNextWifiHost</code> from power-on:
+  <code>AT+CWJAP?</code> answers <code>+CWJAP:"JNextWifiHost",…</code> and
+  <code>AT+CWJAP="network","password"</code> accepts any network, so a program's usual connect
+  sequence passes.</li>
+  <li><code>AT+CIPSTART</code> over TCP answers just <code>OK</code>, without the
+  <code>CONNECT</code> line real firmware sends. A program that waits for <code>CONNECT</code> would
+  wait in vain in the emulator – let it wait for <code>OK</code> or <code>ERROR</code>.</li>
+  <li>Data from the server arrives as <code>+IPD,&lt;length&gt;:…</code>, a closed connection as
+  <code>CLOSED</code>, as with the real module.</li>
+  <li>The UART speed follows the prescaler as on the Next (115,200 baud by default).</li>
+</ul>
+<div class="note"><p>The network is outside the emulator: neither Step Back nor restoring a saved
+state undoes connections. While paused the module keeps receiving and the program gets the data
+when it runs again. WiFi also works with the start into NextZXOS.</p></div>
+
+<h3 id="wifi-ladeni">Debugging the traffic</h3>
+<p><a class="secref" href="#next"></a> has a <span class="ui">WiFi (ESP)</span> tab. It shows everything
+the program sent to the module (→) and everything the module answered (←), line by line with the
+frame number:</p>
+<ul>
+  <li>AT commands are bold, <code>OK</code> green, <code>ERROR</code> and <code>FAIL</code> red, the
+  <code>+IPD,…:</code> header purple; line ends show as <code>↵</code>, other control characters as
+  <code>\xNN</code>;</li>
+  <li>long data is shortened, a click on the line expands it; hovering shows the sequence number,
+  frame, T-state and length;</li>
+  <li>at the top is the module's state (WiFi connection, address, allowed hosts, byte counts) and
+  the last five connections – opened, closed, refused (a host outside <code>espAllowedHosts</code> or
+  loopback), failed;</li>
+  <li>the toolbar has <span class="ui">Clear</span>, <span class="ui">Copy</span> (the shown lines as
+  text), a filter, <span class="ui">Hex</span> and <span class="ui">Follow</span> (scroll to the
+  newest line).</li>
+</ul>
+<p>The debugger keeps the log all the time, even with the panel closed (up to 4 MB); a reset keeps
+it, a new debug session starts it afresh. The tab updates when the program stops and on
+<span class="ui">Refresh</span>, and while it runs with <span class="ui">Live</span> on. It replaces
+a communication log of your own in the program – there is no need to store the module's replies in
+memory and read them from there.</p>
+<p>Two event breakpoints stop the program on a particular exchange (the
+<span class="ui">Breakpoints</span> view, see <a class="secref" href="#udalosti"></a>):
+<span class="ui">ESP: line sent (Z80 → ESP)</span> and <span class="ui">ESP: line received
+(ESP → Z80)</span>. They stop on the <code>OUT</code> or <code>IN</code> instruction that completed the
+line (with its line end), so you stand right in the code that sends the command or reads the reply.
+The condition here is not an expression but text the line must contain (case-insensitive), or a
+regular expression between slashes:</p>
+<pre><code>CIPSTART                 → stops on AT+CIPSTART=…
+/^(ERROR|FAIL)$/         → stops when the program reads an error
+/^\+IPD,\d+:/            → the first line of data from the server</code></pre>
+<p>Without a condition every line stops. After the stop, the line is in the stop reason description
+(Call Stack).</p>
+
 <!-- ================================================================== 13 -->
 <h2 id="launch">Settings and launch.json</h2>
 
@@ -1511,6 +1604,7 @@ suggests attribute names and their descriptions (<kbd>Ctrl</kbd>+<kbd>Space</kbd
     <tr><td><code>esxdosRoot</code></td><td>program folder</td><td>Folder the program sees through esxDOS when there is no SD card (with a start into NextZXOS: what is copied to the card).</td></tr>
     <tr><td><code>boot</code></td><td>–</td><td><code>"nextzxos"</code> – boot NextZXOS and debug the program it starts (<a class="secref" href="#nextzxos"></a>).</td></tr>
     <tr><td><code>cardFolder</code>, <code>autorun</code>, <code>syncBack</code></td><td>see <a class="secref" href="#nextzxos-launch"></a></td><td>The program's folder on the card, starting the program from NextZXOS, copying changed files back.</td></tr>
+    <tr><td><code>esp</code>, <code>espAllowedHosts</code>, <code>espListenAddress</code>, <code>espIpAddress</code></td><td>see <a class="secref" href="#wifi-launch"></a></td><td>The emulated ESP-01 WiFi module and where the program may connect.</td></tr>
     <tr><td><code>rewind</code></td><td><code>false</code></td><td>Step Back – the emulator remembers the last 10 seconds; emulation is slower (<a class="secref" href="#rewind"></a>).</td></tr>
     <tr><td><code>magicBreakpoint</code></td><td><code>true</code></td><td>Stop on the CSpect BREAK instruction (<code>FD 00</code>, <code>DD 01</code>) and on the ZEsarUX <code>ED FF</code>. When off, <code>DD 01</code> behaves as <code>LD BC,nn</code>.</td></tr>
     <tr><td><code>wpmem</code></td><td><code>true</code></td><td>Watchpoints from WPMEM comments.</td></tr>

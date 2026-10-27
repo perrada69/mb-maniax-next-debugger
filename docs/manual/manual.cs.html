@@ -69,6 +69,8 @@ neinstalujete ani nespouštíte – emulátor je součástí rozšíření.</p>
   <li><b>Krok zpět</b> (Step Back) – emulátor si pamatuje posledních 10 sekund.</li>
   <li><b>Start do NextZXOS</b> – emulátor nabootuje opravdový NextZXOS a ladí se program, který
   NextZXOS spustí (NextZXOS se na požádání stáhne ze specnext.com).</li>
+  <li><b>WiFi</b> – emulovaný modul ESP-01 otevírá skutečná síťová spojení; síťové programy jde
+  ladit proti serverům v místní síti i na internetu.</li>
   <li><b>Obrazovka emulátoru</b> v panelu VS Code se zvukem a klávesnicí.</li>
   <li><b>Panel Next</b> s pohledy na hardware: sprity, Pattern RAM, palety, vrstvy, Layer 2,
   tilemapa, program Copperu a všechny registry NEXTREG.</li>
@@ -622,6 +624,8 @@ událost daného druhu.</p>
     <tr><td><span class="ui">Copper (MOVE)</span></td><td>když Copper provede instrukci MOVE</td><td><code>CPC</code> adresa v programu Copperu (0–1023), <code>CVC</code> řádek, <code>HC_ULA</code> vodorovná pozice</td></tr>
     <tr><td><span class="ui">DMA (začátek přenosu)</span></td><td>na začátku přenosu DMA</td><td><code>SRC</code> zdrojová adresa, <code>DST</code> cílová adresa</td></tr>
     <tr><td><span class="ui">Reset stroje</span></td><td>při resetu</td><td>(bez podmínky)</td></tr>
+    <tr><td><span class="ui">ESP: odeslaný řádek (Z80 → ESP)</span></td><td>na <code>OUT</code>, který poslal modulu WiFi konec řádku</td><td>podmínka je text v řádku nebo <code>/regex/</code>, viz <a class="secref" href="#wifi-ladeni"></a></td></tr>
+    <tr><td><span class="ui">ESP: přijatý řádek (ESP → Z80)</span></td><td>na <code>IN</code>, který přečetl konec řádku od modulu</td><td>dtto</td></tr>
   </tbody>
 </table>
 <p>Ve všech podmínkách událostí můžete používat i registry, paměť a ostatní jména z kapitoly
@@ -1457,6 +1461,91 @@ se nic nemění.</p>
 se nastaví až po spuštění programu. Pokud program NextZXOS nespustí (třeba chybí soubor), uvidíte
 na obrazovce emulátoru chybu NextZXOS a ladění čeká; ukončete ho tlačítkem Stop.</p></div>
 
+<!-- ================================================================== WiFi -->
+<h2 id="wifi">WiFi (ESP-01)</h2>
+<p>Next má na UART 0 modul WiFi ESP-01, se kterým programy mluví příkazy AT. Debugger ho umí
+emulovat: s <code>"esp": true</code> v launch.json dostane program modul, který otevírá
+<b>skutečná spojení TCP/UDP z vašeho počítače</b>. Tak jde ladit síťové programy – poštu, IRC,
+HTTP – proti serveru v místní síti nebo na internetu. Výchozí je modul vypnutý: program bez
+výslovného svolení na síť nevidí a na UART 0 mu nic neodpovídá.</p>
+
+<h3 id="wifi-launch">Zapnutí v launch.json</h3>
+<pre><code>{
+    "type": "mbx-next",
+    "request": "launch",
+    "name": "Ladit poštu s WiFi",
+    "program": "${workspaceFolder}/build/posta.nex",
+    "sld": "${workspaceFolder}/build/posta.sld",
+    "esp": true,
+    "espAllowedHosts": ["192.168.1.10"]
+}</code></pre>
+<p>Na začátku ladění vypíše Debug Console, že je WiFi zapnutá a kam se program smí připojit.</p>
+<table class="ref">
+  <thead><tr><th>Atribut</th><th>Výchozí</th><th>Význam</th></tr></thead>
+  <tbody>
+    <tr><td><code>esp</code></td><td><code>false</code></td><td>Zapne emulovaný modul ESP-01 na UART 0.</td></tr>
+    <tr><td><code>espAllowedHosts</code></td><td>jakýkoli host</td><td>Jediné hosty, ke kterým se program smí připojit – jména nebo IP adresy přesně tak, jak je píše v <code>AT+CIPSTART</code> (velikost písmen nevadí, zástupné znaky nejsou).</td></tr>
+    <tr><td><code>espListenAddress</code></td><td><code>127.0.0.1</code></td><td>Adresa, na které poslouchá <code>AT+CIPSERVER</code> (program jako server). <code>0.0.0.0</code> ho zpřístupní celé síti.</td></tr>
+    <tr><td><code>espIpAddress</code></td><td><code>192.168.1.50</code></td><td>Adresa, kterou modul hlásí programu (<code>AT+CIFSR</code>, <code>AT+CIPSTA?</code>). Jen informativní – nic na ní neposlouchá.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="wifi-server">Server na vlastním počítači</h3>
+<p><b>Smyčku modul odmítá vždy</b>: na <code>127.0.0.1</code> ani <code>localhost</code> se program
+nepřipojí (<code>AT+CIPSTART</code> odpoví <code>ERROR</code> a Debug Console ukáže varování
+<i>REFUSED …</i>). Adresy místní sítě (10.x, 172.16–31.x, 192.168.x) povolené jsou. Testovací
+server proto spusťte na všech rozhraních a program ať míří na adresu počítače v místní síti
+(zjistíte ji příkazem <code>ipconfig</code>):</p>
+<pre><code>php -S 0.0.0.0:8080            → program: AT+CIPSTART="TCP","192.168.1.128",8080</code></pre>
+
+<h3 id="wifi-at">Jak modul odpovídá</h3>
+<ul>
+  <li>Modul je od zapnutí připojený k síti <code>JNextWifiHost</code>: <code>AT+CWJAP?</code> odpoví
+  <code>+CWJAP:"JNextWifiHost",…</code> a <code>AT+CWJAP="síť","heslo"</code> přijme jakoukoli síť,
+  takže obvyklá připojovací sekvence programu projde.</li>
+  <li><code>AT+CIPSTART</code> přes TCP odpoví jen <code>OK</code>, bez řádku <code>CONNECT</code>,
+  který posílá skutečný firmware. Program, který čeká na <code>CONNECT</code>, by se v emulátoru
+  nedočkal – ať čeká na <code>OK</code> nebo <code>ERROR</code>.</li>
+  <li>Data od serveru chodí jako <code>+IPD,&lt;délka&gt;:…</code>, zavřené spojení jako
+  <code>CLOSED</code>, stejně jako u skutečného modulu.</li>
+  <li>Rychlost UART se řídí děličem jako na Nextu (výchozí 115 200 Bd).</li>
+</ul>
+<div class="note"><p>Síť je mimo emulátor: Step Back ani obnovení uloženého stavu spojení nevrátí.
+V pauze modul data přijímá dál a program je dostane po rozběhnutí. WiFi funguje i se startem do
+NextZXOS.</p></div>
+
+<h3 id="wifi-ladeni">Ladění provozu s modulem</h3>
+<p>V <a class="secref" href="#next"></a> je záložka <span class="ui">WiFi (ESP)</span>. Ukazuje všechno,
+co program modulu poslal (→), a všechno, co mu modul odpověděl (←), po řádcích s číslem snímku:</p>
+<ul>
+  <li>příkazy AT jsou tučně, <code>OK</code> zeleně, <code>ERROR</code> a <code>FAIL</code> červeně,
+  hlavička <code>+IPD,…:</code> fialově; konce řádků se ukazují jako <code>↵</code>, ostatní řídicí
+  znaky jako <code>\xNN</code>;</li>
+  <li>dlouhá data se zkrátí, klik na řádek je rozbalí; najetí myší ukáže pořadí, snímek, T-stav a
+  délku;</li>
+  <li>nahoře je stav modulu (připojení k WiFi, adresa, povolené hosty, počty bajtů) a posledních pět
+  spojení – otevřeno, zavřeno, odmítnuto (host mimo <code>espAllowedHosts</code> nebo smyčka),
+  selhalo;</li>
+  <li>na liště je <span class="ui">Vymazat</span>, <span class="ui">Kopírovat</span> (zobrazené řádky
+  jako text), filtr, <span class="ui">Hex</span> a <span class="ui">Sledovat</span> (posun na
+  nejnovější řádek).</li>
+</ul>
+<p>Záznam vede debugger pořád, i se zavřeným panelem (nejvýš 4 MB); reset ho nemaže, nové spuštění
+ladění ano. Záložka se obnoví při zastavení programu a tlačítkem <span class="ui">Obnovit</span>, se
+zapnutým <span class="ui">Živě</span> i za běhu. Nahrazuje vlastní záznam komunikace v programu –
+není potřeba ukládat odpovědi modulu do paměti a číst je odtud.</p>
+<p>Zastavit program na konkrétní komunikaci umí dva breakpointy na události (sekce
+<span class="ui">Breakpoints</span>, viz <a class="secref" href="#udalosti"></a>):
+<span class="ui">ESP: odeslaný řádek (Z80 → ESP)</span> a <span class="ui">ESP: přijatý řádek
+(ESP → Z80)</span>. Zastaví na instrukci <code>OUT</code> nebo <code>IN</code>, která dokončila řádek
+(znakem konce řádku), takže stojíte přímo v kódu, který příkaz posílá nebo odpověď čte. Podmínka
+tu není výraz, ale text, který má řádek obsahovat (bez ohledu na velikost písmen), nebo regulární
+výraz mezi lomítky:</p>
+<pre><code>CIPSTART                 → zastaví na AT+CIPSTART=…
+/^(ERROR|FAIL)$/         → zastaví, když program přečte chybu
+/^\+IPD,\d+:/            → první řádek dat od serveru</code></pre>
+<p>Bez podmínky zastaví každý řádek. Po zastavení je řádek v popisu důvodu zastavení (Call Stack).</p>
+
 <!-- ================================================================== 13 -->
 <h2 id="launch">Nastavení a launch.json</h2>
 
@@ -1478,6 +1567,7 @@ názvy atributů a jejich popis (<kbd>Ctrl</kbd>+<kbd>Space</kbd>).</p>
     <tr><td><code>esxdosRoot</code></td><td>složka programu</td><td>Složka, kterou program bez SD karty vidí přes esxDOS (při startu do NextZXOS: co se nahraje na kartu).</td></tr>
     <tr><td><code>boot</code></td><td>–</td><td><code>"nextzxos"</code> – nabootovat NextZXOS a ladit program, který spustí (<a class="secref" href="#nextzxos"></a>).</td></tr>
     <tr><td><code>cardFolder</code>, <code>autorun</code>, <code>syncBack</code></td><td>viz <a class="secref" href="#nextzxos-launch"></a></td><td>Složka programu na kartě, spuštění programu NextZXOS, vrácení změněných souborů.</td></tr>
+    <tr><td><code>esp</code>, <code>espAllowedHosts</code>, <code>espListenAddress</code>, <code>espIpAddress</code></td><td>viz <a class="secref" href="#wifi-launch"></a></td><td>Emulovaný modul WiFi ESP-01 a kam se program smí připojit.</td></tr>
     <tr><td><code>rewind</code></td><td><code>false</code></td><td>Krok zpět – emulátor si pamatuje posledních 10 sekund; emulace je pomalejší (<a class="secref" href="#rewind"></a>).</td></tr>
     <tr><td><code>magicBreakpoint</code></td><td><code>true</code></td><td>Zastavit na instrukci BREAK z CSpectu (<code>FD 00</code>, <code>DD 01</code>) a na <code>ED FF</code> ze ZEsarUX. Vypnuté: <code>DD 01</code> se chová jako <code>LD BC,nn</code>.</td></tr>
     <tr><td><code>wpmem</code></td><td><code>true</code></td><td>Watchpointy z komentářů WPMEM.</td></tr>

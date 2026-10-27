@@ -48,5 +48,9 @@
   "config.nextzxos.cardReset.afterSession": "そのカードから起動したデバッグセッションが終わるたび。",
   "snippet.nextzxosLabel": "MB Maniax: NextZXOS で起動",
   "snippet.nextzxosDescription": "SD カードから NextZXOS を起動し、起動されたプログラムをデバッグ",
-  "snippet.nextzxosName": "NextZXOS 経由でデバッグ"
+  "snippet.nextzxosName": "NextZXOS 経由でデバッグ",
+  "launch.esp": "UART 0 のエミュレートされた WiFi モジュール ESP-01: プログラムはこのコンピューター経由でネットワーク接続を開けます (AT コマンド、ポート $133B/$143B)。既定ではオフ。ループバック (127.0.0.1、localhost) は常に拒否されます – このコンピューター上のサーバーにはローカル ネットワークのアドレスで接続してください。",
+  "launch.espAllowedHosts": "esp 使用時: プログラムが接続できる唯一のホスト (プログラムが AT+CIPSTART に書くとおりの名前または IP アドレス)。空 = 任意のホスト。",
+  "launch.espListenAddress": "esp 使用時: AT+CIPSERVER が待ち受けるアドレス (既定 127.0.0.1 = このコンピューターのみ、0.0.0.0 = ネットワーク全体)。数値のみ。",
+  "launch.espIpAddress": "esp 使用時: モジュールがプログラムに報告するステーション アドレス (AT+CIFSR、AT+CIPSTA?)、既定 192.168.1.50。情報のみ – このアドレスでは何も待ち受けません。"
 }

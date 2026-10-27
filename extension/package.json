@@ -2,7 +2,7 @@
   "name": "mbx-next-debugger",
   "displayName": "MB Maniax Next Debugger",
   "description": "%extension.description%",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "MiroslavBursa",
   "license": "GPL-3.0-or-later",
   "icon": "images/icon.png",
@@ -139,6 +139,29 @@
                 "type": "boolean",
                 "default": false,
                 "description": "%launch.syncBack%"
+              },
+              "esp": {
+                "type": "boolean",
+                "default": false,
+                "description": "%launch.esp%"
+              },
+              "espAllowedHosts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": [],
+                "description": "%launch.espAllowedHosts%"
+              },
+              "espListenAddress": {
+                "type": "string",
+                "default": "127.0.0.1",
+                "description": "%launch.espListenAddress%"
+              },
+              "espIpAddress": {
+                "type": "string",
+                "default": "192.168.1.50",
+                "description": "%launch.espIpAddress%"
               },
               "rewind": {
                 "type": "boolean",

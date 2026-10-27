@@ -82,3 +82,12 @@ Nové příkazy serveru (jen čtou, za běhu i v pauze):
 Dotaz vyřizovaný rozšířením (ne serverem), povolený ve webview: `symbols` → `{labels: [{name, addr, page}], codePages: {"<stránka>": počet řádků kódu ze SLD}}` (bez SLD prázdné). Povolený navíc i `writeMemory` (úprava paměti v pohledu Paměť).
 
 Nové záložky: `memory` (Paměť – hex prohlížeč, order 85), `memmap` (Mapa paměti, order 86), `sound` (Zvuk, order 87).
+
+## WiFi (ESP)
+
+Záložka `esp` (WiFi (ESP), order 88, `media/views/esp.js`): provoz mezi programem a emulovaným
+ESP-01 po řádcích (snímek, směr → / ←, data s řídicími znaky jako značkami; zvýraznění příkazů AT,
+OK / ERROR, +IPD a událostí), nahoře stav modulu a posledních 5 událostí spojení. Povolené dotazy
+navíc: `espLog`, `espState`, `espClear` (smlouva v protocol.md, „Ladění provozu s modulem“).
+Pohled se ptá jen na nové kusy (`since` = seq posledního kusu, ten může ještě růst) a podle
+`epoch` pozná vymazání nebo nové sezení. V DOM drží nejvýš 5000 řádků.

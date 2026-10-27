@@ -27,6 +27,8 @@ a panel next to your code.
 - **Next panel** with views of the Next hardware (sprites, palettes, tilemap, Copper, …).
 - **Start into NextZXOS** – boot the real NextZXOS and debug the program it starts (NextZXOS is
   downloaded from specnext.com on request, it is not part of the debugger).
+- **WiFi** – the emulated ESP-01 module on UART 0 opens real network connections, so network
+  programs (mail, IRC, HTTP) can be debugged against servers on your LAN or the internet.
 
 ## Next panel
 
@@ -94,6 +96,44 @@ everything else NextZXOS offers:
   deletes the programs' folders on it, **MB Maniax: Reset NextZXOS Working Card** returns the whole
   card to its downloaded state, and the setting `mbxNext.nextzxos.cardReset` set to
   `afterSession` does that after every session.
+
+## WiFi (ESP-01)
+
+With `"esp": true` in launch.json the program gets the Next's WiFi module: an emulated ESP-01 on
+UART 0 (AT commands through ports $133B/$143B) that opens real TCP/UDP connections from your
+computer. It is off by default – without it nothing answers on UART 0.
+
+```json
+{
+  "type": "mbx-next",
+  "request": "launch",
+  "name": "Debug with WiFi",
+  "program": "${workspaceFolder}/mail.nex",
+  "sld": "${workspaceFolder}/mail.sld",
+  "esp": true,
+  "espAllowedHosts": ["192.168.1.10", "mail.example.org"]
+}
+```
+
+- `espAllowedHosts` – the only hosts the program may connect to, exactly as it writes them in
+  `AT+CIPSTART`; without it, any host.
+- **Loopback (127.0.0.1, `localhost`) is always refused.** Servers on your LAN are allowed, so to
+  reach a test server on this computer, start it on all interfaces (e.g. `php -S 0.0.0.0:8080`)
+  and let the program connect to the computer's LAN address (192.168.x.x).
+- The module is already joined to a WiFi network (`AT+CWJAP?` answers `+CWJAP:"JNextWifiHost",…`),
+  so a program's usual connect sequence passes. `AT+CIPSTART` over TCP answers just `OK` (no
+  `CONNECT` line) – wait for `OK` / `ERROR`.
+- `espListenAddress` (default 127.0.0.1) – where `AT+CIPSERVER` listens; `espIpAddress` – the
+  address the module reports to the program (`AT+CIFSR`), default 192.168.1.50.
+- Works with the start into NextZXOS too. Step Back does not undo network traffic.
+
+**Debugging the traffic.** The **WiFi (ESP)** tab of the Next panel shows everything the program
+sent to the module and everything the module answered, line by line with the frame number – AT
+commands, `OK` / `ERROR`, `+IPD` data – plus the module's state and its latest connections (opened,
+closed, refused). Filter, hex view, Clear and Copy are on its toolbar; turn on **Live** to watch
+it while the program runs. In the Breakpoints view, **ESP: line sent (Z80 → ESP)** and **ESP: line
+received (ESP → Z80)** stop the program on the `OUT` / `IN` instruction that completed a matching
+line; the condition is text in the line (`CIPSTART`) or a `/regex/`, empty stops on every line.
 
 ## Condition language
 
