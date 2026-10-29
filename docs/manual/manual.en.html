@@ -69,7 +69,7 @@ there is nothing else to install or start – the emulator is part of the extens
   NextZXOS starts (NextZXOS is downloaded from specnext.com on request).</li>
   <li><b>WiFi</b> – the emulated ESP-01 module opens real network connections; network programs
   can be debugged against servers on your LAN or on the internet.</li>
-  <li><b>Emulator screen</b> in a VS Code panel, with sound and keyboard.</li>
+  <li><b>Emulator screen</b> in a VS Code panel, with sound, keyboard and a Kempston mouse.</li>
   <li><b>Next panel</b> with views of the hardware: sprites, Pattern RAM, palettes, layers,
   Layer 2, tilemap, the Copper program and all NEXTREG registers.</li>
   <li><b>Saved states</b> of the whole machine, and export to a file.</li>
@@ -996,6 +996,22 @@ This hint is also shown below the screen in the panel.</p>
 <div class="note"><p>Debugging shortcuts (<kbd>F5</kbd>, <kbd>F10</kbd> …) work only when VS Code has the
 focus, not the emulator screen. If <kbd>F5</kbd> “does nothing”, click into the editor first.</p></div>
 
+<h3 id="mys">Mouse</h3>
+<p>The emulator has a Kempston mouse (ports <code>$FBDF</code> X, <code>$FFDF</code> Y and
+<code>$FADF</code> buttons and wheel). As soon as the running program reads the mouse position, the
+hint below the screen changes to <i>The program reads the mouse…</i> and the pointer over the screen
+becomes a crosshair. Clicking the screen then <b>captures</b> the mouse: the pointer disappears and
+movement, buttons and the wheel go to the emulator. The click that captures the mouse is not passed to
+the program.</p>
+<p><b>Release</b> the mouse with left <kbd>Ctrl</kbd> + left <kbd>Alt</kbd> (press them together) or
+with <kbd>Esc</kbd>. It is also released when the program stops (breakpoint, step, pause), when
+debugging ends or when you switch to another window. <kbd>AltGr</kbd> does not release it, even though
+Windows sends it as <kbd>Ctrl</kbd>+<kbd>Alt</kbd>.</p>
+<p>Movement is converted to screen points: moving across the whole width of the screen in the panel
+moves the Next's mouse by 320 points, whatever the size of the panel.</p>
+<div class="note"><p>Right after releasing it with <kbd>Esc</kbd> the browser refuses to capture the
+mouse again for about a second – if the first click does not capture it, click again.</p></div>
+
 <h3 id="zvuk">Sound</h3>
 <p>The browser inside VS Code may play sound only after a user action – sound therefore starts the
 first time you click the screen (or the 🔇 button). Sound plays only while running; it is silent while
@@ -1752,6 +1768,12 @@ built with this SLD); a condition error → fix the condition (<a class="secref"
 shortcuts (<kbd>F5</kbd>, <kbd>F10</kbd>) work only when the screen does not have the focus – click into the
 editor.</p></dd>
 
+<dt>The mouse is not captured / the pointer stays hidden</dt>
+<dd><p>The mouse is captured only while a program that reads its position is running (the hint below the
+screen then starts with <i>The program reads the mouse</i>). This is detected within a second of the
+program starting. Left <kbd>Ctrl</kbd> + left <kbd>Alt</kbd> or <kbd>Esc</kbd> releases a captured mouse
+(see <a class="secref" href="#mys"></a>).</p></dd>
+
 <dt>No sound</dt>
 <dd><p>Click the screen or the 🔇 button – sound may start only after a click. Check that the program is
 running (it is silent while paused) and that the icon shows 🔊.</p></dd>
@@ -1802,7 +1824,8 @@ machine type (<code>machine</code>).</p></dd>
   </tbody>
 </table>
 <p>In the emulator screen (when it has the focus): <kbd>Shift</kbd> = CAPS SHIFT, <kbd>Ctrl</kbd> = SYMBOL
-SHIFT, <kbd>Esc</kbd> = BREAK.</p>
+SHIFT, <kbd>Esc</kbd> = BREAK. Left <kbd>Ctrl</kbd> + left <kbd>Alt</kbd> or <kbd>Esc</kbd> releases a captured
+mouse.</p>
 
 </main>
 

@@ -351,8 +351,12 @@ export class NextDebugSession extends LoggingDebugSession {
 
     /** Číslo emulovaného snímku (rychlost emulace v panelu; obraz chodí jen při změně). */
     async frameNumber(): Promise<number | undefined> {
-        const r = await this.server?.request('state').catch(() => undefined);
-        return r?.frame;
+        return (await this.machineState())?.frame;
+    }
+
+    /** Odpověď serveru na `state` (snímek, PC, myš…); bez serveru nebo při chybě undefined. */
+    async machineState(): Promise<any> {
+        return this.server?.request('state').catch(() => undefined);
     }
 
     // ------------------------------------------------------------------ DAP: start a konec

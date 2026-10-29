@@ -2,7 +2,7 @@
   "name": "mbx-next-debugger",
   "displayName": "MB Maniax Next Debugger",
   "description": "%extension.description%",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "MiroslavBursa",
   "license": "GPL-3.0-or-later",
   "icon": "images/icon.png",

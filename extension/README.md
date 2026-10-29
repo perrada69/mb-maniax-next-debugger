@@ -24,6 +24,8 @@ a panel next to your code.
 - Stepping (Step Into / Over / Out), call stack with labels, registers and flags (editable),
   MMU pages, disassembly, memory viewer and editor, expressions in the Watch view and on hover.
 - **Emulator screen** in a VS Code panel, with sound and keyboard.
+- **Kempston mouse** – when the program reads the mouse, clicking the screen captures it; left
+  Ctrl + left Alt or Esc releases it.
 - **Next panel** with views of the Next hardware (sprites, palettes, tilemap, Copper, …).
 - **Start into NextZXOS** – boot the real NextZXOS and debug the program it starts (NextZXOS is
   downloaded from specnext.com on request, it is not part of the debugger).

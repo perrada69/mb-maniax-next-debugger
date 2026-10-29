@@ -11,6 +11,8 @@ export class ScreenPanel implements ScreenSink {
     private ready = false;
     private speedTimer?: NodeJS.Timeout;
     private lastFrame?: { frame: number; time: number };
+    private lastMouseReads?: number;
+    private mouseUsed = false;   // program za běhu čte polohu myši → webview ji po kliknutí zachytí
     private highlightRect: HighlightRect | null = null;
 
     constructor(private readonly extensionUri: vscode.Uri) {}
@@ -25,6 +27,7 @@ export class ScreenPanel implements ScreenSink {
         if (this.session !== session) return;
         this.session = undefined;
         this.stopSpeed();
+        this.mouseUsed = false;
         this.post({ type: 'detached' });
     }
 
@@ -41,7 +44,9 @@ export class ScreenPanel implements ScreenSink {
     state(running: boolean): void {
         this.post({ type: 'state', running });
         this.stopSpeed();
-        if (running) this.speedTimer = setInterval(() => void this.measureSpeed(), 1000);
+        if (!running) return;
+        this.speedTimer = setInterval(() => void this.measureSpeed(), 1000);
+        void this.measureSpeed();   // výchozí stav čítačů hned, ať se myš pozná do sekundy
     }
 
     /** Zvýraznění obdélníku (prostor 320 × 256) z panelu Next; null zruší. */
@@ -54,16 +59,30 @@ export class ScreenPanel implements ScreenSink {
         clearInterval(this.speedTimer);
         this.speedTimer = undefined;
         this.lastFrame = undefined;
+        this.lastMouseReads = undefined;
     }
 
-    /** Snímků emulace za sekundu podle čítače snímků serveru. */
+    /**
+     * Snímků emulace za sekundu podle čítače snímků serveru; zároveň podle čítače čtení polohy
+     * myši (state.mouse.reads) pozná, jestli program za poslední sekundu myš četl.
+     */
     private async measureSpeed(): Promise<void> {
-        const frame = await this.session?.frameNumber();
-        if (frame === undefined || !this.speedTimer) return;
+        const s = await this.session?.machineState();
+        if (typeof s?.frame !== 'number' || !this.speedTimer) return;
+        const frame: number = s.frame;
         const time = Date.now();
         const prev = this.lastFrame;
         this.lastFrame = { frame, time };
         if (prev && frame >= prev.frame) this.post({ type: 'speed', fps: Math.round(((frame - prev.frame) * 1000) / (time - prev.time)) });
+        const reads = s.mouse?.reads;
+        if (typeof reads !== 'number') return;
+        const prevReads = this.lastMouseReads;
+        this.lastMouseReads = reads;
+        if (prevReads === undefined) return;
+        const used = reads > prevReads;
+        if (used === this.mouseUsed) return;
+        this.mouseUsed = used;
+        this.post({ type: 'mouse', used });
     }
 
     /** Je-li panel otevřený, ukáže ho a aktivuje jeho skupinu (panel Next se pak otevře pod ním). */
@@ -115,6 +134,7 @@ export class ScreenPanel implements ScreenSink {
                 this.ready = true;
                 this.post({ type: s ? 'attached' : 'detached' });
                 if (s) this.post({ type: 'state', running: s.isRunning() });
+                if (s && this.mouseUsed) this.post({ type: 'mouse', used: true });
                 s?.input('screen', {});
                 if (this.highlightRect) this.post({ type: 'highlight', rect: this.highlightRect });
                 break;

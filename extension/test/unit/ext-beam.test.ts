@@ -101,7 +101,7 @@ function fakeWebview(state: any) {
     const els: Record<string, any> = {};
     let saved = state;
     const sandbox: any = {
-        document: { getElementById: (id: string) => (els[id] ??= el(id)) },
+        document: { getElementById: (id: string) => (els[id] ??= el(id)), addEventListener: () => undefined },
         window: { L10N: { lang: 'cs', texts: { 'screen.beamPos': 'Řádek {0}, sloupec {1}', 'screen.beamOutside': 'Mimo ({0}, {1})' } }, addEventListener: (_: string, l: any) => (listener = l) },
         acquireVsCodeApi: () => ({ postMessage: (m: any) => posted.push(m), getState: () => saved, setState: (s: any) => (saved = s) }),
         AudioContext: function () {},

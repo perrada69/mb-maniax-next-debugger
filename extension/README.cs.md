@@ -22,6 +22,8 @@ zdrojáku: krokování, breakpointy, registry, paměť – a obrazovka emulátor
 - Krokování (Step In / Over / Out), zásobník volání s návěštími, registry a příznaky (lze měnit),
   stránky MMU, disassembler, prohlížeč a úprava paměti, výrazy v panelu Watch a při najetí myší.
 - **Obrazovka emulátoru** v panelu VS Code se zvukem a klávesnicí.
+- **Kempstonova myš** – když program čte myš, kliknutí do obrazu ji zachytí; uvolní ji levý
+  Ctrl + levý Alt nebo Esc.
 - **Panel Next** s pohledy na hardware Nextu (sprity, palety, tilemapa, Copper, …).
 - **Start do NextZXOS** – nabootovat opravdový NextZXOS a ladit program, který spustí (NextZXOS se
   na požádání stáhne ze specnext.com, není součástí debuggeru).

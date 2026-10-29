@@ -126,3 +126,8 @@ body {
     color: var(--vscode-descriptionForeground);
     font-size: 0.9em;
 }
+
+/* Program čte myš: kliknutím se zachytí (pointer lock). */
+#screen.mouse {
+    cursor: crosshair;
+}

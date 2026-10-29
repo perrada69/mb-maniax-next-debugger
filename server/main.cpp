@@ -973,6 +973,9 @@ private:
         res["frame"] = t.frame;
         res["tstates"] = t.tstates_total;
         res["cycleInFrame"] = t.cycle_in_frame;
+        // Kempstonova myš; reads = kolikrát program četl X / Y (panel obrazovky podle toho zachytí myš).
+        const KempstonMouse& m = emu_.mouse();
+        res["mouse"] = {{"x", m.x()}, {"y", m.y()}, {"buttons", m.buttons()}, {"wheel", m.wheel()}, {"reads", m.position_reads()}};
     }
 
     void registers(json& res) {
@@ -1626,6 +1629,8 @@ private:
             const int b = cmd["buttons"].get<int>();
             emu_.mouse().set_buttons(static_cast<uint8_t>(((b & 1) << 1) | ((b >> 1) & 1) | (b & 4)));
         }
+        // Kolečko: počet kroků (+ = od sebe), 4bitové počítadlo na portu $FADF (bity 7–4).
+        if (cmd.contains("wheel")) emu_.mouse().set_wheel(static_cast<uint8_t>((emu_.mouse().wheel() + cmd["wheel"].get<int>()) & 0x0F));
     }
 
     Emulator& emu_;

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- **Kempston mouse**: when the running program reads the mouse, clicking the emulator screen
+  captures it – movement, buttons and the wheel go to the Next's Kempston mouse. Left Ctrl + left
+  Alt (or Esc) releases it; it is also released when the program stops, when debugging ends or
+  when VS Code loses the focus. The hint below the screen shows whether the mouse can be captured.
+
 ## 0.4.0
 
 - **WiFi**: with `"esp": true` in launch.json the program gets the Next's ESP-01 WiFi module on

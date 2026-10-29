@@ -29,7 +29,7 @@ serveru (JNEXT) jdou na stderr.
 | `stepBack` | `count` | |
 | `runTo` | `addr` | |
 | `reset` | `hard` | |
-| `state` | | `paused`, `pc`, `frame`, `tstates`, `cycleInFrame` |
+| `state` | | `paused`, `pc`, `frame`, `tstates`, `cycleInFrame`, `mouse` {x, y, buttons, wheel, reads} |
 | `registers` | | `registers` {AF … PC, I, R, IFF1, IFF2, IM, halted} + `state` |
 | `setRegister` | `name`, `value` | |
 | `readMemory` | `addr`, `length`, `page`? | `data` (base64); bez `page` paměť CPU, `length` nejvýš 0x10000; s `page` fyzická 8K stránka, `length` až 0x30000 souvisle přes stránky `page`, `page`+1, … (`addr` ≥ 0x2000 posune začátek do další stránky); stránka ≥ 0xE0 → chyba `invalid_page` |
@@ -57,7 +57,7 @@ serveru (JNEXT) jdou na stderr.
 | `key` | `scancode` (SDL), `down` | – |
 | `releaseKeys` | | – |
 | `joy` | `bits` (Kempston: R L D U F1 F2) | – |
-| `mouse` | `dx`, `dy`, `buttons` | – |
+| `mouse` | `dx`, `dy` (dy > 0 = dolů), `buttons` (bit 0 levé, 1 pravé, 2 prostřední), `wheel` (kroky, + = od sebe) | – |
 | `audio` | `on` | |
 | `screen` | (pošli obraz znovu) | |
 | `stateSave` | `name`, `advance`? | – (chyby `notAtFrameBoundary`, `limit`) |

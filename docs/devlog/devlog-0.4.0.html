@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MB Maniax Next Debugger 0.4.0 – devlog</title>
+</head>
+<body>
+
+<h1>WiFi for your Next programs, and a debugger for the ESP</h1>
+
+<p>Version 0.4.0 of MB Maniax Next Debugger is out. This release is all about networking. Your program can now use the Next's ESP-01 WiFi module right inside the debugger, and you can see, and stop on, every line it exchanges with the module.</p>
+
+<h2>WiFi in the emulator</h2>
+<p>Add <code>"esp": true</code> to your launch.json and the program gets an emulated ESP-01 on UART 0. It answers AT commands on ports <code>$133B</code> / <code>$143B</code> like the real module and opens real TCP and UDP connections from your computer. Mail clients, IRC, HTTP downloads: you can now step through them while they talk to real servers.</p>
+<pre><code>{
+    "type": "mbx-next",
+    "request": "launch",
+    "name": "Debug with WiFi",
+    "program": "${workspaceFolder}/build/mail.nex",
+    "sld": "${workspaceFolder}/build/mail.sld",
+    "esp": true,
+    "espAllowedHosts": ["192.168.1.10", "mail.example.org"]
+}</code></pre>
+<ul>
+  <li><strong>Off by default.</strong> A program never reaches the network unless you turn the module on.</li>
+  <li><code>espAllowedHosts</code> limits where the program may connect. Without it, any host is allowed.</li>
+  <li><strong>Loopback is always refused</strong> (127.0.0.1, localhost). To reach a test server on your own computer, start it on all interfaces (for example <code>php -S 0.0.0.0:8080</code>) and let the program connect to your LAN address.</li>
+  <li>The module is already joined to a WiFi network, so the usual connect sequence passes. <code>AT+CIPSTART</code> over TCP answers just <code>OK</code> without a <code>CONNECT</code> line, so wait for <code>OK</code> or <code>ERROR</code>.</li>
+  <li>It works with the start into NextZXOS as well.</li>
+</ul>
+
+<h2>See the whole conversation</h2>
+<p>The Next panel has a new <strong>WiFi (ESP)</strong> tab. It lists everything the program sent to the module (→) and everything the module answered (←), line by line with the frame number. AT commands, <code>OK</code> and <code>ERROR</code>, and the <code>+IPD</code> data headers are highlighted, and line ends show as ↵.</p>
+<pre><code>1204 → AT↵
+1204 ← OK↵
+1206 → AT+CIPSTART="TCP","192.168.1.10",8080↵
+1207 ← OK↵
+1207 → AT+CIPSEND=38↵
+1207 ← &gt;
+1208 → GET /inbox HTTP/1.0↵
+1209 ← SEND OK↵
+1211 ← +IPD,412:HTTP/1.0 200 OK↵
+1213 ← CLOSED↵</code></pre>
+<p><em>An illustration of what the tab shows during a simple HTTP request.</em></p>
+<p>Above the log you see the module's state: whether it is on the network, its IP address, the allowed hosts and the byte counts, plus the last connections (opened, closed, refused, failed). The toolbar has a filter, a hex view, Clear and Copy. Long data is shortened and expands with a click.</p>
+<p>The debugger keeps the log all the time, even while the panel is closed. You no longer need to write your own communication buffer into the program just to find out what the module said.</p>
+
+<h2>Stop on a line</h2>
+<p>Two new event breakpoints in the Breakpoints view: <strong>ESP: line sent (Z80 → ESP)</strong> and <strong>ESP: line received (ESP → Z80)</strong>. They stop on the exact <code>OUT</code> or <code>IN</code> instruction that completed a line, so you land in the code that sends the command or reads the reply. The condition is text the line must contain, or a regular expression:</p>
+<pre><code>CIPSTART            stops when the program sends AT+CIPSTART=…
+/^(ERROR|FAIL)$/    stops when the program reads an error
+/^\+IPD,\d+:/       stops on the first line of data from the server</code></pre>
+<p>Leave the condition empty and it stops on every line.</p>
+
+<h2>Good to know</h2>
+<ul>
+  <li>The network lives outside the emulator, so Step Back and restoring a saved state do not undo connections.</li>
+  <li>The WiFi (ESP) tab refreshes when the program stops, on Refresh, and continuously with Live turned on.</li>
+  <li>The extension runs on Windows x64.</li>
+</ul>
+
+<h2>Get it</h2>
+<ul>
+  <li>VS Code Marketplace: <a href="https://marketplace.visualstudio.com/items?itemName=MiroslavBursa.mbx-next-debugger">MB Maniax Next Debugger</a></li>
+  <li>Source and PDF manuals (English and Czech): <a href="https://github.com/perrada69/mb-maniax-next-debugger">github.com/perrada69/mb-maniax-next-debugger</a></li>
+</ul>
+<p>If you already have the extension, VS Code updates it for you. Bug reports and ideas are welcome in the comments.</p>
+<p><em>Miroslav Bursa, MB Maniax</em></p>
+
+</body>
+</html>

@@ -31,8 +31,39 @@ function rasterLabel(r) {
     return ['screen.beamOutside', num(r.vc), num(r.hc)];
 }
 
+/**
+ * Posun myši pro server: k zbytku `acc` {x, y} přičte posun v pixelech panelu krát `scale`
+ * (bodů obrazu 320 × 256 na pixel panelu), vrátí celé {dx, dy} (oříznuté k nule) a zlomky
+ * nechá v `acc` na příště – pomalý pohyb se tak neztratí.
+ */
+function takeMotion(acc, dx, dy, scale) {
+    const fx = acc.x + dx * scale;
+    const fy = acc.y + dy * scale;
+    const out = { dx: Math.trunc(fx), dy: Math.trunc(fy) };
+    acc.x = fx - out.dx;
+    acc.y = fy - out.dy;
+    return out;
+}
+
+/**
+ * Kroky kolečka z WheelEvent (deltaY > 0 = k sobě): kladné = od sebe, jak čeká server.
+ * Zbytek se střádá v `acc.v` (krok = 100 px, 3 řádky nebo 1 stránka), jemné kolečko
+ * a touchpad tak dávají kroky postupně.
+ */
+function wheelSteps(acc, deltaY, deltaMode) {
+    acc.v += deltaMode === 1 ? deltaY / 3 : deltaMode === 2 ? deltaY : deltaY / 100;
+    const n = Math.trunc(acc.v);
+    acc.v -= n;
+    return n === 0 ? 0 : -n;
+}
+
+/** Uvolnění myši: levý Ctrl + levý Alt (AltGr posílá pravý Alt, ten myš nepustí). */
+function isReleaseChord(held) {
+    return held.has('ControlLeft') && held.has('AltLeft');
+}
+
 // Testy (node) si funkce načtou přes require; ve webview `module` není.
-if (typeof module !== 'undefined' && module.exports) module.exports = { rasterMarks, rasterLabel };
+if (typeof module !== 'undefined' && module.exports) module.exports = { rasterMarks, rasterLabel, takeMotion, wheelSteps, isReleaseChord };
 
 if (typeof acquireVsCodeApi === 'function') (function () {
     const vscode = acquireVsCodeApi();
@@ -77,7 +108,19 @@ if (typeof acquireVsCodeApi === 'function') (function () {
     SC.Digit0 = 39;
     for (let i = 1; i <= 12; i++) SC['F' + i] = 57 + i;
 
+    const held = new Set();   // stisknuté klávesy (KeyboardEvent.code) kvůli Ctrl+Alt
+
     function key(e, down) {
+        if (down) held.add(e.code);
+        else held.delete(e.code);
+        if (down && captured && isReleaseChord(held)) {
+            // druhou klávesu do emulátoru neposílat, první pustí releaseKeys
+            releaseMouse();
+            vscode.postMessage({ type: 'releaseKeys' });
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
         const sc = SC[e.code];
         if (sc === undefined || !attached) return;
         if (e.repeat) { e.preventDefault(); return; }
@@ -87,10 +130,94 @@ if (typeof acquireVsCodeApi === 'function') (function () {
     }
     canvas.addEventListener('keydown', (e) => key(e, true));
     canvas.addEventListener('keyup', (e) => key(e, false));
-    canvas.addEventListener('blur', () => vscode.postMessage({ type: 'releaseKeys' }));
-    canvas.addEventListener('mousedown', () => {
+    canvas.addEventListener('blur', () => {
+        held.clear();
+        vscode.postMessage({ type: 'releaseKeys' });
+    });
+
+    // ---- Kempstonova myš: kliknutí do obrazu zachytí myš (pointer lock), když program čte její
+    // polohu (hlásí hostitel podle state.mouse.reads) a stroj běží; uvolní levý Ctrl + levý Alt,
+    // Esc (prohlížeč), zastavení stroje nebo ztráta fokusu.
+    const hint = document.getElementById('hint');
+    const schedule = typeof window.requestAnimationFrame === 'function' ? (f) => window.requestAnimationFrame(f) : (f) => setTimeout(f, 16);
+    let mouseUsed = false;
+    let captured = false;
+    let buttons = 0;
+    let flushPending = false;
+    const moved = { x: 0, y: 0 };    // pixely panelu od posledního odeslání
+    const motion = { x: 0, y: 0 };   // zlomky bodů, které se ještě neposlaly
+    const wheelAcc = { v: 0 };
+
+    function sendMouse(args) {
+        vscode.postMessage({ type: 'mouse', args });
+    }
+    function captureMouse() {
+        if (captured || !attached || !running || !mouseUsed || typeof canvas.requestPointerLock !== 'function') return;
+        try {
+            // Chromium vrací Promise; odmítne např. hned po uvolnění přes Esc
+            const p = canvas.requestPointerLock();
+            if (p && typeof p.catch === 'function') p.catch(() => undefined);
+        } catch (e) {
+            // bez pointer locku zůstane jen klávesnice
+        }
+    }
+    function releaseMouse() {
+        if (captured) document.exitPointerLock();
+    }
+    function showHint() {
+        hint.textContent = captured ? t('screen.hintMouseCaptured') : mouseUsed && attached ? t('screen.hintMouse') : t('screen.hint');
+        canvas.classList.toggle('mouse', mouseUsed && attached && !captured);
+    }
+    function flushMotion() {
+        flushPending = false;
+        if (!captured) return;
+        // pixely panelu → body obrazu (320 bodů na šířku plátna)
+        const m = takeMotion(motion, moved.x, moved.y, canvas.clientWidth > 0 ? 320 / canvas.clientWidth : 1);
+        moved.x = moved.y = 0;
+        if (m.dx || m.dy) sendMouse(m);
+    }
+    function setButtons(b) {
+        b &= 7;
+        if (b === buttons) return;
+        buttons = b;
+        sendMouse({ buttons });
+    }
+    document.addEventListener('pointerlockchange', () => {
+        captured = document.pointerLockElement === canvas;
+        if (!captured) {
+            moved.x = moved.y = motion.x = motion.y = 0;
+            wheelAcc.v = 0;
+            setButtons(0);
+        }
+        showHint();
+    });
+    canvas.addEventListener('mousedown', (e) => {
         canvas.focus();
         startAudio();
+        if (captured) setButtons(e.buttons);
+        else captureMouse();   // kliknutí, které myš zachytí, program nedostane
+    });
+    canvas.addEventListener('mouseup', (e) => {
+        if (captured) setButtons(e.buttons);
+    });
+    canvas.addEventListener('mousemove', (e) => {
+        if (!captured) return;
+        // posílá se nejvýš jednou za snímek prohlížeče
+        moved.x += e.movementX;
+        moved.y += e.movementY;
+        if (!flushPending) {
+            flushPending = true;
+            schedule(flushMotion);
+        }
+    });
+    canvas.addEventListener('wheel', (e) => {
+        if (!captured) return;
+        e.preventDefault();
+        const n = wheelSteps(wheelAcc, e.deltaY, e.deltaMode);
+        if (n) sendMouse({ wheel: n });
+    }, { passive: false });
+    canvas.addEventListener('contextmenu', (e) => {
+        if (captured) e.preventDefault();
     });
 
     pauseBtn.addEventListener('click', () => vscode.postMessage({ type: 'togglePause' }));
@@ -241,16 +368,21 @@ if (typeof acquireVsCodeApi === 'function') (function () {
                 break;
             case 'state':
                 running = m.running;
+                if (!running) releaseMouse();   // krokování a breakpoint: myš zpátky do VS Code
                 showStatus();
                 requestRaster();
                 break;
             case 'attached':
                 attached = true;
                 showStatus();
+                showHint();
                 break;
             case 'detached':
                 attached = false;
                 running = false;
+                mouseUsed = false;
+                releaseMouse();
+                showHint();
                 highlight = null;
                 raster = null;
                 drawHighlight();
@@ -260,6 +392,10 @@ if (typeof acquireVsCodeApi === 'function') (function () {
                 if (m.seq !== rasterSeq || running) break;   // odpověď na starší zastavení
                 raster = m.data || null;
                 drawHighlight();
+                break;
+            case 'mouse':
+                mouseUsed = !!m.used;
+                showHint();
                 break;
             case 'highlight':
                 highlight = m.rect || null;

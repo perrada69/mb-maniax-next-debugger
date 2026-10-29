@@ -71,7 +71,7 @@ neinstalujete ani nespouštíte – emulátor je součástí rozšíření.</p>
   NextZXOS spustí (NextZXOS se na požádání stáhne ze specnext.com).</li>
   <li><b>WiFi</b> – emulovaný modul ESP-01 otevírá skutečná síťová spojení; síťové programy jde
   ladit proti serverům v místní síti i na internetu.</li>
-  <li><b>Obrazovka emulátoru</b> v panelu VS Code se zvukem a klávesnicí.</li>
+  <li><b>Obrazovka emulátoru</b> v panelu VS Code se zvukem, klávesnicí a Kempstonovou myší.</li>
   <li><b>Panel Next</b> s pohledy na hardware: sprity, Pattern RAM, palety, vrstvy, Layer 2,
   tilemapa, program Copperu a všechny registry NEXTREG.</li>
   <li><b>Uložené stavy</b> celého stroje a jejich export do souboru.</li>
@@ -980,6 +980,21 @@ nápověda je i pod obrazem v panelu.</p>
 <div class="note"><p>Klávesové zkratky ladění (<kbd>F5</kbd>, <kbd>F10</kbd> …) fungují, jen když má
 fokus VS Code, ne obraz emulátoru. Když vám <kbd>F5</kbd> „nefunguje“, klikněte nejdřív do editoru.</p></div>
 
+<h3 id="mys">Myš</h3>
+<p>Emulátor má Kempstonovu myš (porty <code>$FBDF</code> X, <code>$FFDF</code> Y a <code>$FADF</code>
+tlačítka a kolečko). Jakmile běžící program čte polohu myši, nápověda pod obrazem se změní na
+<i>Program čte myš…</i> a kurzor nad obrazem bude křížek. Kliknutím do obrazu pak myš
+<b>zachytíte</b>: kurzor zmizí a pohyb, tlačítka i kolečko jdou do emulátoru. Kliknutí, které myš
+zachytí, program nedostane.</p>
+<p>Myš <b>uvolníte</b> levým <kbd>Ctrl</kbd> + levým <kbd>Alt</kbd> (stačí je stisknout spolu)
+nebo klávesou <kbd>Esc</kbd>. Uvolní se také sama, když se program zastaví (breakpoint, krok,
+pauza), když skončí ladění nebo když přepnete do jiného okna. <kbd>AltGr</kbd> myš neuvolní, i když
+ho Windows posílají jako <kbd>Ctrl</kbd>+<kbd>Alt</kbd>.</p>
+<p>Pohyb se přepočítává na body obrazu: přejetí myší přes celou šířku obrazu v panelu posune myš
+Nextu o 320 bodů, bez ohledu na velikost panelu.</p>
+<div class="note"><p>Hned po uvolnění klávesou <kbd>Esc</kbd> prohlížeč asi sekundu nedovolí myš
+znovu zachytit – když první kliknutí nezabere, klikněte znovu.</p></div>
+
 <h3 id="zvuk">Zvuk</h3>
 <p>Prohlížeč uvnitř VS Code smí přehrávat zvuk až po akci uživatele – zvuk se proto zapne, až poprvé
 kliknete do obrazu (nebo na tlačítko 🔇). Zvuk hraje jen za běhu; v pauze a při krokování je ticho.
@@ -1715,6 +1730,11 @@ chyba podmínky → opravte podmínku (<a class="secref" href="#vyrazy"></a>).</
 <dd><p>Klávesy jdou do emulátoru jen tehdy, když má fokus obraz (klikněte do něj). Naopak zkratky
 VS Code (<kbd>F5</kbd>, <kbd>F10</kbd>) fungují, jen když fokus obraz nemá – klikněte do editoru.</p></dd>
 
+<dt>Myš se nezachytí / kurzor zůstal skrytý</dt>
+<dd><p>Myš se zachytí jen za běhu programu, který čte její polohu (nápověda pod obrazem pak začíná
+<i>Program čte myš</i>). Program to pozná do sekundy po rozběhnutí. Zachycenou myš uvolní levý
+<kbd>Ctrl</kbd> + levý <kbd>Alt</kbd> nebo <kbd>Esc</kbd> (viz <a class="secref" href="#mys"></a>).</p></dd>
+
 <dt>Zvuk nehraje</dt>
 <dd><p>Klikněte do obrazu nebo na tlačítko 🔇 – zvuk se smí zapnout až po kliknutí. Zkontrolujte, že
 program běží (v pauze je ticho) a že je ikona 🔊.</p></dd>
@@ -1765,7 +1785,7 @@ v <span class="ui">File › Preferences › Keyboard Shortcuts</span> (<kbd>Ctrl
   </tbody>
 </table>
 <p>V obrazovce emulátoru (když má fokus): <kbd>Shift</kbd> = CAPS SHIFT, <kbd>Ctrl</kbd> = SYMBOL SHIFT,
-<kbd>Esc</kbd> = BREAK.</p>
+<kbd>Esc</kbd> = BREAK. Zachycenou myš uvolní levý <kbd>Ctrl</kbd> + levý <kbd>Alt</kbd> nebo <kbd>Esc</kbd>.</p>
 
 </main>
 
